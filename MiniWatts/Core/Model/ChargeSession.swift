@@ -4,7 +4,8 @@ import Foundation
 nonisolated struct ChargeSample: Codable, Hashable, Identifiable {
     /// Seconds since the session started.
     let offset: TimeInterval
-    let inputWatts: Double
+    /// Nil when adapter-side input cannot be measured (for example, current MagSafe paths).
+    let inputWatts: Double?
     let batteryWatts: Double
     let percent: Int
     let batteryTemperature: Double?
@@ -116,7 +117,7 @@ nonisolated final class SessionStore: @unchecked Sendable {
     static let sampleInterval: TimeInterval = 5
 
     private let url: URL
-    private let queue = DispatchQueue(label: "org.zhaohe.MiniWatts.sessions", qos: .utility)
+    private let queue = DispatchQueue(label: "com.hamizdev.WattTrace.sessions", qos: .utility)
     /// Guarded by `queue`. Holds at most the newest pending write.
     private var pending: [ChargeSession]?
 
