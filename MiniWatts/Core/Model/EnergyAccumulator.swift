@@ -32,13 +32,18 @@ nonisolated struct EnergyTotals: Codable, Hashable {
         return min(batteryWattHours / inputWattHours, 1) * 100
     }
 
-    /// Energy that turned into heat in the cable, the charge IC and the coil.
-    var lossWattHours: Double {
+    /// Adapter energy that did not reach the cell. This includes the phone's own
+    /// system load as well as cable, PMIC and conversion losses; it is not a pure
+    /// heat measurement.
+    var overheadWattHours: Double {
         max(inputWattHours - batteryWattHours, 0)
     }
 
+    /// Kept for source compatibility with upstream code. Prefer `overheadWattHours`.
+    var lossWattHours: Double { overheadWattHours }
+
     var averageInputWatts: Double? {
-        guard integratedSeconds > 0 else { return nil }
+        guard integratedSeconds > 0, inputWattHours > 0.001 else { return nil }
         return inputWattHours * 3600 / integratedSeconds
     }
 }
