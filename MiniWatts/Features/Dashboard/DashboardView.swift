@@ -8,7 +8,7 @@ struct DashboardView: View {
     private var plugged: Bool { snapshot.externalConnected }
 
     var body: some View {
-        PageScaffold("MiniWatts", glow: glowColor, toolbar: AnyView(toolbarButtons)) {
+        PageScaffold("WattTrace", glow: glowColor, toolbar: AnyView(toolbarButtons)) {
             heroPanel
             if monitor.thermal.state.isThrottling { throttleBanner }
             batteryPanel
@@ -168,8 +168,8 @@ struct DashboardView: View {
                            unit: "W", tint: .mwBattery, size: 22)
                 }
                 HStack(alignment: .top, spacing: 10) {
-                    Metric(caption: "Lost as heat",
-                           value: snapshot.conversionLossWatts.map(Formatting.watts) ?? "—",
+                    Metric(caption: "system load + losses",
+                           value: snapshot.inputOverheadWatts.map(Formatting.watts) ?? "—",
                            unit: "W", tint: .mwLoss, size: 22)
                     Metric(caption: "Efficiency",
                            value: snapshot.conversionEfficiency.map { String(format: "%.0f", $0) } ?? "—",
@@ -229,7 +229,7 @@ struct DashboardView: View {
                         Metric(caption: "Into cell",
                                value: String(format: "%.0f", totals.batteryMilliAmpHours),
                                unit: "mAh", size: 20)
-                        Metric(caption: "Round trip",
+                        Metric(caption: "Efficiency",
                                value: totals.efficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
                                unit: "%", tint: .mwLoss, size: 20)
                     }
