@@ -63,26 +63,32 @@ struct SessionPowerChart: View {
     var height: CGFloat = 150
 
     private var ceiling: Double {
-        max((samples.map(\.inputWatts).filter(\.isFinite).max() ?? 0) * 1.2, 5)
+        let peakInput = samples.compactMap(\.inputWatts).filter(\.isFinite).max() ?? 0
+        let peakBattery = samples.map(\.batteryWatts).filter(\.isFinite).max() ?? 0
+        return max(max(peakInput, peakBattery) * 1.2, 5)
     }
 
     var body: some View {
         Chart {
             ForEach(samples) { sample in
-                AreaMark(x: .value("Elapsed", sample.offset),
-                         y: .value("Watts", sample.inputWatts))
-                    .foregroundStyle(LinearGradient(colors: [Color.mwAccent.opacity(0.4), Color.mwAccent.opacity(0.02)],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom))
-                    .interpolationMethod(.monotone)
+                if let inputWatts = sample.inputWatts {
+                    AreaMark(x: .value("Elapsed", sample.offset),
+                             y: .value("Watts", inputWatts))
+                        .foregroundStyle(LinearGradient(colors: [Color.mwAccent.opacity(0.4), Color.mwAccent.opacity(0.02)],
+                                                        startPoint: .top,
+                                                        endPoint: .bottom))
+                        .interpolationMethod(.monotone)
+                }
             }
             ForEach(samples) { sample in
-                LineMark(x: .value("Elapsed", sample.offset),
-                         y: .value("Watts", sample.inputWatts),
-                         series: .value("Series", "From charger"))
-                    .foregroundStyle(Color.mwAccent)
-                    .lineStyle(StrokeStyle(lineWidth: 1.8))
-                    .interpolationMethod(.monotone)
+                if let inputWatts = sample.inputWatts {
+                    LineMark(x: .value("Elapsed", sample.offset),
+                             y: .value("Watts", inputWatts),
+                             series: .value("Series", "From charger"))
+                        .foregroundStyle(Color.mwAccent)
+                        .lineStyle(StrokeStyle(lineWidth: 1.8))
+                        .interpolationMethod(.monotone)
+                }
             }
             ForEach(samples) { sample in
                 LineMark(x: .value("Elapsed", sample.offset),

@@ -1,10 +1,13 @@
-# MiniWatts
+# WattTrace
 
 [English](README.md) · **简体中文**
 
-[![Build](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml/badge.svg)](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml)
+WattTrace 基于 [MiniWatts](https://github.com/ResistanceTo/MiniWatts) 开发，
+遵循 Apache License 2.0，并保留上游的 `LICENSE` 与 `NOTICE`。
 
-一个用 Apple 私有 API 做的 iPhone 电池与充电信息 app。它读取手机自己的电源管理传感器——也就是 iOS 用来控制充电的那一套——显示充电器正在输出多少、其中有多少真正进到电芯、剩下的以多少热量散掉，以及这期间手机里每一个温度传感器的读数。
+[Xcode Cloud 配置](XCODE_CLOUD.md) · [WattTrace v0.0.1 说明](WATTTRACE.md)
+
+一个用 Apple 私有 API 做的 iPhone 电池与充电分析 app。它读取手机自己的电源管理传感器——也就是 iOS 用来控制充电的那一套——显示充电器实际输入、进入电芯的功率、两者之间包含系统负载与转换损耗的差值，以及充电过程中的温度传感器读数。
 
 | 功率 | 温度 | 充电器 | 历史 |
 |:-:|:-:|:-:|:-:|

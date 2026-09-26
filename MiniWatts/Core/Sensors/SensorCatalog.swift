@@ -104,6 +104,16 @@ nonisolated enum SensorCatalog {
         labels[name]
     }
 
+    /// Whether a raw temperature is safe to use in derived thermal UI. Raw Data
+    /// still keeps every HID reading unchanged. On iPhone18,2 / iOS 27.2,
+    /// `PMU tdev7` and `PMU tdev8` repeatedly sit around -25 C while neighbouring
+    /// PMU channels move with load, which behaves like an inactive/sentinel channel.
+    static func isUsableTemperature(name: String, value: Double) -> Bool {
+        guard HIDSensors.plausibleCelsius.contains(value) else { return false }
+        if (name == "PMU tdev7" || name == "PMU tdev8"), value <= -20 { return false }
+        return true
+    }
+
     /// Sorts a sensor name into a zone by whole words rather than by substring.
     ///
     /// Substring matching was wrong in both directions: "surface" contains "rf"

@@ -104,7 +104,8 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
             // on the heat map as if it were a reading. It stays in `sensors`, which
             // Raw data shows unedited, and out of everything that treats a number as
             // degrees.
-            if reading.kind == .temperature, HIDSensors.plausibleCelsius.contains(reading.value) {
+            if reading.kind == .temperature,
+               SensorCatalog.isUsableTemperature(name: reading.name, value: reading.value) {
                 temperatures.append(reading)
             }
         }
@@ -299,17 +300,21 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     var batteryVoltage: Double? { registryVoltage ?? batteryRailVoltage }
     var batteryCurrent: Double? { registryCurrent ?? batteryRailCurrent }
 
-    /// Share of the adapter's power that actually reaches the cell. The remainder
-    /// leaves as heat in the cable, the charge IC and the coil.
+    /// Share of measured adapter power that reaches the cell. The remainder is
+    /// not pure conversion loss: it also includes the phone's live system load.
     var conversionEfficiency: Double? {
         guard let inputWatts, inputWatts > 0.5, let batteryWatts, batteryWatts > 0 else { return nil }
         return min(batteryWatts / inputWatts, 1) * 100
     }
 
-    var conversionLossWatts: Double? {
+    /// Measured input minus battery-side power: system load + path/conversion loss.
+    var inputOverheadWatts: Double? {
         guard let inputWatts, let batteryWatts, inputWatts > batteryWatts else { return nil }
         return inputWatts - batteryWatts
     }
+
+    /// Kept for source compatibility with upstream callers.
+    var conversionLossWatts: Double? { inputOverheadWatts }
 
     // MARK: - Adapter
 

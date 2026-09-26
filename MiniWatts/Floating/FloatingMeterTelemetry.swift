@@ -135,7 +135,7 @@ struct FloatingMeterTelemetryFrame: View {
             Image(systemName: data?.isWireless == true
                   ? "bolt.horizontal.circle.fill" : "bolt.circle.fill")
                 .foregroundStyle(.cyan)
-            Text(verbatim: "MINIWATTS")
+            Text(verbatim: "WATTTRACE")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .tracking(1.8)
             Spacer()
