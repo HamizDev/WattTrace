@@ -1,13 +1,16 @@
-# MiniWatts
+# WattTrace
 
 **English** · [简体中文](README.zh-Hans.md)
 
-[![Build](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml/badge.svg)](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml)
+WattTrace is derived from [MiniWatts](https://github.com/ResistanceTo/MiniWatts)
+under the Apache License 2.0. The upstream `LICENSE` and `NOTICE` files are retained.
+
+[Xcode Cloud setup](XCODE_CLOUD.md) · [WattTrace v0.0.1 notes](WATTTRACE.md)
 
 An iPhone battery and charging monitor built on Apple's private APIs. It reads the
 phone's own power-management sensors — the ones iOS uses to run the charge — and shows
-what the charger is delivering, how much of it reaches the cell, where the rest goes as
-heat, and what every temperature sensor in the phone is doing while it happens.
+what the charger is delivering, how much reaches the cell, the measured system/load
+overhead between those points, and what the phone's temperature sensors report.
 
 | Power | Thermal | Adapter | History |
 |:-:|:-:|:-:|:-:|
