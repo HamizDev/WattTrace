@@ -298,7 +298,7 @@ struct NoReadingView: View {
                 .foregroundStyle(palette.muted)
             Text("No reading")
                 .font(.system(size: 14, weight: .semibold))
-            Text("Open MiniWatts once, then check back.")
+            Text("Open WattTrace once, then check back.")
                 .font(.system(size: 11))
                 .foregroundStyle(palette.muted)
         }
