@@ -308,7 +308,7 @@ final class PowerMonitor {
         if snapshot.date.timeIntervalSince(lastSampleWrite) >= SessionStore.sampleInterval {
             lastSampleWrite = snapshot.date
             session.samples.append(ChargeSample(offset: snapshot.date.timeIntervalSince(session.start),
-                                                inputWatts: snapshot.inputWatts ?? 0,
+                                                inputWatts: snapshot.inputWatts,
                                                 batteryWatts: snapshot.batteryWatts ?? 0,
                                                 percent: snapshot.percent ?? session.endPercent,
                                                 batteryTemperature: snapshot.batteryTemperature,
@@ -346,7 +346,9 @@ final class PowerMonitor {
     /// A stretch of being plugged in that moved no energy is a cable reseat, or a
     /// phone sitting at 100 %, not a charge worth keeping.
     private static func isWorthKeeping(_ session: ChargeSession) -> Bool {
-        session.totals.inputWattHours > 0.001 || session.gainedPercent > 0
+        session.totals.inputWattHours > 0.001
+            || session.totals.batteryWattHours > 0.001
+            || session.gainedPercent > 0
     }
 
     private func persist() {
