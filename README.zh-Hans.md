@@ -38,8 +38,9 @@ WattTrace 自己的改动包括：无线输入功率读不到时不再记录假�
 3. 编译成功后下载 unsigned IPA Artifact。
 4. 使用自己的 Apple 开发者签名后侧载安装。
 
-打包脚本目前保留上游文件命名，所以 IPA / Artifact 文件名可能还会包含
-`MiniWatts`；但 App 的显示名称和 Bundle ID 已更改为 WattTrace。
+GitHub Actions 的 Artifact 已调整为 `WattTrace-unsigned-ipa`，
+其中包含 `WattTrace-unsigned.ipa`。Xcode 内部可执行文件仍叫
+`MiniWatts.app`，安装到手机后显示名称则是 WattTrace。
 
 **Xcode / Xcode Cloud（首次配置需 Mac）**
 
