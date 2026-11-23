@@ -284,12 +284,12 @@
         }
       }
     },
-    "Open MiniWatts once, then check back." : {
+    "Open WattTrace once, then check back." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请先打开一次 MiniWatts，稍后再来查看。"
+            "value" : "请先打开一次 WattTrace，稍后再来查看。"
           }
         }
       }
@@ -304,12 +304,12 @@
         }
       }
     },
-    "Paused — open MiniWatts to resume" : {
+    "Paused — open WattTrace to resume" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已暂停 — 打开 MiniWatts 以继续"
+            "value" : "已暂停 — 打开 WattTrace 以继续"
           }
         }
       }
