@@ -17,6 +17,7 @@ struct DevicesView: View {
     var body: some View {
         PageScaffold("Devices", glow: .mwWireless) {
             thisPhonePanel
+            systemMonitorLink
             if groups.isEmpty {
                 accessoriesPlaceholder
             } else {
@@ -62,6 +63,37 @@ struct DevicesView: View {
                               tint: percent <= 20 ? .mwDanger : .mwBattery)
                 }
             }
+        }
+    }
+
+    /// Keep the top-level tab bar to five pages. The System Monitor is a
+    /// separate screen under Devices, so navigating back automatically stops
+    /// its CPU and display-link sampling.
+    private var systemMonitorLink: some View {
+        Panel("System Monitor", systemImage: "cpu") {
+            NavigationLink {
+                SystemMonitorView()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "gauge.with.dots.needle.50percent")
+                        .font(.system(size: 25, weight: .medium))
+                        .foregroundStyle(Color.mwWireless)
+                        .frame(width: 36)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Performance and display")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("WattTrace CPU · FPS · thermal state")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 
