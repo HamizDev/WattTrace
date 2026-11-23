@@ -349,6 +349,8 @@ struct SessionDetailView: View {
                 DetailRow(label: "Path resistance",
                           value: session.pathMilliohms.map { String(format: "%.0f mΩ", $0) })
                 DetailRow(label: "Throttled", value: Formatting.duration(session.throttledSeconds))
+                DetailRow(label: "Input measured", value: Formatting.duration(session.totals.inputMeasuredSeconds))
+                DetailRow(label: "Cell measured", value: Formatting.duration(session.totals.batteryMeasuredSeconds))
                 DetailRow(label: "Samples", value: "\(session.samples.count)")
                 DetailRow(label: "Transport", value: DetailRow.transportName(wireless: session.isWireless))
             }
