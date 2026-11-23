@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
 
+# A burst of commits to the same PR should only consume macOS minutes for
+# the newest commit. Never cancel a tag release mid-upload.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ipa:
     name: Unsigned ipa
