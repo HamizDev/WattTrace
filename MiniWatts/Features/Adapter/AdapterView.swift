@@ -47,6 +47,13 @@ struct AdapterView: View {
                         .foregroundStyle(Color.mwMuted)
                 }
 
+                if snapshot.inputWatts != nil, !snapshot.isWirelessInput {
+                    Text("Measured at the phone's USB-C rail (VQ0u × IQ0u). The adapter value is a negotiated ceiling, not a wall-meter reading.")
+                        .font(.caption)
+                        .foregroundStyle(Color.mwMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 if let utilisation = snapshot.adapterUtilisation {
                     BarRow(title: Text("Adapter utilisation"),
                            detail: "\(Int(utilisation * 100))%",
@@ -54,7 +61,13 @@ struct AdapterView: View {
                            tint: utilisation > 0.75 ? .mwBattery : .mwLoss)
                 }
 
-                if snapshot.inputWatts == nil, snapshot.adapterIsWireless {
+                if let partial = snapshot.partialInputWatts, let battery = snapshot.batteryWatts {
+                    PartialInputNote(sensedWatts: partial, cellWatts: battery)
+                } else if InputShortfallNotes.applies(to: snapshot, check: monitor.levelRateCheck) {
+                    // In place of `headroomReason`: a half reading looks exactly like a
+                    // phone drawing half the rating, and would be blamed on the cable.
+                    InputShortfallNotes(snapshot: snapshot, check: monitor.levelRateCheck, showsAgreement: false)
+                } else if snapshot.inputWatts == nil, snapshot.adapterIsWireless {
                     EmptyNote(text: "Wireless charging has no input-current sensor, so there is nothing to compare against the rating. The voltage and current below are the profile the pad negotiated — a ceiling that stays put while the actual draw moves.",
                               systemImage: "wave.3.right")
                 } else if let reason = headroomReason {
@@ -73,7 +86,7 @@ struct AdapterView: View {
     private var headroomReason: LocalizedStringResource? {
         guard let utilisation = snapshot.adapterUtilisation, utilisation < 0.75 else { return nil }
         if monitor.thermal.state.isThrottling {
-            return "Well under the adapter's rating while the system is thermally throttling — the ceiling right now is heat, not the charger."
+            return "Well under the adapter's rating while system thermal pressure is high. Charge current may be limited by iOS."
         }
         if snapshot.isChargingOnHold {
             return "Charging is on hold, so almost nothing is being drawn. Optimized Battery Charging or a charge limit looks exactly like this."

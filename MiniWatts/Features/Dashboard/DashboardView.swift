@@ -12,6 +12,7 @@ struct DashboardView: View {
             heroPanel
             if monitor.thermal.state.isThrottling { throttleBanner }
             batteryPanel
+            forecastPanel
             breakdownPanel
             livePanel
             sessionPanel
@@ -50,8 +51,16 @@ struct DashboardView: View {
                     if snapshot.isWirelessInput {
                         Pill(text: Text("MagSafe"), systemImage: "wave.3.right", tint: .mwWireless)
                     }
+                    if monitor.levelRateCheck?.verdict == .sensorsShort {
+                        Pill(text: Text("reading low"), systemImage: "exclamationmark.triangle.fill", tint: .mwDanger)
+                    } else if InputShortfallNotes.applies(to: snapshot, check: monitor.levelRateCheck) {
+                        Pill(text: Text("may read half"), systemImage: "exclamationmark.triangle", tint: .mwLoss)
+                    }
                     if snapshot.holdIsInferred {
                         Pill(text: Text("inferred"), systemImage: "questionmark.circle", tint: .mwLoss)
+                    }
+                    if snapshot.holdIsUnknown {
+                        Pill(text: Text("hold status unknown"), systemImage: "questionmark.circle", tint: .mwLoss)
                     }
                     if monitor.thermal.lowPowerMode || snapshot.lowPowerMode {
                         Pill(text: Text("Low Power"), systemImage: "battery.25", tint: .mwLoss)
@@ -97,7 +106,7 @@ struct DashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Color.mwDanger)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Thermal throttling active")
+                    Text("High system thermal pressure")
                         .font(.system(size: 14, weight: .semibold))
                     Text(monitor.thermal.state.chargingEffect)
                         .font(.caption)
@@ -144,13 +153,65 @@ struct DashboardView: View {
                            tint: (snapshot.batteryCurrent ?? 0) > 0 ? .mwBattery : .primary,
                            size: 20)
                     Metric(caption: "Cell temp",
-                           value: snapshot.batteryTemperature.map { String(format: "%.1f", $0) } ?? "—",
-                           unit: "°C",
+                           value: snapshot.batteryTemperature.map { monitor.temperatureUnit.number($0) } ?? "—",
+                           unit: monitor.temperatureUnit.symbol,
                            tint: snapshot.batteryTemperature.map { Color.mwTemperature($0) } ?? .primary,
                            size: 20)
                 }
             }
         }
+    }
+
+    // MARK: Forecast
+
+    /// Time to 80 % and to full, asked for in #27. Only while the battery is actually
+    /// charging: on hold, full, or on battery there is nothing to count down to.
+    @ViewBuilder
+    private var forecastPanel: some View {
+        if plugged, snapshot.isCharging, !snapshot.isChargingOnHold,
+           let percent = snapshot.percent, percent < 100 {
+            Panel("Charge forecast", systemImage: "clock") {
+                if let forecast = monitor.chargeForecast {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .top, spacing: 10) {
+                            if percent < ChargeForecast.taperStart {
+                                Metric(caption: "To 80%",
+                                       value: Self.duration(forecast.secondsRemaining(to: 80, from: percent, at: snapshot.date)),
+                                       tint: .mwBattery,
+                                       footnote: Self.arrival(forecast.secondsRemaining(to: 80, from: percent, at: snapshot.date),
+                                                              after: snapshot.date),
+                                       size: 22)
+                            }
+                            Metric(caption: "To 100%",
+                                   value: Self.duration(forecast.secondsRemaining(to: 100, from: percent, at: snapshot.date)),
+                                   tint: .mwBattery,
+                                   footnote: Self.arrival(forecast.secondsRemaining(to: 100, from: percent, at: snapshot.date),
+                                                          after: snapshot.date),
+                                   size: 22)
+                        }
+                        Text("Worked out from how fast the level has been rising — \(forecast.measuredRise)% in the last \(Formatting.duration(forecast.measuredSpan)). Charging slows past 80%, so the time beyond it follows a typical charging curve and is approximate. A charge limit or Optimized Charging stops the battery short of 100%.")
+                            .font(.caption2)
+                            .foregroundStyle(Color.mwMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    EmptyNote(text: "Waiting for the battery level to move twice. The forecast comes from how fast it actually rises, so it takes a few minutes to appear.",
+                              systemImage: "clock")
+                }
+            }
+        }
+    }
+
+    /// "38m", "1h 38m", in the locale's own words for hours and minutes. Never under a
+    /// minute: a countdown to "0m" reads as already there.
+    private static func duration(_ seconds: TimeInterval) -> String {
+        let minutes = max((seconds / 60).rounded(), 1)
+        return Duration.seconds(minutes * 60)
+            .formatted(.units(allowed: [.hours, .minutes], width: .narrow))
+    }
+
+    private static func arrival(_ seconds: TimeInterval, after date: Date) -> Text {
+        Text("around \(date.addingTimeInterval(seconds).formatted(date: .omitted, time: .shortened))")
     }
 
     // MARK: Breakdown
@@ -160,26 +221,37 @@ struct DashboardView: View {
               trailing: snapshot.adapterUtilisation.map { Text("\(Int($0 * 100))% of adapter") }) {
             VStack(spacing: 12) {
                 HStack(alignment: .top, spacing: 10) {
-                    Metric(caption: "From charger",
+                    Metric(caption: snapshot.isWirelessInput ? "At charging coil" : "At phone port",
                            value: snapshot.inputWatts.map(Formatting.watts) ?? "—",
-                           unit: "W", tint: .mwAccent, size: 22)
+                           unit: "W",
+                           tint: .mwAccent,
+                           footnote: snapshot.isWirelessInput
+                               ? Text(verbatim: "coil voltage × current")
+                               : Text(verbatim: "Charger VQ0u × IQ0u"),
+                           size: 22)
                     Metric(caption: "Into cell",
                            value: snapshot.batteryWatts.map { Formatting.watts(max($0, 0)) } ?? "—",
                            unit: "W", tint: .mwBattery, size: 22)
                 }
                 HStack(alignment: .top, spacing: 10) {
-                    Metric(caption: "system load + losses",
-                           value: snapshot.inputOverheadWatts.map(Formatting.watts) ?? "—",
+                    Metric(caption: "Load + loss",
+                           value: snapshot.unaccountedPowerWatts.map(Formatting.watts) ?? "—",
                            unit: "W", tint: .mwLoss, size: 22)
-                    Metric(caption: "Efficiency",
-                           value: snapshot.conversionEfficiency.map { String(format: "%.0f", $0) } ?? "—",
+                    Metric(caption: "Cell share",
+                           value: snapshot.chargePathEfficiency.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "%",
                            tint: efficiencyTint,
-                           footnote: Text("cell watts ÷ charger watts"),
+                           footnote: Text("cell watts ÷ measured input watts"),
                            size: 22)
                 }
                 if let input = snapshot.inputWatts, input > 0.2, let battery = snapshot.batteryWatts, battery > 0 {
                     PowerFlowBar(input: input, toBattery: battery)
+                }
+                if let partial = snapshot.partialInputWatts, let battery = snapshot.batteryWatts {
+                    PartialInputNote(sensedWatts: partial, cellWatts: battery)
+                }
+                if plugged {
+                    InputShortfallNotes(snapshot: snapshot, check: monitor.levelRateCheck)
                 }
                 if wirelessInputUnmeasurable {
                     EmptyNote(text: "Charging wirelessly. The charge IC exposes the coil's voltage but no current to pair with it, so the power coming in cannot be measured — only what reaches the cell. The figure the charger reports about itself is a ceiling, not a reading, and does not move.",
@@ -190,7 +262,7 @@ struct DashboardView: View {
     }
 
     private var efficiencyTint: Color {
-        guard let efficiency = snapshot.conversionEfficiency else { return .primary }
+        guard let efficiency = snapshot.chargePathEfficiency else { return .primary }
         return efficiency >= 85 ? .mwBattery : (efficiency >= 70 ? .mwLoss : .mwDanger)
     }
 
@@ -229,8 +301,8 @@ struct DashboardView: View {
                         Metric(caption: "Into cell",
                                value: String(format: "%.0f", totals.batteryMilliAmpHours),
                                unit: "mAh", size: 20)
-                        Metric(caption: "Efficiency",
-                               value: totals.efficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
+                        Metric(caption: "Cell share",
+                               value: totals.chargePathEfficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
                                unit: "%", tint: .mwLoss, size: 20)
                     }
                 }
@@ -249,7 +321,7 @@ struct DashboardView: View {
     }
 }
 
-/// The input-versus-stored split, drawn as one bar so the loss has a size.
+/// The input-versus-stored split, drawn as one bar so unaccounted power has a size.
 struct PowerFlowBar: View {
     let input: Double
     let toBattery: Double

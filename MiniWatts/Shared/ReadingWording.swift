@@ -8,8 +8,8 @@ import Foundation
 nonisolated extension ChargeReading.Source {
     var caption: LocalizedStringResource {
         switch self {
-        case .charger: return "from charger"
-        case .magSafe: return "from MagSafe"
+        case .charger: return "at phone port"
+        case .magSafe: return "at charging coil"
         case .intoBattery: return "into battery"
         case .fromBattery: return "drawn from battery"
         }
@@ -17,6 +17,10 @@ nonisolated extension ChargeReading.Source {
 }
 
 nonisolated extension ChargeReading {
+    /// An unknown hold is not a title of its own. What is known in that case —
+    /// plugged in, not charging — is what the app's own status line says, and a
+    /// widget saying “unknown” beside it would be the two disagreeing about one
+    /// reading.
     var statusTitle: LocalizedStringResource {
         if isOnHold { return "Charging on hold" }
         if isFull { return "Full" }

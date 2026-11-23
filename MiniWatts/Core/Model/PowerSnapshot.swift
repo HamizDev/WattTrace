@@ -1,5 +1,16 @@
 import Foundation
 
+/// Confidence state for the system's charge-hold decision.
+///
+/// A missing battery-current sensor is evidence we do not have, rather than
+/// evidence that charging is being held. Keeping that distinction prevents the
+/// UI from presenting an inferred hold as a fact.
+nonisolated enum ChargeHoldState: String, Codable, Hashable, Sendable {
+    case held
+    case notHeld
+    case unknown
+}
+
 /// One advertised USB-PD / HVC power profile from the adapter's menu.
 nonisolated struct PDProfile: Identifiable, Hashable {
     let index: Int
@@ -18,10 +29,12 @@ nonisolated struct ZoneTemperatures: Identifiable, Hashable {
     let zone: ThermalZone
     /// Every reading in the zone, hottest first, calibration constants last.
     let readings: [HIDSensors.Reading]
-    /// The hottest *live* reading, which is what the zone is represented by
-    /// wherever one number has to stand for it. Nil when the zone has nothing but
-    /// calibration constants in it.
-    let hottest: Double?
+    /// The one number that stands for the zone — on the heat map and in the zone's
+    /// header. The hottest *live* reading, except in the battery zone, where it is
+    /// the median: the same figure `PowerSnapshot.batteryTemperature` gives, so the
+    /// map's battery pin and the Battery readout beside it cannot disagree. Nil when
+    /// the zone has nothing but calibration constants in it.
+    let representative: Double?
 
     var id: ThermalZone { zone }
 }
@@ -53,12 +66,24 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     // MARK: - Derived from the sensors, resolved once
 
+    /// `sensors` with each SMC key's copies merged into one reading — see
+    /// `mergingCopies`. Everything derived below is read from this list; `sensors`
+    /// stays as the services reported it, for Raw data.
+    let readings: [HIDSensors.Reading]
+
     /// Every temperature sensor, in the order the services were enumerated.
     let temperatures: [HIDSensors.Reading]
     /// Temperature sensors grouped by where they sit in the phone.
     let temperaturesByZone: [ZoneTemperatures]
     /// The hottest live sensor anywhere in the phone.
     let hottestSensor: HIDSensors.Reading?
+    /// Temperature values that were present in the raw HID stream but were not
+    /// safe to use as a derived reading. The raw sensor remains available in the
+    /// Debug screen so a model-specific mapping can be investigated later.
+    let temperatureWarnings: [String]
+    /// Live battery-zone readings used to calculate the representative battery
+    /// temperature. Keeping every reading makes the aggregation visible in the UI.
+    let batteryTemperatureReadings: [HIDSensors.Reading]
 
     let usbInputVoltage: Double?
     let usbInputCurrent: Double?
@@ -73,11 +98,28 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     /// Wireless usually stops at nil on purpose. powerd does report the pad's
     /// voltage and current, but those are the negotiated ceiling and do not move
     /// with the draw, so there is no honest input figure to put on the dial.
+    ///
+    /// Also nil when the sensors answered but their product cannot be the whole
+    /// input — see `partialInputWatts`.
     let inputWatts: Double?
+    /// What the input sensors multiply out to when that cannot be all of the input:
+    /// more power is reaching the cell than they account for. nil whenever
+    /// `inputWatts` is trusted, or there was nothing to multiply.
+    ///
+    /// An iPad Pro M1 showed 6.41 W "from charger" beside 16.6 W into the cell, and
+    /// an iPhone 18 Pro Max read 21.8 W while an inline meter on the same cable read
+    /// 14.55 V × 2.99 A — the voltage right, the current half. On those models
+    /// `IQ0u` evidently sees one of several input paths. Which one is not known, so
+    /// the figure is kept for Raw data and for saying why the input is missing, and
+    /// is otherwise treated as no reading: nothing is integrated or derived from it.
+    let partialInputWatts: Double?
     /// Power crossing into (+) or out of (−) the battery, in watts.
     let batteryWatts: Double?
 
     private let zoneHottest: [ThermalZone: HIDSensors.Reading]
+    /// Set by `PowerMonitor` after a short debounce. Standalone reads (widgets,
+    /// Shortcuts) leave this nil and use the sensor evidence directly.
+    private var holdStateOverride: ChargeHoldState?
 
     init(date: Date = .now,
          registry: [String: Any] = [:],
@@ -91,44 +133,64 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         self.adapterDetails = adapterDetails
         self.sensors = sensors
         self.chargeStatus = chargeStatus
+        self.holdStateOverride = nil
+        let externalConnected = Self.externalConnected(registry: registry, powerSource: powerSource)
+        let readings = Self.mergingCopies(sensors)
+        self.readings = readings
 
         // Names repeat — an iPhone 17 reports four separate sensors all called
         // "gas gauge battery" — so first wins, which is what a linear `first(where:)`
-        // over the service list used to do.
+        // over the service list used to do. Lookups go by SMC key first; the name is
+        // the fallback for a service that publishes no key.
         var byName: [String: HIDSensors.Reading] = [:]
+        var byKey: [String: HIDSensors.Reading] = [:]
         var temperatures: [HIDSensors.Reading] = []
-        for reading in sensors {
+        var temperatureWarnings: [String] = []
+        for reading in readings {
             if byName[reading.name] == nil { byName[reading.name] = reading }
+            if !reading.key.isEmpty, byKey[reading.key] == nil { byKey[reading.key] = reading }
             // A reading on the temperature page that no phone could produce is not a
             // temperature — it is a sentinel or a raw counter, and it used to be drawn
             // on the heat map as if it were a reading. It stays in `sensors`, which
             // Raw data shows unedited, and out of everything that treats a number as
             // degrees.
-            if reading.kind == .temperature,
-               SensorCatalog.isUsableTemperature(name: reading.name, value: reading.value) {
-                temperatures.append(reading)
+            guard reading.kind == .temperature else { continue }
+            guard HIDSensors.plausibleCelsius.contains(reading.value) else {
+                temperatureWarnings.append(Self.temperatureWarning(for: reading, reason: "outside the plausible Celsius range"))
+                continue
             }
+            if let reason = Self.derivedTemperatureRejectionReason(for: reading,
+                                                                    allSensors: readings,
+                                                                    externalConnected: externalConnected) {
+                temperatureWarnings.append(Self.temperatureWarning(for: reading, reason: reason))
+                continue
+            }
+            temperatures.append(reading)
         }
         self.temperatures = temperatures
+        self.temperatureWarnings = temperatureWarnings
 
-        func named(_ name: String) -> Double? { byName[name]?.value }
+        /// The reading for an SMC key, or failing that the first one with this name.
+        func sensor(_ key: String, _ name: String) -> Double? {
+            (byKey[key] ?? byName[name])?.value
+        }
         func rail(_ kind: HIDSensors.Kind, _ fragments: [String]) -> Double? {
-            sensors.first { reading in
+            readings.first { reading in
                 reading.kind == kind && fragments.contains { reading.name.localizedCaseInsensitiveContains($0) }
             }?.value
         }
 
-        let usbVoltage = named("Charger VQ0u") ?? rail(.voltage, ["VQ0u"])
-        let usbCurrent = named("Charger IQ0u") ?? rail(.current, ["IQ0u"])
+        let usbVoltage = sensor("VQ0u", "Charger VQ0u") ?? rail(.voltage, ["VQ0u"])
+        let usbCurrent = sensor("IQ0u", "Charger IQ0u") ?? rail(.current, ["IQ0u"])
         // Matched on the rail rather than the full name: "Q1u" is the charge IC's
         // second upstream port, which is where the wireless coil lands. Naming varies
         // between phone models, and a current sensor for this rail may not exist at
         // all — on the models checked so far only the voltage is exposed.
-        let coilVoltage = rail(.voltage, ["Q1u"])
-        let coilCurrent = rail(.current, ["Q1u"])
-        let cellCurrent = named("Charger IQ0B") ?? rail(.current, ["IQ0B"])
-        let cellVoltage = named("Charger VQ0l")
-            ?? named("PMU VP0u")
+        let coilVoltage = byKey["VQ1u"]?.value ?? rail(.voltage, ["Q1u"])
+        let coilCurrent = byKey["IQ1u"]?.value ?? rail(.current, ["Q1u"])
+        let cellCurrent = sensor("IQ0B", "Charger IQ0B") ?? rail(.current, ["IQ0B"])
+        let cellVoltage = sensor("VQ0l", "Charger VQ0l")
+            ?? sensor("VP0u", "PMU VP0u")
             ?? rail(.voltage, ["VQ0l", "VP0u"])
 
         usbInputVoltage = usbVoltage
@@ -138,22 +200,33 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         batteryRailVoltage = cellVoltage
         batteryRailCurrent = cellCurrent
 
+        let sensedInputWatts: Double?
         if let voltage = usbVoltage, let current = usbCurrent, voltage > 0.5 {
-            inputWatts = voltage * current
+            sensedInputWatts = voltage * current
         } else if let voltage = coilVoltage, let current = coilCurrent, voltage > 0.5 {
-            inputWatts = voltage * current
+            sensedInputWatts = voltage * current
         } else {
-            inputWatts = nil
+            sensedInputWatts = nil
         }
 
         let registryVoltage = Self.int("Voltage", in: registry).map { Double($0) / 1000 }
         let registryCurrent = Self.int("InstantAmperage", in: registry).map { Double($0) / 1000 }
+        let cellWatts: Double?
         if let voltage = registryVoltage, let current = registryCurrent {
-            batteryWatts = voltage * current
+            cellWatts = voltage * current
         } else if let current = cellCurrent, let voltage = cellVoltage {
-            batteryWatts = current * voltage
+            cellWatts = current * voltage
         } else {
-            batteryWatts = nil
+            cellWatts = nil
+        }
+        batteryWatts = cellWatts
+
+        if let sensed = sensedInputWatts, let cell = cellWatts, Self.exceedsInput(cell: cell, input: sensed) {
+            inputWatts = nil
+            partialInputWatts = sensed
+        } else {
+            inputWatts = sensedInputWatts
+            partialInputWatts = nil
         }
 
         // One pass over the temperature sensors: `SensorCatalog.zone(for:)` lowercases
@@ -174,6 +247,11 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         }
         zoneHottest = hottestByZone
         hottestSensor = hottestOverall
+        let batteryReadings = (grouped[.battery] ?? [])
+            .filter(Self.isLiveTemperature)
+            .sorted { $0.value < $1.value }
+        batteryTemperatureReadings = batteryReadings
+        let batteryMedian = Self.median(batteryReadings.map(\.value))
         temperaturesByZone = grouped
             .map { zone, readings in
                 ZoneTemperatures(
@@ -187,7 +265,7 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
                         if leftLive != rightLive { return leftLive }
                         return left.value > right.value
                     },
-                    hottest: hottestByZone[zone]?.value
+                    representative: zone == .battery ? batteryMedian : hottestByZone[zone]?.value
                 )
             }
             .sorted { $0.zone.order < $1.zone.order }
@@ -201,9 +279,7 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     }
 
     var externalConnected: Bool {
-        if registry["ExternalConnected"] != nil { return bool("ExternalConnected", in: registry) }
-        if let state = powerSource?["Power Source State"] as? String { return state == "AC Power" }
-        return bool("Raw External Connected", in: powerSource)
+        Self.externalConnected(registry: registry, powerSource: powerSource)
     }
 
     var fullyCharged: Bool {
@@ -219,15 +295,35 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     /// e.g. "Charging On Hold". Privileged on iOS, so usually nil there.
     var chargeStatusText: String? { chargeStatus?["chargeStatus"] as? String }
 
-    /// powerd's verdict when we can get it; otherwise the shape a hold takes from
-    /// outside: plugged in, below full, not charging, and no current into the battery.
-    /// That is what Optimized Battery Charging and a charge limit look like.
-    var isChargingOnHold: Bool {
-        if let text = chargeStatusText { return text == "Charging On Hold" }
+    /// The direct evidence available in this snapshot, before the monitor's
+    /// hysteresis filter is applied.
+    var measuredHoldState: ChargeHoldState {
+        if let text = chargeStatusText {
+            let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return normalized == "charging on hold" || normalized == "on hold" ? .held : .notHeld
+        }
         guard externalConnected, !isCharging, !fullyCharged,
-              let level = percent, level >= 50, level < 100 else { return false }
-        if let current = batteryRailCurrent { return abs(current) < 0.3 }
-        return true
+              let level = percent, level >= 50, level < 100 else { return .notHeld }
+        // The merged current, not the HID rail alone. On a phone they are the same
+        // number. Where the registry answers instead — the simulator — the rail is
+        // absent, and asking only the rail called the hold unknown beside a cell
+        // current reading of 0.00 A on the same screen.
+        guard let current = batteryCurrent else { return .unknown }
+        return abs(current) < 0.3 ? .held : .notHeld
+    }
+
+    /// The debounced state in the main app, or the measured state for a
+    /// standalone snapshot.
+    var holdState: ChargeHoldState { holdStateOverride ?? measuredHoldState }
+
+    mutating func setHoldStateOverride(_ state: ChargeHoldState?) {
+        holdStateOverride = state
+    }
+
+    var isChargingOnHold: Bool { holdState == .held }
+
+    var holdIsUnknown: Bool {
+        holdState == .unknown
     }
 
     var holdIsInferred: Bool { chargeStatusText == nil && isChargingOnHold }
@@ -272,6 +368,86 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     // MARK: - Sensors
 
+    /// One reading per SMC key: the copies of a key averaged, in the position of its
+    /// first copy. Readings without a key pass through untouched.
+    ///
+    /// iOS 27 publishes every key through two services — an iPhone 18 Pro Max dump has
+    /// `Charger IQ0B` at 4.502 and 4.626 A, and every other sensor twice as well. They
+    /// are one signal read a moment apart, not two paths to be added: ChargeSpeed found
+    /// a single service read twice 2 ms apart varies as much as the two copies differ,
+    /// the static ALS key reads identically on both, and users with inline meters saw
+    /// one copy match the meter at 14–30 W. So the copies are averaged, never summed.
+    ///
+    /// The kind is part of the identity because a key is only meaningful on its page.
+    static func mergingCopies(_ sensors: [HIDSensors.Reading]) -> [HIDSensors.Reading] {
+        struct Identity: Hashable { let key: String; let kind: HIDSensors.Kind }
+        var sums: [Identity: (total: Double, count: Int)] = [:]
+        for reading in sensors where !reading.key.isEmpty {
+            let identity = Identity(key: reading.key, kind: reading.kind)
+            let sum = sums[identity] ?? (0, 0)
+            sums[identity] = (sum.total + reading.value, sum.count + 1)
+        }
+        guard sums.values.contains(where: { $0.count > 1 }) else { return sensors }
+        var emitted = Set<Identity>()
+        return sensors.compactMap { reading in
+            guard !reading.key.isEmpty else { return reading }
+            let identity = Identity(key: reading.key, kind: reading.kind)
+            guard emitted.insert(identity).inserted, let sum = sums[identity] else { return nil }
+            guard sum.count > 1 else { return reading }
+            return HIDSensors.Reading(name: reading.name,
+                                      kind: reading.kind,
+                                      value: sum.total / Double(sum.count),
+                                      key: reading.key,
+                                      index: reading.index)
+        }
+    }
+
+    /// How many services were folded into another one's reading by `mergingCopies`.
+    var mergedCopyCount: Int { sensors.count - readings.count }
+
+    /// The device's model identifier, e.g. "iPhone19,7". In the simulator, the model
+    /// being simulated.
+    static let modelIdentifier: String = {
+        // Inside a simulator `uname` reports the Mac's architecture, so the
+        // simulated model identifier is taken from the environment instead.
+        if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            return simulated
+        }
+        var info = utsname()
+        guard uname(&info) == 0 else { return "unknown" }
+        // `info.machine` is a fixed-size C array; mirroring it avoids taking an
+        // overlapping pointer to the struct that is still being written.
+        return Mirror(reflecting: info.machine).children.reduce(into: "") { result, element in
+            guard let byte = element.value as? Int8, byte != 0 else { return }
+            result.append(Character(UnicodeScalar(UInt8(byte))))
+        }
+    }()
+
+    /// The iPhone 18 Pro generation (iPhone19,x), where wired charging above about
+    /// 30 W reads about half on every sensor this app can see.
+    ///
+    /// Measured by two MiniWatts users with an inline meter and a charger display (#10,
+    /// #16 — iPhone19,7, 14.55 V × 2.99 A against `IQ0u` 1.513 A) and by ChargeSpeed's
+    /// author on their own 18 Pro Max, who also saw `IQ0B` halve at the same tick as
+    /// `IQ0u`. That is why `partialInputWatts` cannot catch it: the cell side reads
+    /// short too, so it never exceeds the input. Readings agreed at 14 W and 26 W, and
+    /// one user reports they agree again above about 70 %. The inference — a second
+    /// charging path with no readable sensor — is not verified.
+    static let readsHalfAtHighPower = modelIdentifier.hasPrefix("iPhone19,")
+
+    /// True when the half reading *can* apply: an 18 Pro on a wired adapter whose
+    /// negotiated profile offers more than 30 W.
+    ///
+    /// A caution, not a detection. Nothing the sensors report tells the two modes
+    /// apart: ChargeSpeed tried "metered current pinned at half the contract" and
+    /// removed it after it nearly fired on an ordinary pause at 1.5 A. The level-rate
+    /// check in `PowerMonitor` is what can tell, minutes later.
+    var mayReadHalfInput: Bool {
+        guard Self.readsHalfAtHighPower, externalConnected, !adapterIsWireless,
+              let profile = negotiatedProfile else { return false }
+        return profile.watts > 30
+    }
+
     /// The hottest live sensor in a zone. Nil when the zone is absent, or holds
     /// nothing but calibration constants.
     func temperature(in zone: ThermalZone) -> Double? { zoneHottest[zone]?.value }
@@ -288,7 +464,79 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         !reading.name.localizedCaseInsensitiveContains("tcal")
     }
 
-    var batteryTemperature: Double? { registryTemperature ?? temperature(in: .battery) }
+    /// Whether more power is reaching the cell than the input sensors account for.
+    ///
+    /// Energy only flows one way through a charger, so a cell figure above the input
+    /// figure means the input figure is short. The margins are there because the two
+    /// rails are separate sensors read a moment apart: a load step can put the cell
+    /// briefly ahead by a few percent. The cases this exists for are not close —
+    /// the cell side was 1.8× and 2.6× the input.
+    private static func exceedsInput(cell: Double, input: Double) -> Bool {
+        cell > input * 1.2 && cell - input > 1.5
+    }
+
+    /// The rail number in a charge-IC die sensor's name: "0" in `Charger TQ0d`, "2"
+    /// in the `Charger TQ2d` an iPad Pro reports. nil for any other sensor.
+    private static func chargeDieRail(in lowercasedName: String) -> Substring? {
+        guard let prefix = lowercasedName.range(of: "tq") else { return nil }
+        let tail = lowercasedName[prefix.upperBound...]
+        let digits = tail.prefix(while: \.isNumber)
+        let rest = tail.dropFirst(digits.count)
+        guard !digits.isEmpty, rest.first == "d", !(rest.dropFirst().first?.isLetter ?? false) else { return nil }
+        return digits
+    }
+
+    /// Some models expose a sentinel on the temperature usage page that is still
+    /// inside the broad physical range. Keep it in the raw dump, but do not let it
+    /// become the phone's hottest component or battery temperature.
+    private static func derivedTemperatureRejectionReason(
+        for reading: HIDSensors.Reading,
+        allSensors: [HIDSensors.Reading],
+        externalConnected: Bool
+    ) -> String? {
+        // An iPhone 11 lists nine sensors at exactly 0.0 °C — the camera dies, `AMC
+        // ODTS`, `TV1s`–`TV5s` — in a 22 °C room beside neighbours at 25–33 °C. That
+        // is a sensor that is switched off, not a part at freezing point. Exactly
+        // zero only: a phone that really is that cold does not sit on the number.
+        if reading.value == 0 {
+            return "exactly 0.0 °C, which is what an unpowered sensor reports"
+        }
+        let name = reading.name.lowercased()
+        if name.contains("tdev"), reading.value < -10 {
+            return "below the plausible temperature of a powered die"
+        }
+        // Any rail, not only Q0: an iPhone 11 idles at `TQ0d` 97.5 °C beside a 29 °C
+        // `TQ0j`, and an iPad Pro M1 does the same on `TQ2d`. Each die is checked
+        // against the junction sensor of its own rail.
+        guard let rail = Self.chargeDieRail(in: name), reading.value > 85 else { return nil }
+        let junction = allSensors.first {
+            $0.kind == .temperature
+                && $0.name.localizedCaseInsensitiveContains("tq\(rail)j")
+                && HIDSensors.plausibleCelsius.contains($0.value)
+        }?.value
+        guard externalConnected, let junction, junction >= 60 else {
+            return "high charge-IC die value without a matching live junction reading"
+        }
+        return nil
+    }
+
+    private static func temperatureWarning(for reading: HIDSensors.Reading, reason: String) -> String {
+        "[\(reading.index)] \(reading.name) = \(reading.formatted) — excluded from derived temperatures: \(reason)"
+    }
+
+    private static func median(_ values: [Double]) -> Double? {
+        guard !values.isEmpty else { return nil }
+        let sorted = values.sorted()
+        let middle = sorted.count / 2
+        if sorted.count.isMultiple(of: 2) {
+            return (sorted[middle - 1] + sorted[middle]) / 2
+        }
+        return sorted[middle]
+    }
+
+    var batteryTemperature: Double? {
+        registryTemperature ?? Self.median(batteryTemperatureReadings.map(\.value))
+    }
     var chargerTemperature: Double? { temperature(in: .charger) }
     var socTemperature: Double? { temperature(in: .soc) }
 
@@ -300,21 +548,19 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     var batteryVoltage: Double? { registryVoltage ?? batteryRailVoltage }
     var batteryCurrent: Double? { registryCurrent ?? batteryRailCurrent }
 
-    /// Share of measured adapter power that reaches the cell. The remainder is
-    /// not pure conversion loss: it also includes the phone's live system load.
-    var conversionEfficiency: Double? {
+    /// Share of measured adapter power that reaches the cell. The remainder also
+    /// includes the phone's own system load, so this is charge-path efficiency.
+    var chargePathEfficiency: Double? {
         guard let inputWatts, inputWatts > 0.5, let batteryWatts, batteryWatts > 0 else { return nil }
         return min(batteryWatts / inputWatts, 1) * 100
     }
 
-    /// Measured input minus battery-side power: system load + path/conversion loss.
-    var inputOverheadWatts: Double? {
+    /// Adapter power not observed at the battery rail. It is not a pure heat
+    /// measurement: phone load and conversion loss are mixed together.
+    var unaccountedPowerWatts: Double? {
         guard let inputWatts, let batteryWatts, inputWatts > batteryWatts else { return nil }
         return inputWatts - batteryWatts
     }
-
-    /// Kept for source compatibility with upstream callers.
-    var conversionLossWatts: Double? { inputOverheadWatts }
 
     // MARK: - Adapter
 
@@ -396,7 +642,7 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     /// divide, and dividing by a near-zero current would produce a large number out
     /// of nothing, so it goes nil instead.
     var inputPathMilliohms: Double? {
-        guard let drop = inputVoltageDropVolts, drop > 0,
+        guard partialInputWatts == nil, !mayReadHalfInput, let drop = inputVoltageDropVolts, drop > 0,
               let current = usbInputCurrent, current >= Self.measurableInputAmps
         else { return nil }
         return drop / current * 1000
@@ -404,7 +650,9 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     /// What the phone is taking as a share of the current the adapter offered, 0…1.
     var inputCurrentUtilisation: Double? {
-        guard !isWirelessInput, let current = usbInputCurrent,
+        // A current that may be half the real one would make a full-power charge look
+        // like a phone holding back, and `isInputSagging` would blame the cable.
+        guard !isWirelessInput, partialInputWatts == nil, !mayReadHalfInput, let current = usbInputCurrent,
               let ceiling = adapterCurrentMilliamps, ceiling > 0 else { return nil }
         return current / (Double(ceiling) / 1000)
     }
@@ -437,6 +685,11 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         return menu.compactMap { entry in
             guard let voltage = int("MaxVoltage", in: entry),
                   let current = int("MaxCurrent", in: entry) else { return nil }
+            // An iPhone 18 Pro Max listed a seventh profile of 65535 mV × 65535 mA,
+            // which the page drew as "65.5 V × 65.53 A, 4295 W". All bits set is a
+            // placeholder, not an offer; what it stands for is not known. The entry
+            // is still in Raw data's adapter details.
+            guard voltage > 0, current > 0, voltage != 0xFFFF, current != 0xFFFF else { return nil }
             return PDProfile(index: int("Index", in: entry) ?? 0,
                              voltageMillivolts: voltage,
                              currentMilliamps: current)
@@ -464,6 +717,12 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     // MARK: - Helpers
 
+    private static func externalConnected(registry: [String: Any], powerSource: [String: Any]?) -> Bool {
+        if registry["ExternalConnected"] != nil { return bool("ExternalConnected", in: registry) }
+        if let state = powerSource?["Power Source State"] as? String { return state == "AC Power" }
+        return bool("Raw External Connected", in: powerSource)
+    }
+
     /// IOKit reports some signed 32-bit values as wrapped unsigned numbers
     /// (a −658 mA discharge arrives as 18446744073709550958).
     static func signed(_ number: NSNumber) -> Int {
@@ -483,10 +742,14 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         Self.int(key, in: dictionary)
     }
 
-    private func bool(_ key: String, in dictionary: [String: Any]?) -> Bool {
+    private static func bool(_ key: String, in dictionary: [String: Any]?) -> Bool {
         guard let dictionary else { return false }
         if let value = dictionary[key] as? Bool { return value }
         if let number = dictionary[key] as? NSNumber { return number.boolValue }
         return false
+    }
+
+    private func bool(_ key: String, in dictionary: [String: Any]?) -> Bool {
+        Self.bool(key, in: dictionary)
     }
 }

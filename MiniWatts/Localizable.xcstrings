@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Input measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入侧采样时长"
+          }
+        }
+      }
+    },
+    "Cell measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池侧采样时长"
+          }
+        }
+      }
+    },
     "" : {
       "shouldTranslate" : false
     },
@@ -34,12 +54,62 @@
         }
       }
     },
+    "around %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "约 %@"
+          }
+        }
+      }
+    },
     "at the current draw" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "按当前取电"
+          }
+        }
+      }
+    },
+    "Automatic" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动"
+          }
+        }
+      }
+    },
+    "Automatic follows your region and the Temperature setting under General › Language & Region in the Settings app, which is %@ on this device. Applies to the app, the floating meter, the Live Activity and the widget. Raw data always shows the sensors' own °C." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“自动”跟随你的地区，以及“设置” App 中“通用 › 语言与地区”下的“温度”选项，本机当前为 %@。此设置对 App、悬浮读数、实时活动和小组件都生效。原始数据始终显示传感器自身的 °C。"
+          }
+        }
+      }
+    },
+    "Battery level check: rising at about %@ W against %@ W measured at the cell — too far apart to agree, too close to call. It is worked out for a %@ Wh battery; if that is not your phone's, set it in Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电量核对：按电量上升推算约 %1$@ W，电芯实测为 %2$@ W —— 差距大到不算一致，又不足以下结论。以上按 %3$@ Wh 的电池能量计算；如果与你的手机不符，请在设置中修改。"
+          }
+        }
+      }
+    },
+    "Battery level check: rising at about %@ W, in line with the %@ W the cell sensors measure." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电量核对：按电量上升推算约 %1$@ W，与电芯传感器测得的 %2$@ W 一致。"
           }
         }
       }
@@ -60,6 +130,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "线缆对比"
+          }
+        }
+      }
+    },
+    "Charge forecast" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充电预估"
           }
         }
       }
@@ -114,12 +194,12 @@
         }
       }
     },
-    "From one sample, against the negotiated %@. That figure is a ceiling rather than a measurement, so read this as an order of magnitude. Once the current moves — the taper past 80%, thermal throttling, the phone's own load — it is replaced by a fit that needs no reference at all." : {
+    "From one sample, against the negotiated %@. That figure is a ceiling rather than a measurement, so read this as an order of magnitude. Once the current moves — the taper past 80%%, thermal throttling, the phone's own load — it is replaced by a fit that needs no reference at all." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "单次采样，以协商出的 %@ 为参考。那个值是天花板而不是测量值，所以只能当数量级看。一旦电流动起来——80% 之后的涓流、热降频、手机自身的负载——它就会被一个完全不需要参考值的拟合结果取代。"
+            "value" : "单次采样，以协商出的 %@ 为参考。那个值是天花板而不是测量值，所以只能当数量级看。一旦电流动起来——80%% 之后的涓流、热降频、手机自身的负载——它就会被一个完全不需要参考值的拟合结果取代。"
           }
         }
       }
@@ -184,12 +264,32 @@
         }
       }
     },
+    "may read half" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可能只读到一半"
+          }
+        }
+      }
+    },
     "of the current on offer" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "占可用电流"
+          }
+        }
+      }
+    },
+    "On the iPhone 18 Pro, wired charging above about 30 W can read about half on every sensor here: people with an inline meter saw the input and the cell figures both at half the real power. Nothing is corrected. Once the battery level has risen a few percent, it is used to check." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 iPhone 18 Pro 上，有线充电超过约 30 W 时，这里所有传感器的读数都可能只有实际的一半：有用户串接功率计测得，输入和电芯两侧的数值都只有实际功率的一半。这里不做修正。电量上升几个百分点后，会用电量变化来核对。"
           }
         }
       }
@@ -214,12 +314,32 @@
         }
       }
     },
+    "Rated for this model: %@ Wh (%@)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机型额定：%1$@ Wh（%2$@）"
+          }
+        }
+      }
+    },
     "Reading" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "读数"
+          }
+        }
+      }
+    },
+    "reading low" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读数偏低"
           }
         }
       }
@@ -234,6 +354,16 @@
         }
       }
     },
+    "Sensor names and scales differ between models, and an iPad differs from an iPhone more than most. This build was checked on an iPhone Air; what it knows about iPads comes from one iPad Pro's sensor list. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your iPad, it may well be." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器的名称和换算方式因机型而异，iPad 与 iPhone 的差别尤其大。这个版本是在 iPhone Air 上验证的，对 iPad 的了解只来自一台 iPad Pro 的传感器列表。不可能的读数仍保留在原始数据里，但不参与推算出的温度；只是错、却还说得过去的读数拦不住——如果这里有哪个数字在你的 iPad 上看着不对，很可能就是不对。"
+          }
+        }
+      }
+    },
     "Taking" : {
       "localizations" : {
         "zh-Hans" : {
@@ -244,12 +374,32 @@
         }
       }
     },
+    "Temperature" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "温度"
+          }
+        }
+      }
+    },
     "Temperature unit" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "温度单位"
+          }
+        }
+      }
+    },
+    "The battery level is rising %@× as fast as the cell sensors account for — about %@ W from the level against %@ W measured — so they are seeing only part of the charge, and the figures here are low. Nothing is corrected. Worked out for a %@ Wh battery; the right value for yours goes in Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电量上升的速度是电芯传感器所能解释的 %1$@ 倍 —— 按电量推算约 %2$@ W，实测只有 %3$@ W —— 说明传感器只测到了部分充电功率，这里的数值偏低。这里不做修正。以上按 %4$@ Wh 的电池能量计算；你的手机的正确数值请在设置中填写。"
           }
         }
       }
@@ -274,12 +424,42 @@
         }
       }
     },
+    "The temperatures are measured; the positions are not. iOS reports sensor names and values and no coordinates at all, so each zone is drawn at a fixed spot that follows the layout of an iPad Pro 11-inch — logic board down the middle between two battery cells, charge IC by the USB-C port. Other iPads are built differently. Read this as a legend for the sensor lists, not as a map of your iPad." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "温度数据为实际测量值，但位置并非如此。iOS 仅报告传感器名称和数值，完全不包含坐标信息，因此各发热区域均按 iPad Pro 11 英寸的布局绘制在固定位置 —— 主板位于中间、夹在两块电芯之间，充电芯片位于 USB-C 接口旁。其他 iPad 的内部结构不同。请将此图作为传感器列表的图例参考，而非 iPad 内部的真实地图。"
+          }
+        }
+      }
+    },
     "The voltage at the port has collapsed well below what was negotiated, and the phone is holding the current down to keep it up. That is the cable or the plugs, not the charger." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "端口电压已经塌到远低于协商值，手机正压着电流以维持电压。问题出在线缆或插头，不在充电器。"
+          }
+        }
+      }
+    },
+    "To 100%" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充到 100%"
+          }
+        }
+      }
+    },
+    "To 80%" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充到 80%"
           }
         }
       }
@@ -294,12 +474,62 @@
         }
       }
     },
+    "Units" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单位"
+          }
+        }
+      }
+    },
+    "Use" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用"
+          }
+        }
+      }
+    },
+    "Used for the %-rate estimate, which is the sole way to see discharge power — no discharge-current sensor is exposed to a sandboxed app — and for checking the charging sensors against how fast the battery level rises. Look up your model's rating and enter it here." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用于百分比变化率估算（这是查看放电功率的唯一方式，沙盒应用无法访问任何放电电流传感器），也用于根据电量上升的速度核对充电传感器的读数。请查询你机型的额定能量并在此输入。"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本"
+          }
+        }
+      }
+    },
     "Voltage drop" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "电压损失"
+          }
+        }
+      }
+    },
+    "Waiting for the battery level to move twice. The forecast comes from how fast it actually rises, so it takes a few minutes to appear." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待电量变化两次。预估来自电量实际上升的速度，所以需要几分钟才会出现。"
           }
         }
       }
@@ -320,6 +550,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无线充电没有线缆，也没有输入电流传感器，无从测量。"
+          }
+        }
+      }
+    },
+    "Worked out from how fast the level has been rising — %lld%% in the last %@. Charging slows past 80%%, so the time beyond it follows a typical charging curve and is approximate. A charge limit or Optimized Charging stops the battery short of 100%%." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "根据电量上升的速度推算 —— 最近 %2$@ 内上升了 %1$lld%%。超过 80%% 后充电会变慢，这之后的时间按典型充电曲线估算，只是近似值。开启充电上限或优化电池充电时，电池不会充到 100%%。"
           }
         }
       }
@@ -384,9 +624,6 @@
         }
       }
     },
-    "%lld" : {
-      "shouldTranslate" : false
-    },
     "%lld samples" : {
       "localizations" : {
         "zh-Hans" : {
@@ -432,19 +669,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "占适配器 %lld%%"
-          }
-        }
-      }
-    },
-    "°C" : {
-      "shouldTranslate" : false
-    },
-    "46+" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "46+"
           }
         }
       }
@@ -575,16 +799,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "电池"
-          }
-        }
-      }
-    },
-    "Battery °C" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "电池温度 °C"
           }
         }
       }
@@ -759,16 +973,6 @@
         }
       }
     },
-    "cell watts ÷ charger watts" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "电芯功率 ÷ 充电器功率"
-          }
-        }
-      }
-    },
     "Celsius" : {
       "localizations" : {
         "zh-Hans" : {
@@ -835,16 +1039,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "电池电量"
-          }
-        }
-      }
-    },
-    "Charge power below the adapter's rating right now is expected: the limit is the system's, not the charger's." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当前充电功率低于适配器额定功率属正常现象：此时的功率限制来自系统温控，而非充电器。"
           }
         }
       }
@@ -1059,16 +1253,6 @@
         }
       }
     },
-    "Efficiency" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "转换效率"
-          }
-        }
-      }
-    },
     "Elapsed" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1139,12 +1323,42 @@
         }
       }
     },
-    "from charger" : {
+    "at charging coil" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "来自充电器"
+            "value" : "充电线圈处"
+          }
+        }
+      }
+    },
+    "at phone port" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手机接口处"
+          }
+        }
+      }
+    },
+    "At charging coil" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充电线圈处"
+          }
+        }
+      }
+    },
+    "At phone port" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手机接口处"
           }
         }
       }
@@ -1155,16 +1369,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "来自充电器"
-          }
-        }
-      }
-    },
-    "from MagSafe" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "来自 MagSafe"
           }
         }
       }
@@ -1399,26 +1603,6 @@
         }
       }
     },
-    "Lost" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "损耗"
-          }
-        }
-      }
-    },
-    "Lost as heat" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "发热损耗"
-          }
-        }
-      }
-    },
     "low" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1595,16 +1779,6 @@
         }
       }
     },
-    "No thermal limit on charge current." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "充电电流不受发热限制。"
-          }
-        }
-      }
-    },
     "Nominal" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1661,16 +1835,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他传感器"
-          }
-        }
-      }
-    },
-    "Overheated: charging is suspended until the phone cools." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "设备过热：已暂停充电，直至手机冷却。"
           }
         }
       }
@@ -1821,16 +1985,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右"
-          }
-        }
-      }
-    },
-    "Round trip" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "综合效率"
           }
         }
       }
@@ -2015,16 +2169,6 @@
         }
       }
     },
-    "Thermal throttling active" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "温控限制已生效"
-          }
-        }
-      }
-    },
     "This adapter published no PD profile menu. Legacy USB-A chargers and some wireless pads report only a single voltage and current." : {
       "localizations" : {
         "zh-Hans" : {
@@ -2081,16 +2225,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "节流"
-          }
-        }
-      }
-    },
-    "Throttling: iOS is limiting charge current and clocks." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "发热限频：iOS 正在限制充电电流与芯片频率。"
           }
         }
       }
@@ -2155,16 +2289,6 @@
         }
       }
     },
-    "Unrecognised thermal state." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未识别的发热状态。"
-          }
-        }
-      }
-    },
     "USB-C" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2205,16 +2329,6 @@
         }
       }
     },
-    "Used only for the %-rate estimate, which is the sole way to see discharge power: no discharge-current sensor is exposed to a sandboxed app. Look up your model's rating — an iPhone 17 Pro Max is about 19.7 Wh — and enter it here." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "仅用于百分比变化率估算，这也是查看放电功率的唯一方式：沙盒应用无法访问任何放电电流传感器。请查询您机型的额定能量（例如 iPhone 17 Pro Max 约为 19.7 Wh）并在此输入。"
-          }
-        }
-      }
-    },
     "W rated" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2225,32 +2339,12 @@
         }
       }
     },
-    "Warming up. Charge current may be trimmed." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "温度上升中，充电电流可能会被削减。"
-          }
-        }
-      }
-    },
     "Watts" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "功率"
-          }
-        }
-      }
-    },
-    "Well under the adapter's rating while the system is thermally throttling — the ceiling right now is heat, not the charger." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "系统正在因发热限频，功率远低于适配器额定值——此刻的瓶颈是温度，不是充电器。"
           }
         }
       }
@@ -2461,16 +2555,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "传感器叫什么、怎么换算、甚至有没有这个传感器，都因机型而异，而且没有任何官方文档。这个版本是在 iPhone Air（iPhone18,4）上开发和验证的。换一个机型，某项读数可能不存在，也可能名字和实际含义对不上。明显不可能的数值会被隐藏而不是显示出来，但一个看着还算合理、实际却是错的数值，这样是拦不住的——所以看到反常的数字请当它可疑，并带上你的机型标识反馈给我。"
-          }
-        }
-      }
-    },
-    "Sensor names and scales differ by iPhone model, and this build was checked on an iPhone Air. Impossible readings are hidden, but a reading that is merely wrong cannot be spotted that way — if something here looks off for your model, it may well be." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器的名称和换算方式因 iPhone 机型而异，这个版本是在 iPhone Air 上验证的。不可能的读数会被隐藏，但只是错、却还说得过去的读数拦不住——如果这里有哪个数字在你的机型上看着不对，很可能就是不对。"
           }
         }
       }
@@ -2701,6 +2785,176 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "结束实时活动"
+          }
+        }
+      }
+    },
+    "Load + loss" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "负载与损耗"
+          }
+        }
+      }
+    },
+    "Cell share" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电芯占比"
+          }
+        }
+      }
+    },
+    "cell watts ÷ measured input watts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电芯功率 ÷ 实测输入功率"
+          }
+        }
+      }
+    },
+    "hold status unknown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持状态未知"
+          }
+        }
+      }
+    },
+    "No elevated system thermal pressure." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统没有升高的热压力。"
+          }
+        }
+      }
+    },
+    "Warming up. iOS may trim performance or charge current." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设备正在升温，iOS 可能降低性能或充电电流。"
+          }
+        }
+      }
+    },
+    "High system thermal pressure. iOS may limit charge current and clocks." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统热压力较高，iOS 可能限制充电电流和处理器频率。"
+          }
+        }
+      }
+    },
+    "Critical thermal pressure. iOS may suspend charging until the phone cools." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统热压力达到临界值，iOS 可能暂停充电，直到设备冷却。"
+          }
+        }
+      }
+    },
+    "Unrecognised system thermal state." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法识别的系统热状态。"
+          }
+        }
+      }
+    },
+    "High system thermal pressure" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统热压力较高"
+          }
+        }
+      }
+    },
+    "Well under the adapter's rating while system thermal pressure is high. Charge current may be limited by iOS." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统热压力较高时，功率明显低于充电器额定值。iOS 可能限制了充电电流。"
+          }
+        }
+      }
+    },
+    "Charge power below the adapter's rating right now is expected: system thermal pressure may be limiting current." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前充电功率低于适配器额定值是正常的：系统热压力可能正在限制电流。"
+          }
+        }
+      }
+    },
+    "The input sensors read %@ W while %@ W is reaching the cell, so on this model they see only part of what comes in. That figure is not shown as the input, and nothing is worked out from it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入传感器读数为 %1$@ W，而进入电芯的有 %2$@ W，说明在这个机型上它们只测到了部分输入。这个数值不会作为输入功率显示，也不会据此推算任何结果。"
+          }
+        }
+      }
+    },
+    "Sensor names and scales differ by iPhone model, and this build was checked on an iPhone Air. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your model, it may well be." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器的名称和换算方式因 iPhone 机型而异，这个版本是在 iPhone Air 上验证的。不可能的读数仍保留在原始数据里，但不参与推算出的温度；只是错、却还说得过去的读数拦不住——如果这里有哪个数字在你的机型上看着不对，很可能就是不对。"
+          }
+        }
+      }
+    },
+    "Excluded from derived temperatures" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未计入推算温度的读数"
+          }
+        }
+      }
+    },
+    "Temperature sensors answered, but every value was excluded from derived readings. See the filter details below." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "温度传感器有响应，但所有数值都被排除在推算读数之外。详见下方的过滤说明。"
+          }
+        }
+      }
+    },
+    "Measured at the phone's USB-C rail (VQ0u × IQ0u). The adapter value is a negotiated ceiling, not a wall-meter reading." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在手机 USB-C 供电轨上测得（VQ0u × IQ0u）。适配器的数值是协商出的上限，不是功率计的读数。"
           }
         }
       }
