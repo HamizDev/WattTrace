@@ -40,9 +40,9 @@ energy-weighted History charge-path efficiency calculated from *paired* rails.
 3. Download the unsigned IPA artifact after the run succeeds.
 4. Sign the IPA with your own Apple developer credentials to sideload it.
 
-Until the packaging script is renamed, the IPA/artifact may still contain the
-upstream `MiniWatts` filename even though the installed app's display name and
-bundle identifier are WattTrace.
+The workflow now publishes `WattTrace-unsigned-ipa`, containing
+`WattTrace-unsigned.ipa`. The internal Xcode executable remains
+`MiniWatts.app`, but the installed App displays as WattTrace.
 
 **Xcode / Xcode Cloud (macOS setup)**
 
