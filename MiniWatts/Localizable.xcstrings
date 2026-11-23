@@ -1,6 +1,186 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "System Monitor" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统监控"
+          }
+        }
+      }
+    },
+    "WattTrace CPU" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace CPU"
+          }
+        }
+      }
+    },
+    "App CPU" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App CPU 占用"
+          }
+        }
+      }
+    },
+    "User" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用户态"
+          }
+        }
+      }
+    },
+    "Display timing" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕刷新"
+          }
+        }
+      }
+    },
+    "Observed callbacks" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回调频率"
+          }
+        }
+      }
+    },
+    "Maximum refresh" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕最高刷新率"
+          }
+        }
+      }
+    },
+    "Low Power Mode On" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低电量模式已开启"
+          }
+        }
+      }
+    },
+    "Low Power Mode Off" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低电量模式已关闭"
+          }
+        }
+      }
+    },
+    "Measurement scope" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测量说明"
+          }
+        }
+      }
+    },
+    "Performance and display" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "性能与显示"
+          }
+        }
+      }
+    },
+    "WattTrace CPU · FPS · thermal state" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace CPU · 帧率 · 发热状态"
+          }
+        }
+      }
+    },
+    "CPU time used by WattTrace itself, averaged over the last sample interval. This is not total iPhone CPU use. 100% means one fully busy logical core; a multithreaded app can exceed 100%." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这里显示的是 WattTrace 自身进程在最近采样间隔内的 CPU 使用率，不是整台 iPhone 的 CPU 占用率。100% 表示一个逻辑核心满负荷运行，多线程 App 的数值可以超过 100%。"
+          }
+        }
+      }
+    },
+    "Observed is the CADisplayLink callback frequency while this screen is visible. It is not a direct hardware panel measurement or the frame rate of other apps. iOS may lower it for power, temperature, or display scheduling." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这里显示的是本页面可见时 CADisplayLink 的实际回调频率，不是屏幕硬件寄存器读数，也不是其他 App 的帧率。iOS 可能因电量、温度或显示调度而降低频率。"
+          }
+        }
+      }
+    },
+    "This is the official system thermal-pressure category, not a temperature in degrees. For available physical sensor values, open the Thermal tab." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是 iOS 官方系统发热压力等级，并非以度数表示的温度。可用的真实温度传感器读数请查看“温度”标签页。"
+          }
+        }
+      }
+    },
+    "These performance readings use public system interfaces and do not depend on the private charging sensor backend." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些性能指标使用公开的系统接口，不依赖充电模块的私有传感器。"
+          }
+        }
+      }
+    },
+    "Sampling runs only with System Monitor open and WattTrace active. Readings reset when the screen is closed or the app is backgrounded." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在打开系统监控页面且 WattTrace 处于前台时采样。关闭页面或 App 进入后台后，读数会重置。"
+          }
+        }
+      }
+    },
+    "A precise whole-device CPU percentage or numeric CPU temperature is not available from this panel; do not compare these figures with hardware-level diagnostics as if they were the same measurement." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此页面无法获得精确的全设备 CPU 占用率或 CPU 实际摄氏温度；请勿将这些指标与硬件级诊断数据视为同一种测量。"
+          }
+        }
+      }
+    },
     "Input measured" : {
       "localizations": {
         "zh-Hans": {
