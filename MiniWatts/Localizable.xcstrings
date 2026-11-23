@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Input measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入侧采样时长"
+          }
+        }
+      }
+    },
+    "Cell measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池侧采样时长"
+          }
+        }
+      }
+    },
     "" : {
       "shouldTranslate" : false
     },
