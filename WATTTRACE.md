@@ -37,3 +37,23 @@ Merged upstream MiniWatts through commit `0b519fda61dfd7b766d4be05fdaa2114f295d5
 WattTrace retains its own app/extension identifiers, signing entitlements, shared
 Xcode scheme and user-visible branding. The fork also retains battery-only wireless
 sessions and computes the aggregate History cell share from paired input/cell energy.
+
+## System Monitor (development)
+
+A new **Devices → System Monitor** detail page collects foreground performance
+readings without adding a sixth top-level tab.
+
+- **App CPU**: `getrusage(RUSAGE_SELF)` user + system CPU-time deltas divided
+  by elapsed monotonic uptime. The readout is *WattTrace's own process*, not
+  device-wide CPU. 100% is one logical core; multithreaded use can exceed 100%.
+- **Display callbacks**: `CADisplayLink` callback count per measured second
+  while this page is visible, beside the display's advertised maximum refresh.
+  This is not a direct hardware panel frequency or another app's rendering FPS.
+- **Thermal**: `ProcessInfo.thermalState` and Low Power Mode. These public
+  statuses are not numeric CPU temperatures.
+- Sampling stops when this detail page disappears or the app leaves the active
+  scene. No new private API dependency is introduced by System Monitor.
+
+**Validation status:** sources and localization are committed; Xcode/iPhone
+runtime testing is pending. The previous GitHub Actions run was cancelled before
+executing steps, so it did not deliver a compiler diagnostic.
