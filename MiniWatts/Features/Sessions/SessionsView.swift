@@ -39,7 +39,7 @@ struct SessionsView: View {
             }
             if monitor.sessions.isEmpty {
                 Panel("No finished charges yet", systemImage: "clock.arrow.circlepath") {
-                    EmptyNote(text: "A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep MiniWatts in the foreground for the totals to cover the whole charge.",
+                    EmptyNote(text: "A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep WattTrace in the foreground for the totals to cover the whole charge.",
                               systemImage: "bolt.badge.clock")
                 }
             } else {
@@ -99,8 +99,14 @@ struct SessionsView: View {
         let delivered = monitor.sessions.compactMap(\.totals.measuredInputWattHours)
         let totalDelivered = delivered.isEmpty ? nil : delivered.reduce(0, +)
         let totalStored = monitor.sessions.reduce(0) { $0 + $1.totals.batteryWattHours }
-        let efficiencies = monitor.sessions.compactMap(\.totals.chargePathEfficiencyPercent)
-        let averageEfficiency = efficiencies.isEmpty ? nil : efficiencies.reduce(0, +) / Double(efficiencies.count)
+        // Aggregate with the same paired sampling intervals as the per-session
+        // charge-path efficiency. A plain mean gives a five-minute session the
+        // same weight as a two-hour session, which biases the History summary.
+        let pairedInput = monitor.sessions.reduce(0) { $0 + $1.totals.pairedInputWattHours }
+        let pairedCell = monitor.sessions.reduce(0) { $0 + $1.totals.pairedBatteryWattHours }
+        let averageEfficiency: Double? = pairedInput > 0.001 && pairedCell > 0
+            ? min(pairedCell / pairedInput, 1) * 100
+            : nil
         return Panel("All sessions", systemImage: "sum", trailing: Text(verbatim: "\(monitor.sessions.count)")) {
             HStack(alignment: .top, spacing: 10) {
                 Metric(caption: "Delivered",
@@ -241,7 +247,9 @@ struct SessionDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     SessionPowerChart(samples: session.samples)
                     HStack(spacing: 14) {
-                        LegendDot(color: .mwAccent, text: "From charger")
+                        if session.measuredPeakInputWatts != nil {
+                            LegendDot(color: .mwAccent, text: "From charger")
+                        }
                         LegendDot(color: .mwBattery, text: "Into battery", dashed: true)
                         if session.throttledFraction > 0 {
                             LegendDot(color: .mwDanger.opacity(0.4), text: "Throttled")
