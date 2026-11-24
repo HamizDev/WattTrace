@@ -57,6 +57,11 @@ sync are planned separately.
 
 ## Measurements and limits
 
+**iPhone 17 Pro Max:** a dedicated `iPhone18,2` profile adds separate
+physical-SIM/eSIM battery reference presets and a live Device compatibility
+screen. See [device notes and validation matrix](docs/DEVICE_COMPATIBILITY.md).
+
+
 WattTrace reports available USB-C input voltage/current and battery-rail
 power, charge sessions, adapter PD profiles, temperature sensors, iOS thermal
 state, and an estimated rate derived from battery percentage changes.

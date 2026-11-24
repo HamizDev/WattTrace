@@ -260,7 +260,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                if let rating = PowerMonitor.modelRating {
+                if DeviceCompatibilityProfile.isIPhone17ProMax {
+                    iPhone17ProMaxBatteryPresets(capacity: capacity)
+                } else if let rating = PowerMonitor.modelRating {
                     HStack(alignment: .firstTextBaseline) {
                         Text("Rated for this model: \(String(format: "%.2f", rating.wattHours)) Wh (\(rating.source))")
                             .font(.caption)
@@ -279,6 +281,45 @@ struct SettingsView: View {
                               systemImage: "checkmark.circle")
                 }
             }
+        }
+    }
+
+    private func iPhone17ProMaxBatteryPresets(capacity: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("iPhone 17 Pro Max battery presets")
+                .font(.system(size: 14, weight: .semibold))
+            ForEach(DeviceCompatibilityProfile.BatteryVariant.allCases) { variant in
+                Button {
+                    capacity.wrappedValue = variant.estimatedWattHours
+                } label: {
+                    HStack(alignment: .center, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(variant.title)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text(verbatim: "\(variant.ratedMilliampHours) mAh · ≈ \(String(format: "%.1f", variant.estimatedWattHours)) Wh")
+                                .font(.caption)
+                                .foregroundStyle(Color.mwMuted)
+                        }
+                        Spacer(minLength: 6)
+                        if abs(capacity.wrappedValue - variant.estimatedWattHours) < 0.05 {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.mwBattery)
+                        } else {
+                            Text("Use")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.mwAccent)
+                        }
+                    }
+                    .padding(.vertical, 5)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            EmptyNote(text: "Both hardware variants share iPhone18,2. Select the variant by the presence of a physical SIM tray, not by whether an eSIM is currently active. These are approximate rated energy presets, not measured usable battery capacity.",
+                      systemImage: "info.circle")
+            EmptyNote(text: "The original 19.7 Wh fallback assumes the larger pack; it does not identify your hardware. Your existing custom value is preserved until you choose a preset.",
+                      systemImage: "info.circle")
         }
     }
 

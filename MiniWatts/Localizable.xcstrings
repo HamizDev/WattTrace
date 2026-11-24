@@ -1,6 +1,336 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Device compatibility" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备兼容性"
+          }
+        }
+      }
+    },
+    "Live sensor coverage" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时传感器覆盖"
+          }
+        }
+      }
+    },
+    "Power rails, thermal sensors and model notes" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电源轨、温度传感器及机型说明"
+          }
+        }
+      }
+    },
+    "Device profile" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备档案"
+          }
+        }
+      }
+    },
+    "Raw HID readings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原始 HID 读数"
+          }
+        }
+      }
+    },
+    "Merged HID readings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合并后 HID 读数"
+          }
+        }
+      }
+    },
+    "Energy reference" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池能量参考值"
+          }
+        }
+      }
+    },
+    "Simulator data is not evidence of hardware sensor compatibility." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模拟器数据不能作为真机硬件传感器兼容性的依据。"
+          }
+        }
+      }
+    },
+    "Live power coverage" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时功率数据覆盖"
+          }
+        }
+      }
+    },
+    "Battery rail current" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池轨电流"
+          }
+        }
+      }
+    },
+    "Measured input power" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实测输入功率"
+          }
+        }
+      }
+    },
+    "Partial input reading" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不完整的输入读数"
+          }
+        }
+      }
+    },
+    "Battery rail power" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池轨功率"
+          }
+        }
+      }
+    },
+    "Negotiated profile" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已协商供电档位"
+          }
+        }
+      }
+    },
+    "A dash means no usable reading at this moment. A numeric zero is an actual reading, but a zero-voltage rail is not evidence of active charging. The negotiated profile is a ceiling, not measured input power." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "横线表示此刻没有可用读数。数字 0 是实际读到的值，但电源轨电压为 0 并不表示正在充电。协商档位是上限，不是实测输入功率。"
+          }
+        }
+      }
+    },
+    "Thermal coverage" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度数据覆盖"
+          }
+        }
+      }
+    },
+    "Accepted temperature readings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纳入计算的温度读数"
+          }
+        }
+      }
+    },
+    "Excluded temperature readings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已排除的温度读数"
+          }
+        }
+      }
+    },
+    "Battery temperature sensors" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池温度传感器"
+          }
+        }
+      }
+    },
+    "Raw data retains the original sensor values. Excluded and calibration readings do not become the hottest-component measurement." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原始数据保留传感器原值。被排除的读数和校准值不会参与最高部件温度的计算。"
+          }
+        }
+      }
+    },
+    "iPhone 17 Pro Max profile" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max 专项档案"
+          }
+        }
+      }
+    },
+    "Model-specific notes" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "机型专项说明"
+          }
+        }
+      }
+    },
+    "USB-C input and battery-rail sensors have been observed on this model. Their readings still need comparison with an external meter across different charge levels and adapters." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此机型已观测到 USB-C 输入侧和电池轨传感器。仍需在不同电量与适配器条件下使用外置功率计交叉验证。"
+          }
+        }
+      }
+    },
+    "PMU tdev7 and tdev8 have returned approximately −25 °C while nearby sensors were warm. The upstream rejection rule excludes tdev readings below −10 °C from derived temperatures without deleting the raw data. PMU tcal is treated as calibration, not a live hotspot." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PMU tdev7 和 tdev8 曾返回约 −25 °C，而附近传感器温度正常偏高。上游规则会将低于 −10 °C 的 tdev 读数排除在派生温度之外，同时保留原始数据。PMU tcal 作为校准值，不视为实时热点。"
+          }
+        }
+      }
+    },
+    "MagSafe input current and cable identity remain unverified or unavailable. A USB-C reading or a negotiated profile does not prove wireless input watts or cable e-marker access." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MagSafe 输入电流和线缆身份信息尚未验证或无法获取。USB-C 读数或协商档位不能证明无线输入瓦数或线缆 e-marker 可读。"
+          }
+        }
+      }
+    },
+    "Battery energy presets for both SIM-tray and eSIM-only hardware are in Settings → Battery energy. The model identifier is not enough to choose between them." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带实体 SIM 卡槽和纯 eSIM 硬件的电池能量预设位于“设置 → 电池能量”。仅凭机型标识无法区分两种硬件。"
+          }
+        }
+      }
+    },
+    "Sensor coverage is evaluated from the current snapshot, not from a static compatibility promise. It can change with the charger, battery state, iOS release and hardware revision." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "传感器覆盖根据当前采样结果判断，不是固定的兼容性承诺。充电器、电池状态、iOS 版本及硬件版本都可能影响读数。"
+          }
+        }
+      }
+    },
+    "This page does not run extra HID or accessory scans. It reuses the normal WattTrace snapshot; use Raw data for detailed diagnosis." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此页面不会额外扫描 HID 或配件，而是复用 WattTrace 的常规采样。详细诊断请查看原始数据。"
+          }
+        }
+      }
+    },
+    "iPhone 17 Pro Max battery presets" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max 电池预设"
+          }
+        }
+      }
+    },
+    "Physical SIM tray" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带实体 SIM 卡槽"
+          }
+        }
+      }
+    },
+    "eSIM-only hardware" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纯 eSIM 硬件"
+          }
+        }
+      }
+    },
+    "Both hardware variants share iPhone18,2. Select the variant by the presence of a physical SIM tray, not by whether an eSIM is currently active. These are approximate rated energy presets, not measured usable battery capacity." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两种硬件均使用 iPhone18,2 标识。请根据是否有实体 SIM 卡槽选择，而不是根据当前是否启用 eSIM。这些是估算的额定能量预设，并非实测可用电池容量。"
+          }
+        }
+      }
+    },
+    "The original 19.7 Wh fallback assumes the larger pack; it does not identify your hardware. Your existing custom value is preserved until you choose a preset." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原有的 19.7 Wh 默认值假定使用较大的电池，并不代表已识别你的硬件。主动选择预设前，现有自定义数值保持不变。"
+          }
+        }
+      }
+    },
     "System Monitor" : {
       "localizations": {
         "zh-Hans": {

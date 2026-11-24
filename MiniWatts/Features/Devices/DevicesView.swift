@@ -17,6 +17,7 @@ struct DevicesView: View {
     var body: some View {
         PageScaffold("Devices", glow: .mwWireless) {
             thisPhonePanel
+            compatibilityLink
             systemMonitorLink
             if groups.isEmpty {
                 accessoriesPlaceholder
@@ -40,6 +41,10 @@ struct DevicesView: View {
                         .font(.system(size: 30, weight: .light))
                         .foregroundStyle(Color.mwAccent)
                     VStack(alignment: .leading, spacing: 2) {
+                        if let deviceName = DeviceCompatibilityProfile.displayName {
+                            Text(verbatim: deviceName)
+                                .font(.system(size: 15, weight: .semibold))
+                        }
                         Text(snapshot.statusText)
                             .font(.system(size: 14, weight: .semibold))
                         Text(snapshot.externalConnected
@@ -63,6 +68,34 @@ struct DevicesView: View {
                               tint: percent <= 20 ? .mwDanger : .mwBattery)
                 }
             }
+        }
+    }
+
+    private var compatibilityLink: some View {
+        Panel("Device compatibility", systemImage: "checkmark.shield") {
+            NavigationLink {
+                DeviceCompatibilityView()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "sensor")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(Color.mwAccent)
+                        .frame(width: 36)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Live sensor coverage")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("Power rails, thermal sensors and model notes")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 

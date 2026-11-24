@@ -53,6 +53,11 @@ GitHub Actions 的 Artifact 已调整为 `WattTrace-unsigned-ipa`，
 
 ## 功能与限制
 
+**iPhone 17 Pro Max 专项适配：**识别 `iPhone18,2`，支持实体 SIM / 纯 eSIM
+两种电池能量预设，并在设备页提供实时传感器兼容性检查。
+[机型说明与实机验证清单](docs/DEVICE_COMPATIBILITY.md)。
+
+
 可以显示受支持的 USB-C 输入电压/电流、电池侧功率、
 充电历史、PD 协议档位、温度传感器、iOS 发热状态及电量变化率估算。
 上游的充满时间预测根据最近的电量百分比变化计算，**不代表系统保证的时间**。

@@ -57,3 +57,19 @@ readings without adding a sixth top-level tab.
 **Validation status:** sources and localization are committed; Xcode/iPhone
 runtime testing is pending. The previous GitHub Actions run was cancelled before
 executing steps, so it did not deliver a compiler diagnostic.
+
+## iPhone 17 Pro Max device profile (development)
+
+- Detects `iPhone18,2` and displays the model name without assuming its SIM hardware.
+- Offers physical SIM (4,823 mAh / approximately 18.7 Wh) and eSIM-only
+  (5,088 mAh / approximately 19.7 Wh) battery reference presets, retaining custom
+  settings and the upstream provisional default.
+- Adds Devices → Device compatibility with live rail availability, accepted/
+  rejected temperature counts and model-specific caveats.
+- Reuses the existing sensor snapshot; no duplicate HID client or fabricated
+  wireless input reading.
+- Preserves upstream temperature sentinel filtering and the distinction between
+  measured power and a negotiated ceiling.
+
+See [Device compatibility and real-device test matrix](docs/DEVICE_COMPATIBILITY.md).
+Fresh compile and device validation are pending.

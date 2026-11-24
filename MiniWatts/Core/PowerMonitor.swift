@@ -131,15 +131,16 @@ final class PowerMonitor {
     ///
     /// - iPhone 18 Pro Max (iPhone19,7 from issue #16's dump; iPhone19,3 per
     ///   ChargeSpeed): 5,567 mAh in iFixit's teardown, 21.75 Wh.
-    /// - iPhone 17 Pro Max (iPhone18,2): 5,088 mAh × 3.87 V, 19.7 Wh, ChargeSpeed's
-    ///   figure, which its author notes was not checked against a source. That is the
-    ///   eSIM-only pack; models with a SIM tray are listed smaller.
+    /// - iPhone 17 Pro Max (iPhone18,2): both battery variants are available in
+    ///   Settings. The historical default is the provisional eSIM-only preset.
+    ///   A model identifier does not reveal whether a physical SIM tray exists.
     static let modelRating: ModelRating? = {
         switch PowerSnapshot.modelIdentifier {
         case "iPhone19,3", "iPhone19,7":
             return ModelRating(wattHours: 21.75, source: "iFixit teardown, 5,567 mAh")
-        case "iPhone18,2":
-            return ModelRating(wattHours: 19.7, source: "5,088 mAh × 3.87 V")
+        case DeviceCompatibilityProfile.iPhone17ProMaxIdentifier:
+            return ModelRating(wattHours: DeviceCompatibilityProfile.provisionalBatteryWattHours,
+                               source: "5,088 mAh × 3.87 V, eSIM-only provisional preset")
         default:
             return nil
         }
