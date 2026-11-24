@@ -45,6 +45,7 @@ struct SessionsView: View {
                 }
             } else {
                 summaryPanel
+                SessionExportLink(sessions: monitor.sessions)
                 if monitor.sessions.count >= 2 {
                     SessionComparisonLink(sessions: monitor.sessions)
                 }
@@ -200,6 +201,7 @@ struct SessionDetailView: View {
                     SessionComparisonLink(sessions: monitor.sessions, baselineID: session.id)
                 }
                 climatePanel
+                SessionExportLink(sessions: [session])
                 cablePanel
                 detailsPanel
             }

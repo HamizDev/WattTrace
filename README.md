@@ -57,6 +57,8 @@ sync are planned separately.
 
 ## Measurements and limits
 
+Completed sessions can be exported to Files as CSV or versioned JSON. See [the export schema](docs/EXPORT_SCHEMA.md) for meter alignment, units and legacy data limitations.
+
 **iPhone 17 Pro Max:** a dedicated `iPhone18,2` profile adds separate
 physical-SIM/eSIM battery reference presets and a live Device compatibility
 screen. See [device notes and validation matrix](docs/DEVICE_COMPATIBILITY.md).

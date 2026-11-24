@@ -161,3 +161,33 @@ samples or missing legacy metadata. The existing Foundation-only CI
 regression script now also checks confounding across SOC levels, within-level
 correlation, matched thermal pressure, missing channels, valid zero watts,
 flat data, pauses, transitions, gaps, serialization and full-charge exclusion.
+
+## CSV / JSON export (stage 4)
+
+Open **History → Export charging data** for all completed records, or the
+same link in an individual session detail. A local Files save dialog offers:
+session summary CSV, saved curve samples CSV, SOC bands CSV (both widths),
+thermal relationships CSV, and complete schema-versioned JSON.
+
+The serializer runs off the main actor. Timestamps are ISO 8601 UTC with
+milliseconds; numerical CSV cells are locale-independent and UTF-8 BOM
+supports Excel. Missing optional values are empty cells / absent JSON keys;
+negative and zero numerical values remain numerical. Text fields are quoted
+and potentially executable spreadsheet formulas are escaped in CSV only.
+JSON preserves original text. No upload or automatic sharing is performed.
+
+New sessions record the capture model, OS and app version/build (not a
+unique device identifier), and additional metadata at saved curve points:
+actually observed SOC, USB/wireless/battery rail V/A, partial input watts,
+negotiated voltage/current ceiling, thermal pressure, charge/hold state.
+This is not an additional sensor scan or a full-resolution raw HID export.
+Older records keep absent fields absent; their ambiguous legacy stored
+zeros and potentially thinned/carried-forward samples are labelled.
+
+The JSON contains both SOC widths and thermal sufficient statistics plus
+computed relationship and pressure results. The SOC CSV includes a width
+column; filter one width before summation. The thermal CSV repeats pressure
+results per temperature channel. See [Export schema](docs/EXPORT_SCHEMA.md).
+Foundation-only regression checks cover schema, CSV quoting/formula
+protection, column counts, signed watts, unknown versus measured zero,
+legacy fields, UTC timestamps and JSON structure.

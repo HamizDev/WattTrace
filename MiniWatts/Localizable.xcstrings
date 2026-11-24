@@ -1,6 +1,276 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Export charging data" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出充电数据"
+          }
+        }
+      }
+    },
+    "CSV and JSON files" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSV 与 JSON 文件"
+          }
+        }
+      }
+    },
+    "Saved curves, SOC bands and thermal analysis" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史曲线、SOC 分段与热分析"
+          }
+        }
+      }
+    },
+    "Export format" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出格式"
+          }
+        }
+      }
+    },
+    "File format" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件格式"
+          }
+        }
+      }
+    },
+    "Preparing export" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在准备导出"
+          }
+        }
+      }
+    },
+    "Export to Files" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出到文件"
+          }
+        }
+      }
+    },
+    "File saved" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件已保存"
+          }
+        }
+      }
+    },
+    "Export failed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出失败"
+          }
+        }
+      }
+    },
+    "Export scope" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出范围"
+          }
+        }
+      }
+    },
+    "Completed sessions" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成会话"
+          }
+        }
+      }
+    },
+    "Saved curve samples" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已保存曲线采样"
+          }
+        }
+      }
+    },
+    "Only completed sessions are exported. Saved curves may be thinned and are not the full one-second sensor stream. The SOC and thermal aggregates retain their own measured durations." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅导出已完成会话。已保存曲线可能经过抽稀，并非完整的每秒传感器数据流。SOC 与热分析汇总保留各自的有效测量时长。"
+          }
+        }
+      }
+    },
+    "CSV uses UTF-8 with a BOM, decimal points and UTC timestamps. Temperatures are always Celsius. Blank fields are unavailable; legacy zero values are flagged separately. JSON contains the analysis statistics and unmodified text labels." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSV 使用带 BOM 的 UTF-8、小数点和 UTC 时间戳。温度始终使用摄氏度。空白字段表示不可用，旧版零值另有标记。JSON 包含分析统计数据和未修改的文本标签。"
+          }
+        }
+      }
+    },
+    "Local file export" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本地文件导出"
+          }
+        }
+      }
+    },
+    "WattTrace does not upload this file. You choose its destination in Files. Timestamps, charger names and manual labels can be identifying; review the file before sharing it." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace 不会上传此文件。你可在“文件”中选择保存位置。时间戳、充电器名称及手动标签可能包含个人信息，分享前请检查。"
+          }
+        }
+      }
+    },
+    "Older sessions do not contain per-sample voltages, currents or full thermal states. New recordings include these where available; unavailable fields remain blank." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "旧会话没有保存各采样点的电压、电流及完整热压力状态。新记录会在可用时保存这些数据，不可用字段仍留空。"
+          }
+        }
+      }
+    },
+    "Session summary (CSV)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话总览（CSV）"
+          }
+        }
+      }
+    },
+    "Saved curve samples (CSV)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史曲线采样（CSV）"
+          }
+        }
+      }
+    },
+    "SOC bands (CSV)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC 分段（CSV）"
+          }
+        }
+      }
+    },
+    "Thermal relationships (CSV)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热分析结果（CSV）"
+          }
+        }
+      }
+    },
+    "Complete analysis (JSON)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完整分析（JSON）"
+          }
+        }
+      }
+    },
+    "One row per session, including energy, measurement coverage, labels and charging-path resistance." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每次会话一行，包括能量、测量覆盖率、标签和充电路径电阻。"
+          }
+        }
+      }
+    },
+    "One row per saved curve point with UTC timestamp, offset, stored and analysis-compatible power, temperature and any recorded rail details. Useful for aligning an external power meter." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个已保存曲线采样点一行，包含 UTC 时间戳、时间偏移、原存功率及用于分析的功率、温度和已记录电源轨详情，便于与外置功率计对齐。"
+          }
+        }
+      }
+    },
+    "Both 5% and 10% SOC summaries, with mean, peak, measurement time and thermal-state durations. Filter by band width before aggregating." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含 5% 与 10% 两种 SOC 汇总，以及均值、峰值、测量时长和热压力时长。汇总时请先按区间宽度筛选。"
+          }
+        }
+      }
+    },
+    "One row per power rail and temperature channel, with within-SOC correlation, slope, paired coverage and matched thermal-pressure comparison. Pressure fields repeat for each temperature channel." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个功率测量侧与温度通道一行，包含同 SOC 相关系数、斜率、配对覆盖率和匹配热压力对比。热压力字段在不同温度通道中重复。"
+          }
+        }
+      }
+    },
+    "Versioned JSON containing session metadata, stored curve points, both SOC band widths, thermal sufficient statistics and calculated thermal relationships." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带版本号的 JSON，包含会话元数据、历史曲线采样、两种 SOC 区间、热分析累计统计及计算结果。"
+          }
+        }
+      }
+    },
     "Thermal and power analysis" : {
       "localizations": {
         "zh-Hans": {

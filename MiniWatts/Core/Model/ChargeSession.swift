@@ -1,7 +1,7 @@
 import Foundation
 
 /// One point on a session's charge curve.
-nonisolated struct ChargeSample: Codable, Hashable, Identifiable {
+nonisolated struct ChargeSample: Codable, Hashable, Identifiable, Sendable {
     /// Seconds since the session started.
     let offset: TimeInterval
     /// Nil means that rail was unavailable for that sample. Older session files
@@ -13,12 +13,14 @@ nonisolated struct ChargeSample: Codable, Hashable, Identifiable {
     let hottestTemperature: Double?
     /// True while `ProcessInfo.thermalState` was `.serious` or `.critical`.
     let throttled: Bool
+    /// New curve-point channels. Optional for history recorded before this revision.
+    var details: ChargeSampleDetails? = nil
 
     var id: TimeInterval { offset }
 }
 
 /// Everything recorded between plugging in and unplugging.
-nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
+nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
     let start: Date
     var end: Date?
@@ -53,6 +55,8 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     var thermalPowerAnalysis: ThermalPowerAnalysis?
     /// Optional, user-entered test identifier, never inferred cable metadata.
     var testLabel: String?
+    /// Recorded at session start; never filled using the current export device.
+    var captureDevice: SessionCaptureDevice?
 
     var isOpen: Bool { end == nil }
     var duration: TimeInterval { (end ?? .now).timeIntervalSince(start) }
@@ -91,6 +95,7 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         self.socAnalysis = nil
         self.thermalPowerAnalysis = nil
         self.testLabel = nil
+        self.captureDevice = nil
     }
 
     /// Older history has at most the saved, possibly thinned curve. Its SOC
@@ -115,14 +120,58 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         samples.sorted(by: { $0.offset < $1.offset }).map { sample in
             SOCReading(
                 offset: sample.offset,
-                percent: sample.percent,
-                inputWatts: totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
-                batteryWatts: totals.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
+                percent: sample.details != nil ? sample.details?.observedPercent : sample.percent,
+                inputWatts: sample.details != nil || totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
+                batteryWatts: sample.details != nil || totals.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
                 batteryTemperature: sample.batteryTemperature,
                 hottestTemperature: sample.hottestTemperature,
-                pressure: sample.throttled ? .legacyHigh : .legacyNotHigh
+                pressure: sample.details != nil
+                    ? sample.details?.thermalPressure
+                    : (sample.throttled ? .legacyHigh : .legacyNotHigh)
             )
         }
+    }
+
+    /// Make an immutable export snapshot from the completed session. The
+    /// persisted sample values are preserved; old ambiguous zeros remain
+    /// explicitly flagged instead of being promoted to new observations.
+    var exportRecord: SessionExportRecord? {
+        guard let end else { return nil }
+        let t = totals
+        let soc = resolvedSOCAnalysis
+        let summary = SessionExportSummary(
+            id: id, start: start, end: end, startPercent: startPercent, endPercent: endPercent,
+            testLabel: testLabel, adapterName: adapterName, adapterRatedWatts: adapterRatedWatts,
+            isWireless: isWireless, captureDevice: captureDevice,
+            totals: SessionExportTotals(
+                inputWattHours: t.inputMeasuredSeconds > 0 ? t.inputWattHours : nil,
+                batteryWattHours: t.batteryMeasuredSeconds > 0 ? t.batteryWattHours : nil,
+                batteryMilliampHours: t.batteryCurrentMeasuredSeconds > 0 ? t.batteryMilliAmpHours : nil,
+                observedSeconds: t.integratedSeconds, inputMeasuredSeconds: t.inputMeasuredSeconds,
+                batteryMeasuredSeconds: t.batteryMeasuredSeconds, batteryCurrentMeasuredSeconds: t.batteryCurrentMeasuredSeconds,
+                pairedInputWattHours: t.pairedInputWattHours > 0.001 ? t.pairedInputWattHours : nil,
+                pairedBatteryWattHours: t.pairedInputWattHours > 0.001 ? t.pairedBatteryWattHours : nil,
+                chargePathEfficiencyPercent: t.chargePathEfficiencyPercent, loadAndLossWattHours: t.unaccountedWattHours
+            ),
+            peakInputWatts: t.inputMeasuredSeconds > 0 || peakInputWatts > 0 ? peakInputWatts : nil,
+            peakBatteryWatts: t.batteryMeasuredSeconds > 0 || peakBatteryWatts > 0 ? peakBatteryWatts : nil,
+            peakBatteryTemperatureCelsius: peakBatteryTemperature, thermalHighSeconds: throttledSeconds,
+            pathMilliohms: pathMilliohms, pathSamples: pathSamples
+        )
+        let newCurve = soc.source == .live
+        let exportSamples = samples.sorted { $0.offset < $1.offset }.map { sample in
+            SessionExportSample(
+                timestamp: start.addingTimeInterval(sample.offset), offsetSeconds: sample.offset,
+                recordedPercent: sample.percent, storedInputWatts: sample.inputWatts,
+                storedBatteryWatts: sample.batteryWatts,
+                analysisInputWatts: newCurve || sample.details != nil || t.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
+                analysisBatteryWatts: newCurve || sample.details != nil || t.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
+                batteryTemperatureCelsius: sample.batteryTemperature,
+                hotspotTemperatureCelsius: sample.hottestTemperature, highThermalPressure: sample.throttled,
+                details: sample.details
+            )
+        }
+        return SessionExportRecord(summary: summary, samples: exportSamples, soc: soc, thermal: resolvedThermalPowerAnalysis)
     }
 
     /// Takes the fit if it rests on at least as much as whatever is already stored.

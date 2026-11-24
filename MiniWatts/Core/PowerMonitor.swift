@@ -374,6 +374,12 @@ final class PowerMonitor {
                                        adapterName: snapshot.adapterName,
                                        adapterRatedWatts: snapshot.adapterRatedWatts,
                                        isWireless: snapshot.isWirelessInput)
+        currentSession?.captureDevice = SessionCaptureDevice(
+            modelIdentifier: PowerSnapshot.modelIdentifier,
+            systemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+            appBuild: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        )
         lastSampleWrite = .distantPast
         lastThermalObservationDate = snapshot.date
     }
@@ -427,7 +433,23 @@ final class PowerMonitor {
                                                 percent: snapshot.percent ?? session.endPercent,
                                                 batteryTemperature: snapshot.batteryTemperature,
                                                 hottestTemperature: snapshot.hottestSensor?.value,
-                                                throttled: thermal.state.isThrottling))
+                                                throttled: thermal.state.isThrottling,
+                                                details: ChargeSampleDetails(
+                                                    observedPercent: snapshot.percent,
+                                                    usbVoltage: snapshot.usbInputVoltage,
+                                                    usbCurrent: snapshot.usbInputCurrent,
+                                                    wirelessVoltage: snapshot.wirelessInputVoltage,
+                                                    wirelessCurrent: snapshot.wirelessInputCurrent,
+                                                    batteryRailVoltage: snapshot.batteryRailVoltage,
+                                                    batteryRailCurrent: snapshot.batteryRailCurrent,
+                                                    partialInputWatts: snapshot.partialInputWatts,
+                                                    negotiatedVolts: snapshot.negotiatedProfile?.volts,
+                                                    negotiatedAmps: snapshot.negotiatedProfile?.amps,
+                                                    thermalPressure: socPressure,
+                                                    isCharging: snapshot.isCharging,
+                                                    reportedWireless: snapshot.adapterIsWireless,
+                                                    holdState: snapshot.holdState.rawValue
+                                                )))
             // A very long charge is thinned in place: every other point goes, which
             // halves the resolution without losing the shape of the curve.
             if session.samples.count > SessionStore.sampleLimit {

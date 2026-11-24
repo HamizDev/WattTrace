@@ -67,5 +67,6 @@ struct SOCBandAnalysisTests {
         print("SOC analysis regression checks passed")
         SOCSessionComparisonTests.run()
         try ThermalPowerAnalysisTests.run()
+        try SessionExportTests.run()
     }
 }

@@ -53,6 +53,8 @@ GitHub Actions 的 Artifact 已调整为 `WattTrace-unsigned-ipa`，
 
 ## 功能与限制
 
+已完成充电记录支持导出 CSV / JSON 到“文件”。[导出格式说明](docs/EXPORT_SCHEMA.md) 包含单位、外置功率计对齐及历史数据限制。
+
 **iPhone 17 Pro Max 专项适配：**识别 `iPhone18,2`，支持实体 SIM / 纯 eSIM
 两种电池能量预设，并在设备页提供实时传感器兼容性检查。
 [机型说明与实机验证清单](docs/DEVICE_COMPATIBILITY.md)。
