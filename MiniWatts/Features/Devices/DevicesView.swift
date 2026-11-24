@@ -22,12 +22,9 @@ struct DevicesView: View {
             AccessoryBatteryProbeLink()
             compatibilityLink
             systemMonitorLink
-            if groups.isEmpty {
-                accessoriesPlaceholder
-            } else {
-                ForEach(groups) { group in
-                    DeviceCard(group: group)
-                }
+            accessoriesStatusPanel
+            ForEach(groups) { group in
+                DeviceCard(group: group)
             }
         }
     }
@@ -136,12 +133,26 @@ struct DevicesView: View {
     /// Empty accessory battery telemetry is not evidence of a disconnected
     /// accessory. The separate audio-route panel can report a route name even
     /// when the private battery service returns no readable battery data.
-    private var accessoriesPlaceholder: some View {
+    private var accessoriesStatusPanel: some View {
         Panel("Accessories", systemImage: "airpods") {
             VStack(alignment: .leading, spacing: 10) {
-                EmptyNote(text: monitor.batteryCenterStatus
-                          ?? "No external accessory battery records were returned.")
                 DetailRow(label: "BatteryCenter records", value: String(monitor.devices.count))
+                DetailRow(label: "External accessory records", value: String(monitor.devices.filter { !$0.isInternal }.count))
+                if groups.isEmpty {
+                    EmptyNote(text: monitor.batteryCenterStatus
+                              ?? "No external accessory battery records were returned.")
+                }
+                if let time = monitor.accessoryReadDate {
+                    DetailRow(label: "Last accessory check", value: Formatting.clock(time))
+                }
+                Button {
+                    monitor.refreshAccessoryDevices()
+                } label: {
+                    Label("Refresh accessory records", systemImage: "arrow.clockwise")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.mwAccent)
                 EmptyNote(text: "AirPods battery percentages, left/right and case levels require actual battery records. The audio output name is not a substitute for those readings.", systemImage: "info.circle")
             }
         }
@@ -255,10 +266,14 @@ struct PartGauge: View {
             }
             Text(entry.percent.map { "\($0)%" } ?? "—")
                 .mwReadout(size: 15)
-            ChargeBar(percent: Double(entry.percent ?? 0),
-                      isCharging: entry.isCharging,
-                      tint: (entry.percent ?? 0) <= 20 ? .mwDanger : .mwBattery,
-                      height: 4)
+            if let percent = entry.percent {
+                ChargeBar(percent: Double(percent),
+                          isCharging: entry.isCharging,
+                          tint: percent <= 20 ? .mwDanger : .mwBattery,
+                          height: 4)
+            } else {
+                Capsule().fill(Color.mwMuted.opacity(0.15)).frame(height: 4)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)

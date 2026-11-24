@@ -166,6 +166,7 @@ final class PowerMonitor {
     private let probeService = SensorProbe()
     private let batteryCenter = BatteryCenterBridge()
     private var lastBatteryCenterStatus: BatteryCenterBridge.Status?
+    private(set) var accessoryReadDate: Date?
     private let energy = EnergyAccumulator()
     private var socAccumulator = SOCBandAccumulator()
     private var thermalPowerAccumulator = ThermalPowerAccumulator()
@@ -304,14 +305,7 @@ final class PowerMonitor {
             sensorServiceCount = result.serviceCount
             collectDiagnostics()
         }
-        if tick % 5 == 1 {
-            let next = batteryCenter.read()
-            if next != devices { devices = next }
-            if lastBatteryCenterStatus != batteryCenter.status {
-                lastBatteryCenterStatus = batteryCenter.status
-                collectDiagnostics()
-            }
-        }
+        if tick % 5 == 1 { refreshAccessoryDevices() }
 
         appendLive(current)
         updateRateEstimate(current)
@@ -754,6 +748,17 @@ final class PowerMonitor {
         #endif
         if let storeWarning { lines.append(storeWarning) }
         diagnostics = lines
+    }
+
+    /// Refresh the existing bridge, never a second controller or HID client.
+    func refreshAccessoryDevices() {
+        let next = batteryCenter.read()
+        if next != devices { devices = next }
+        accessoryReadDate = .now
+        if lastBatteryCenterStatus != batteryCenter.status {
+            lastBatteryCenterStatus = batteryCenter.status
+            collectDiagnostics()
+        }
     }
 
     /// Why the accessory list is empty, in the app's voice, for the Devices screen.

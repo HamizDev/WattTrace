@@ -15,8 +15,8 @@ upstream changes can still be merged.
 
 ## Current work
 
-- Development: `watttrace/v0.0.2` → [development branch](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.2)
-- App version: `0.0.2` (development)
+- Development: `watttrace/v0.0.3` → [development branch](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.3)
+- App version: `0.0.3` (development)
 - App bundle: `com.hamizdev.WattTrace`
 - Widget bundle: `com.hamizdev.WattTrace.Widget`
 - App Group: `group.com.hamizdev.WattTrace`
@@ -36,7 +36,7 @@ energy-weighted History charge-path efficiency calculated from *paired* rails.
 **GitHub Actions (from Windows or macOS)**
 
 1. Open [Actions → Build](https://github.com/HamizDev/WattTrace/actions/workflows/build.yml).
-2. Choose **Run workflow**, branch `watttrace/v0.0.2`.
+2. Choose **Run workflow**, branch `watttrace/v0.0.3`.
 3. Download the unsigned IPA artifact after the run succeeds.
 4. Sign the IPA with your own Apple developer credentials to sideload it.
 

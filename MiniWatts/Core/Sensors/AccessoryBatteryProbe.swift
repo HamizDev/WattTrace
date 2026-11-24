@@ -10,7 +10,7 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
     @preconcurrency CBCentralManagerDelegate, @preconcurrency CBPeripheralDelegate {
 
     enum Discovery {
-        case connected, nearby
+        case connected, nearby, caseVisibility
     }
 
     enum Phase: Equatable {
@@ -44,6 +44,7 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
     @Published private(set) var completedAt: Date?
     @Published private(set) var attempted: Set<UUID> = []
     @Published private(set) var failureDetail: String?
+    @Published private(set) var visibility: AccessoryAdvertisementEvidence?
 
     private let batteryService = CBUUID(string: "180F")
     private let batteryLevel = CBUUID(string: "2A19")
@@ -60,6 +61,7 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
         guard !phase.isBusy else { return }
         stop()
         discovery = mode
+        visibility = mode == .caseVisibility ? AccessoryAdvertisementEvidence() : nil
         phase = .preparing
         central = CBCentralManager(delegate: self, queue: .main,
                                    options: [CBCentralManagerOptionShowPowerAlertKey: false])
@@ -117,6 +119,7 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
         selectedName = nil
         completedAt = nil
         failureDetail = nil
+        visibility = nil
         phase = .idle
     }
 
@@ -189,6 +192,15 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
         case .poweredOn:
             guard phase == .preparing else { return }
             cancelTimeout()
+            if discovery == .caseVisibility {
+                phase = .scanning
+                // A case may not advertise BAS. Only aggregate observations,
+                // never retain or connect to peripherals in this mode.
+                central.scanForPeripherals(withServices: nil,
+                                           options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+                armTimeout(seconds: 10)
+                return
+            }
             let connected = central.retrieveConnectedPeripherals(withServices: [batteryService])
             for peripheral in connected { remember(peripheral, source: .connected) }
             if discovery == .nearby {
@@ -217,8 +229,22 @@ final class AccessoryBatteryProbe: NSObject, ObservableObject,
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
                         advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard central === self.central, phase == .scanning else { return }
-        // The service filter is public. Ignore private manufacturer payloads,
-        // raw addresses, RSSI and other data unrelated to battery telemetry.
+        if discovery == .caseVisibility {
+            guard var evidence = visibility else { return }
+            let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+            let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
+            let serviceUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
+            evidence.record(localName: name, manufacturerData: manufacturerData,
+                            advertisesBatteryService: serviceUUIDs.contains(batteryService))
+            visibility = evidence
+            if evidence.totalReports >= AccessoryAdvertisementEvidence.limit {
+                central.stopScan()
+                cancelTimeout()
+                phase = .ready
+            }
+            return
+        }
+        // Standard service scan only; no vendor payload is retained.
         remember(peripheral, source: .nearby)
     }
 

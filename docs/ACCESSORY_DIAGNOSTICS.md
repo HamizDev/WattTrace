@@ -43,3 +43,19 @@ a claim that AirPods 4 battery access has been solved.
 Apple documentation:
 - https://developer.apple.com/documentation/corebluetooth/cbcentralmanager/retrieveconnectedperipherals(withservices:)
 - https://developer.apple.com/documentation/bundleresources/information-property-list/nsbluetoothalwaysusagedescription
+
+## v0.0.3 case-open visibility diagnostic
+
+The previous nearby scan requested 180F only; a charging case need not
+advertise that service. Use **Check case-open broadcasts (10 seconds)** for a
+separate foreground scan with no service filter. It records only anonymous
+callback counts, with a hard cap of 512. It checks the standard advertised
+service list, local-name substring, company ID 0x004C and complete leading
+type-0x07 TLV shape, without interpreting proprietary battery bytes. No
+device identities or manufacturer data are retained, no peripheral is
+connected, and no claim is made that any report belongs to the user's case.
+The shareable report is aggregate counts only. Compare separate closed-lid
+and open-lid checks in a quiet setting. An absent or positive report does
+not establish battery availability; the OS can filter reports and nearby
+Apple devices can contribute. The system Batteries widget remains the
+reference for actual AirPods component percentages.

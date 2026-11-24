@@ -244,3 +244,22 @@ not evidence of equivalent permissions. Real-device AirPods 4 testing pending.
   longer inherit the nearest old release tag.
 - AirPods 4 standard battery availability and actual device icon rendering
   still require real-device validation. See docs/ACCESSORY_DIAGNOSTICS.md.
+
+## v0.0.3 — thermal evidence and accessory visibility
+
+- Replace inherited iPhone Air-only wording in Thermal and Settings with
+  actual model/current sensor coverage. Distinguish earlier iPhone18,2
+  observations from present-device calibration. Share a reduced thermal
+  report using existing snapshots; calibration is visibly marked.
+- Replay de-identified temperature readings from the 2026-09-26 iPhone18,2
+  raw dump through production PowerSnapshot on CI. Expected: 30 raw
+  temperature values, 2 rejected tdev sentinels, 1 non-live calibration
+  channel, 37.9 °C cell, 43.7 °C charger, 43.8 °C hottest.
+  This checks interpretation, not new hardware calibration.
+- Show BatteryCenter external record count and last check with manual
+  refresh. Do not draw a zero/low gauge for missing accessory percentages.
+- Add separate 10-second case-open BLE visibility diagnostic (512 reports
+  maximum). Count public advertisement metadata only; no connection,
+  payload storage, device identifiers, ownership assignment or battery
+  decoding. Standard BAS reads remain separate. AirPods 4 battery access
+  remains unverified/unavailable if the OS does not expose real records.
