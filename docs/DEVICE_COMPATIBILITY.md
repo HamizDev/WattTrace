@@ -72,3 +72,19 @@ reading; zero is preserved as a measured numeric value.
 The new compatibility screen and settings presets require fresh Xcode build
 and on-device validation. The original sensor observations are not a test
 report for this code revision.
+
+## Historical thermal replay (v0.0.3)
+
+The de-identified 2026-09-26 14:53 raw sensor snapshot from an iPhone18,2
+contains 30 temperature readings. Gas gauge values are 37.8–37.9 °C,
+charge IC TQ0d/TQ0j are 43.7/43.1 °C, PMU tdev7/tdev8 are −24.9/−24.7 °C,
+and PMU tcal is 51.8 °C. The sample is transcribed into
+tests/IPhone17ProMaxThermalReplay.swift without serials or personal metadata.
+CI runs the production PowerSnapshot logic on the historical values: expected
+battery median 37.9 °C, charger 43.7 °C and hottest live reading 43.8 °C.
+The two tdev sentinels remain in raw input, and tcal remains listed but not live.
+
+Thermal → Thermal validation reports this evidence separately from current
+sensor counts. Use Share thermal validation report on the actual phone for
+a new sample. This regression does not establish absolute accuracy, physical
+map coordinates or successful installation of the new revision.

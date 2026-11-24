@@ -1,6 +1,246 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Thermal validation" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度验证"
+          }
+        }
+      }
+    },
+    "Live temperature sensors" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时温度传感器"
+          }
+        }
+      }
+    },
+    "Calibration channels" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "校准通道"
+          }
+        }
+      }
+    },
+    "iPhone 17 Pro Max (iPhone18,2): previous real-device sensor observations confirmed battery, charger and PMU readings. Recorded samples are covered by regression tests; this installation still requires fresh device testing and external calibration." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max（iPhone18,2）：此前真机采样已获得电池、充电芯片及 PMU 温度读数，历史样本已纳入回归测试。当前安装版本仍需重新进行真机验证和外部仪器校准。"
+          }
+        }
+      }
+    },
+    "Sensor names and scales vary by model and OS. Current readable channels are shown above; these counts do not establish hardware calibration." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "传感器名称和量程随设备及系统版本变化。上方显示当前可用通道数量，不代表已经完成硬件校准。"
+          }
+        }
+      }
+    },
+    "Excluded sentinel values remain in Raw data. Calibration channels are not live hotspots. The heat map is schematic, not a calibrated image of the device interior." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被排除的异常值仍保留于原始数据。校准通道不是实时热点。热力图仅为示意，不是经校准的设备内部热成像。"
+          }
+        }
+      }
+    },
+    "Share thermal validation report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享温度验证报告"
+          }
+        }
+      }
+    },
+    "Calibration (not a live hotspot)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "校准值（非实时热点）"
+          }
+        }
+      }
+    },
+    "Sensor names and scales vary by device and OS. WattTrace includes real-device observations from iPhone 17 Pro Max (iPhone18,2); see Thermal for current sensor coverage and a shareable validation report. A plausible reading is not proof of accuracy or hardware calibration." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "传感器名称和量程随设备及系统变化。WattTrace 已纳入 iPhone 17 Pro Max（iPhone18,2）的真机采样记录；请在发热页面查看当前传感器覆盖及可分享的验证报告。合理的读数并不证明测量精度或硬件校准。"
+          }
+        }
+      }
+    },
+    "External accessory records" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部配件记录数"
+          }
+        }
+      }
+    },
+    "Last accessory check" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近配件检查"
+          }
+        }
+      }
+    },
+    "Refresh accessory records" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新配件记录"
+          }
+        }
+      }
+    },
+    "Check case-open broadcasts (10 seconds)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检查充电盒开盖广播（10 秒）"
+          }
+        }
+      }
+    },
+    "Standard battery discovery is filtered to 180F. The separate case-open check only counts visible BLE advertisements without connecting. Open your own AirPods case next to the phone before starting." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准电量查找筛选 180F。独立的开盖检查只统计可见 BLE 广播，不连接设备。开始前请在手机附近打开自己的 AirPods 充电盒。"
+          }
+        }
+      }
+    },
+    "Case-open broadcast visibility" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "充电盒开盖广播可见性"
+          }
+        }
+      }
+    },
+    "Visible BLE reports" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可见 BLE 广播数"
+          }
+        }
+      }
+    },
+    "Apple manufacturer reports" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 厂商数据报告数"
+          }
+        }
+      }
+    },
+    "Proximity-shaped reports" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近距离配对格式报告数"
+          }
+        }
+      }
+    },
+    "AirPods-named reports" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称含 AirPods 的报告数"
+          }
+        }
+      }
+    },
+    "Report limit reached; the visibility scan stopped early." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达到报告数量上限，可见性扫描提前结束。"
+          }
+        }
+      }
+    },
+    "These are anonymous advertisement counts, not distinct devices, verified case identity or battery readings. Apple proximity-shaped data may come from other nearby devices. Zero reports does not prove the case is not broadcasting." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些是匿名广播计数，不代表不同设备数量、已验证的充电盒身份或电量读数。类似 Apple 近距离配对格式的数据也可能来自其他附近设备。零条报告不能证明充电盒没有广播。"
+          }
+        }
+      }
+    },
+    "Share case visibility report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享充电盒可见性报告"
+          }
+        }
+      }
+    },
+    "Checking visible BLE broadcasts" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检查可见 BLE 广播"
+          }
+        }
+      }
+    },
+    "There is no background scanning, proprietary AirPods battery decoding, forced pairing or automatic connection. Standard battery reads disconnect on completion or timeout; the case-open check never connects." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不进行后台扫描、AirPods 私有电量解码、强制配对或自动连接。标准电量读取完成或超时后释放连接；开盖检查从不连接设备。"
+          }
+        }
+      }
+    },
     "Bluetooth battery diagnostic" : {
       "localizations": {
         "zh-Hans": {
@@ -2964,16 +3204,6 @@
         }
       }
     },
-    "Sensor names and scales differ between models, and an iPad differs from an iPhone more than most. This build was checked on an iPhone Air; what it knows about iPads comes from one iPad Pro's sensor list. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your iPad, it may well be." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器的名称和换算方式因机型而异，iPad 与 iPhone 的差别尤其大。这个版本是在 iPhone Air 上验证的，对 iPad 的了解只来自一台 iPad Pro 的传感器列表。不可能的读数仍保留在原始数据里，但不参与推算出的温度；只是错、却还说得过去的读数拦不住——如果这里有哪个数字在你的 iPad 上看着不对，很可能就是不对。"
-          }
-        }
-      }
-    },
     "Taking" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5159,16 +5389,6 @@
         }
       }
     },
-    "Sensor names, scales and even which sensors exist differ from model to model, and nothing about them is documented. This build was written and checked on an iPhone Air (iPhone18,4). On another model a reading can be missing, or belong to something other than its name suggests. Values that are impossible are hidden rather than shown, but a wrong value that happens to look reasonable cannot be caught that way — so treat anything surprising as suspect, and please report it with your model identifier." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器叫什么、怎么换算、甚至有没有这个传感器，都因机型而异，而且没有任何官方文档。这个版本是在 iPhone Air（iPhone18,4）上开发和验证的。换一个机型，某项读数可能不存在，也可能名字和实际含义对不上。明显不可能的数值会被隐藏而不是显示出来，但一个看着还算合理、实际却是错的数值，这样是拦不住的——所以看到反常的数字请当它可疑，并带上你的机型标识反馈给我。"
-          }
-        }
-      }
-    },
     "Free and open source" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5525,16 +5745,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入传感器读数为 %1$@ W，而进入电芯的有 %2$@ W，说明在这个机型上它们只测到了部分输入。这个数值不会作为输入功率显示，也不会据此推算任何结果。"
-          }
-        }
-      }
-    },
-    "Sensor names and scales differ by iPhone model, and this build was checked on an iPhone Air. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your model, it may well be." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器的名称和换算方式因 iPhone 机型而异，这个版本是在 iPhone Air 上验证的。不可能的读数仍保留在原始数据里，但不参与推算出的温度；只是错、却还说得过去的读数拦不住——如果这里有哪个数字在你的机型上看着不对，很可能就是不对。"
           }
         }
       }

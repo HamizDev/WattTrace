@@ -67,7 +67,8 @@ struct DeviceCompatibilityView: View {
     private var thermalPanel: some View {
         Panel("Thermal coverage", systemImage: "thermometer.medium") {
             VStack(alignment: .leading, spacing: 0) {
-                DetailRow(label: "Accepted temperature readings", value: String(snapshot.temperatures.count))
+                DetailRow(label: "Live temperature sensors", value: String(snapshot.temperatures.filter { !$0.name.localizedCaseInsensitiveContains("tcal") }.count))
+                DetailRow(label: "Calibration channels", value: String(snapshot.temperatures.filter { $0.name.localizedCaseInsensitiveContains("tcal") }.count))
                 DetailRow(label: "Excluded temperature readings", value: String(snapshot.temperatureWarnings.count))
                 DetailRow(label: "Battery temperature sensors", value: String(snapshot.batteryTemperatureReadings.count))
                 DetailRow(label: "Battery temperature", value: snapshot.batteryTemperature.map { monitor.temperatureUnit.reading($0) })

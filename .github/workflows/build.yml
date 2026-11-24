@@ -86,6 +86,9 @@ jobs:
       - name: Test SOC analysis
         run: bash scripts/test-soc-analysis.sh
 
+      - name: Replay iPhone 17 Pro Max thermal readings
+        run: bash scripts/test-thermal-replay.sh
+
       - name: Validate app icon resources
         run: python3 scripts/verify-app-icons.py
 

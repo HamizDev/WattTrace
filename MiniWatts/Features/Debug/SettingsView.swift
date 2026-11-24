@@ -373,7 +373,7 @@ struct SettingsView: View {
 
     /// Where the source lives. Kept as a constant rather than built inline: a typo in
     /// a string literal would only show up as a force-unwrap crash on this screen.
-    private static let repository = URL(string: "https://github.com/ResistanceTo/WattTrace")!
+    private static let repository = URL(string: "https://github.com/HamizDev/WattTrace")!
 
     /// "1.6.0 (412)": the release tag and the commit count, which `build-ipa.sh` writes
     /// into the bundle. A build run from Xcode carries the project file's 1.0 (1).
@@ -406,7 +406,7 @@ struct SettingsView: View {
                 }
                 Link(destination: Self.repository) {
                     HStack(spacing: 8) {
-                        Text(verbatim: "github.com/ResistanceTo/WattTrace")
+                        Text(verbatim: "github.com/HamizDev/WattTrace")
                             .mwMono(size: 12, weight: .medium)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -431,7 +431,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Sensor names, scales and even which sensors exist differ from model to model, and nothing about them is documented. This build was written and checked on an iPhone Air (iPhone18,4). On another model a reading can be missing, or belong to something other than its name suggests. Values that are impossible are hidden rather than shown, but a wrong value that happens to look reasonable cannot be caught that way — so treat anything surprising as suspect, and please report it with your model identifier.")
+                Text("Sensor names and scales vary by device and OS. WattTrace includes real-device observations from iPhone 17 Pro Max (iPhone18,2); see Thermal for current sensor coverage and a shareable validation report. A plausible reading is not proof of accuracy or hardware calibration.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)

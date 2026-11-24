@@ -35,6 +35,7 @@ struct AccessoryBatteryProbeView: View {
             Backdrop(glow: .mwWireless)
             PanelScroll {
                 controls
+                if probe.visibility != nil { caseVisibilityPanel }
                 if !probe.candidates.isEmpty { candidatePanel }
                 if probe.completedAt != nil || !probe.results.isEmpty { resultPanel }
                 limitations
@@ -67,10 +68,40 @@ struct AccessoryBatteryProbeView: View {
                     Button("Scan for battery service (10 seconds)") { probe.discover(.nearby) }
                         .buttonStyle(.bordered)
                         .tint(.mwAccent)
+                    Button("Check case-open broadcasts (10 seconds)") { probe.discover(.caseVisibility) }
+                        .buttonStyle(.bordered)
+                        .tint(.mwAccent)
                 }
-                EmptyNote(text: "Bluetooth access is requested only when you start a check. Nearby discovery is filtered to the standard Battery Service. Choose a listed accessory before WattTrace connects to read it.")
-                if probe.phase == .ready && probe.candidates.isEmpty {
+                EmptyNote(text: "Standard battery discovery is filtered to 180F. The separate case-open check only counts visible BLE advertisements without connecting. Open your own AirPods case next to the phone before starting.")
+                if probe.phase == .ready && probe.visibility == nil && probe.candidates.isEmpty {
                     EmptyNote(text: "No matching Battery Service devices were returned. This does not mean your AirPods are disconnected or that their battery is empty.")
+                }
+            }
+        }
+    }
+
+    private var caseVisibilityPanel: some View {
+        Panel("Case-open broadcast visibility", systemImage: "wave.3.right") {
+            if let evidence = probe.visibility {
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(spacing: 0) {
+                        DetailRow(label: "Visible BLE reports", value: String(evidence.totalReports))
+                        DetailRow(label: "Apple manufacturer reports", value: String(evidence.appleReports))
+                        DetailRow(label: "Proximity-shaped reports", value: String(evidence.proximityReports))
+                        DetailRow(label: "AirPods-named reports", value: String(evidence.airPodsNamedReports))
+                        DetailRow(label: "Battery Service advertisements", value: String(evidence.batteryServiceReports))
+                    }
+                    if evidence.totalReports >= AccessoryAdvertisementEvidence.limit {
+                        EmptyNote(text: "Report limit reached; the visibility scan stopped early.")
+                    }
+                    EmptyNote(text: "These are anonymous advertisement counts, not distinct devices, verified case identity or battery readings. Apple proximity-shaped data may come from other nearby devices. Zero reports does not prove the case is not broadcasting.")
+                    if probe.phase == .ready {
+                        ShareLink(item: evidence.report(version: SettingsView.versionText)) {
+                            Label("Share case visibility report", systemImage: "square.and.arrow.up")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .tint(.mwAccent)
+                    }
                 }
             }
         }
@@ -136,7 +167,7 @@ struct AccessoryBatteryProbeView: View {
         Panel("AirPods and accessory limits", systemImage: "info.circle") {
             VStack(alignment: .leading, spacing: 10) {
                 EmptyNote(text: "This reads only the public Bluetooth Battery Service (180F) and Battery Level characteristic (2A19). AirPods 4 may not expose these to a third-party app. Audio-route detection alone does not establish battery access.")
-                EmptyNote(text: "There is no background scanning, proprietary AirPods broadcast decoding, forced pairing or automatic connection. The diagnostic disconnects its local connection when the read finishes or times out.")
+                EmptyNote(text: "There is no background scanning, proprietary AirPods battery decoding, forced pairing or automatic connection. Standard battery reads disconnect on completion or timeout; the case-open check never connects.")
                 EmptyNote(text: "For unavailable left/right/case readings, check the system Batteries widget. No battery percentage is fabricated from signal strength, audio connection or charge state.")
             }
         }
@@ -146,7 +177,8 @@ struct AccessoryBatteryProbeView: View {
         switch probe.phase {
         case .idle: return "Ready for a manual battery check"
         case .preparing: return "Preparing Bluetooth"
-        case .scanning: return "Looking for Battery Service"
+        case .scanning:
+            return probe.visibility == nil ? "Looking for Battery Service" : "Checking visible BLE broadcasts"
         case .ready: return "Discovery complete"
         case .connecting: return "Connecting to selected accessory"
         case .reading: return "Reading standard battery characteristics"

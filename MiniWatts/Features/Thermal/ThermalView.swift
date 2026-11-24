@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ThermalView: View {
     @Environment(PowerMonitor.self) private var monitor
@@ -42,28 +43,76 @@ struct ThermalView: View {
                 ForEach(snapshot.temperaturesByZone) { group in
                     zonePanel(group)
                 }
-                modelNote
+            }
+            validationPanel
+        }
+    }
+
+    /// Historical evidence and current coverage are deliberately separate.
+    /// No extra HID client is opened to generate or share this report.
+    private var validationPanel: some View {
+        Panel("Thermal validation", systemImage: "checkmark.shield") {
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(spacing: 0) {
+                    DetailRow(label: "Model", value: DeviceCompatibilityProfile.displayName ?? monitor.deviceModelIdentifier)
+                    DetailRow(label: "Model identifier", value: monitor.deviceModelIdentifier)
+                    DetailRow(label: "System", value: UIDevice.current.systemVersion)
+                    DetailRow(label: "Live temperature sensors", value: String(liveTemperatureCount))
+                    DetailRow(label: "Calibration channels", value: String(calibrationCount))
+                    DetailRow(label: "Excluded temperature readings", value: String(snapshot.temperatureWarnings.count))
+                }
+                #if targetEnvironment(simulator)
+                EmptyNote(text: "Simulator data is not evidence of hardware sensor compatibility.",
+                          systemImage: "exclamationmark.triangle")
+                #else
+                if DeviceCompatibilityProfile.isIPhone17ProMax {
+                    EmptyNote(text: "iPhone 17 Pro Max (iPhone18,2): previous real-device sensor observations confirmed battery, charger and PMU readings. Recorded samples are covered by regression tests; this installation still requires fresh device testing and external calibration.",
+                              systemImage: "checkmark.shield")
+                } else {
+                    EmptyNote(text: "Sensor names and scales vary by model and OS. Current readable channels are shown above; these counts do not establish hardware calibration.",
+                              systemImage: "info.circle")
+                }
+                #endif
+                EmptyNote(text: "Excluded sentinel values remain in Raw data. Calibration channels are not live hotspots. The heat map is schematic, not a calibrated image of the device interior.",
+                          systemImage: "info.circle")
+                ShareLink(item: thermalReport) {
+                    Label("Share thermal validation report", systemImage: "square.and.arrow.up")
+                        .font(.caption.weight(.semibold))
+                }
+                .tint(.mwAccent)
             }
         }
     }
 
-    /// Which sensors exist, what they are called and how they are scaled is different
-    /// on every model and documented nowhere. Readings outside anything physical are
-    /// dropped by `HIDSensors`, but a value that is wrong and still looks plausible
-    /// cannot be caught that way, so the page says so rather than implying otherwise.
-    @ViewBuilder
-    private var modelNote: some View {
-        // Two literals, not one ternary: the extractor reads each at its own call site.
-        switch form {
-        case .phone:
-            EmptyNote(text: "Sensor names and scales differ by iPhone model, and this build was checked on an iPhone Air. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your model, it may well be.",
-                      systemImage: "exclamationmark.circle")
-                .padding(.horizontal, 4)
-        case .tablet:
-            EmptyNote(text: "Sensor names and scales differ between models, and an iPad differs from an iPhone more than most. This build was checked on an iPhone Air; what it knows about iPads comes from one iPad Pro's sensor list. Impossible readings stay in Raw data but are left out of derived temperatures; a reading that is merely wrong cannot be spotted that way — if something here looks off for your iPad, it may well be.",
-                      systemImage: "exclamationmark.circle")
-                .padding(.horizontal, 4)
+    private var calibrationCount: Int {
+        snapshot.temperatures.filter { $0.name.localizedCaseInsensitiveContains("tcal") }.count
+    }
+
+    private var liveTemperatureCount: Int {
+        snapshot.temperatures.count - calibrationCount
+    }
+
+    private var thermalReport: String {
+        var lines = [
+            "WattTrace thermal validation — \(SettingsView.versionText)",
+            "Timestamp UTC: \(snapshot.date.ISO8601Format())",
+            "Model: \(monitor.deviceModelIdentifier)",
+            "System: \(UIDevice.current.systemVersion)",
+            "HID raw readings: \(snapshot.sensors.count)",
+            "Live temperature sensors: \(liveTemperatureCount)",
+            "Calibration channels: \(calibrationCount)",
+            "Excluded readings: \(snapshot.temperatureWarnings.count)",
+            "Battery: \(snapshot.batteryTemperature.map { String(format: "%.3f °C", $0) } ?? "unavailable")",
+            "Charge IC: \(snapshot.chargerTemperature.map { String(format: "%.3f °C", $0) } ?? "unavailable")",
+            "Hottest: \(snapshot.hottestSensor.map { "\($0.name) = \($0.formatted)" } ?? "unavailable")",
+            "",
+            "# Raw temperatures (°C)"
+        ]
+        lines += snapshot.sensors.filter { $0.kind == .temperature }.map {
+            "[\($0.index)] \($0.name) \($0.key) = \($0.formatted)"
         }
+        lines += ["", "# Excluded readings"] + snapshot.temperatureWarnings
+        return lines.joined(separator: "\n")
     }
 
     private var glowColor: Color {
@@ -237,6 +286,9 @@ struct ThermalView: View {
 
     private func sensorLabels(_ reading: HIDSensors.Reading) -> (title: Text, subtitle: Text?) {
         let source = sensorSource(reading)
+        if reading.name.localizedCaseInsensitiveContains("tcal") {
+            return (Text("Calibration (not a live hotspot)"), source)
+        }
         guard let label = SensorCatalog.label(for: reading.name) else {
             return (Text(verbatim: reading.name), source)
         }
@@ -251,8 +303,8 @@ struct ThermalView: View {
                     let labels = sensorLabels(reading)
                     BarRow(title: labels.title,
                            detail: unit.reading(reading.value),
-                           fraction: (reading.value - 20) / 30,
-                           tint: .mwTemperature(reading.value),
+                           fraction: reading.name.localizedCaseInsensitiveContains("tcal") ? 0 : (reading.value - 20) / 30,
+                           tint: reading.name.localizedCaseInsensitiveContains("tcal") ? .mwMuted : .mwTemperature(reading.value),
                            subtitle: labels.subtitle)
                 }
             }
