@@ -13,8 +13,8 @@ Xcode target 和源码目录暂时仍叫 `MiniWatts`，以便未来继续同步�
 
 ## 当前开发进度
 
-- 开发分支：`watttrace/v0.0.3` → [开发分支](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.3)
-- App 版本：`0.0.3`（开发中）
+- 开发分支：`watttrace/v0.0.4` → [开发分支](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.4)
+- App 版本：`0.0.4`（开发中）
 - 主 App Bundle ID：`com.hamizdev.WattTrace`
 - Widget Bundle ID：`com.hamizdev.WattTrace.Widget`
 - App Group：`group.com.hamizdev.WattTrace`
@@ -34,7 +34,7 @@ WattTrace 自己的改动包括：无线输入功率读不到时不再记录假�
 **GitHub Actions（Windows 也可以操作）**
 
 1. 打开 [Actions → Build](https://github.com/HamizDev/WattTrace/actions/workflows/build.yml)。
-2. 选择 **Run workflow**，分支 `watttrace/v0.0.3`。
+2. 选择 **Run workflow**，分支 `watttrace/v0.0.4`。
 3. 编译成功后下载 unsigned IPA Artifact。
 4. 使用自己的 Apple 开发者签名后侧载安装。
 

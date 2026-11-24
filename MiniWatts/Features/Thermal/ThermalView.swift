@@ -3,6 +3,7 @@ import UIKit
 
 struct ThermalView: View {
     @Environment(PowerMonitor.self) private var monitor
+    @State private var presentedReport: DiagnosticReport?
 
     private var snapshot: PowerSnapshot { monitor.snapshot }
     private var unit: TemperatureDisplayUnit { monitor.temperatureUnit }
@@ -46,6 +47,9 @@ struct ThermalView: View {
             }
             validationPanel
         }
+        .sheet(item: $presentedReport) { report in
+            DiagnosticReportPreview(report: report)
+        }
     }
 
     /// Historical evidence and current coverage are deliberately separate.
@@ -75,11 +79,9 @@ struct ThermalView: View {
                 #endif
                 EmptyNote(text: "Excluded sentinel values remain in Raw data. Calibration channels are not live hotspots. The heat map is schematic, not a calibrated image of the device interior.",
                           systemImage: "info.circle")
-                ShareLink(item: thermalReport) {
-                    Label("Share thermal validation report", systemImage: "square.and.arrow.up")
-                        .font(.caption.weight(.semibold))
+                DiagnosticReportActions(kind: .thermal, makeText: { thermalReport }) {
+                    presentedReport = $0
                 }
-                .tint(.mwAccent)
             }
         }
     }

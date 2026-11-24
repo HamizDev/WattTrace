@@ -59,3 +59,9 @@ and open-lid checks in a quiet setting. An absent or positive report does
 not establish battery availability; the OS can filter reports and nearby
 Apple devices can contribute. The system Batteries widget remains the
 reference for actual AirPods component percentages.
+
+In v0.0.4, after a completed case visibility check, use **Copy diagnostic
+report** or **View or save report**. Copy does not depend on the iOS share
+sheet. The preview is a frozen text snapshot, and the completed report
+remains in memory while the diagnostic page is open even if the app
+backgrounds. No BLE scan or connection continues in the background.

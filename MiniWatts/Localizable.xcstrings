@@ -1,6 +1,106 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Copy diagnostic report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制报告"
+          }
+        }
+      }
+    },
+    "View or save report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看或保存报告"
+          }
+        }
+      }
+    },
+    "Report copied. Return to your chat and paste it." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "报告已复制，返回聊天后粘贴即可。"
+          }
+        }
+      }
+    },
+    "Captured report (does not update while open)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已生成的报告（打开期间不会随实时读数变化）"
+          }
+        }
+      }
+    },
+    "Save report to Files" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存报告到文件"
+          }
+        }
+      }
+    },
+    "Share report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享报告"
+          }
+        }
+      }
+    },
+    "If the system share sheet is unavailable, copy the report or save the text file instead." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果无法打开系统分享面板，可以直接复制报告或保存为文本文件。"
+          }
+        }
+      }
+    },
+    "Thermal validation report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度验证报告"
+          }
+        }
+      }
+    },
+    "Case visibility report" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "充电盒可见性报告"
+          }
+        }
+      }
+    },
+    "Last completed case check" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次完成的充电盒检查"
+          }
+        }
+      }
+    },
     "Thermal validation" : {
       "localizations": {
         "zh-Hans": {

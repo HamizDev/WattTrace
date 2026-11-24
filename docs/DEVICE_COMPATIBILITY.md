@@ -88,3 +88,8 @@ Thermal → Thermal validation reports this evidence separately from current
 sensor counts. Use Share thermal validation report on the actual phone for
 a new sample. This regression does not establish absolute accuracy, physical
 map coordinates or successful installation of the new revision.
+
+In v0.0.4, Thermal → Thermal validation provides **Copy diagnostic report**
+and **View or save report**. Capture is on demand and the preview does not
+change with subsequent sensor samples. Copy directly to the clipboard, or
+save a UTF-8 text file from the preview; system sharing is optional.

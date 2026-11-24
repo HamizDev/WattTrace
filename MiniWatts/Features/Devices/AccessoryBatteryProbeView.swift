@@ -28,6 +28,8 @@ struct AccessoryBatteryProbeLink: View {
 
 struct AccessoryBatteryProbeView: View {
     @StateObject private var probe = AccessoryBatteryProbe()
+    @State private var presentedReport: DiagnosticReport?
+    @State private var completedCaseReport: DiagnosticReport?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -36,6 +38,13 @@ struct AccessoryBatteryProbeView: View {
             PanelScroll {
                 controls
                 if probe.visibility != nil { caseVisibilityPanel }
+                if probe.visibility == nil, let report = completedCaseReport {
+                    Panel("Last completed case check", systemImage: "doc.text") {
+                        DiagnosticReportActions(kind: .caseVisibility, makeText: { report.text }) {
+                            presentedReport = $0
+                        }
+                    }
+                }
                 if !probe.candidates.isEmpty { candidatePanel }
                 if probe.completedAt != nil || !probe.results.isEmpty { resultPanel }
                 limitations
@@ -43,7 +52,21 @@ struct AccessoryBatteryProbeView: View {
         }
         .navigationTitle("Bluetooth battery diagnostic")
         .navigationBarTitleDisplayMode(.inline)
-        .onDisappear { probe.stop() }
+        .sheet(item: $presentedReport) { report in
+            DiagnosticReportPreview(report: report)
+        }
+        .onDisappear {
+            probe.stop()
+            completedCaseReport = nil
+        }
+        .onChange(of: probe.phase) { _, phase in
+            if phase == .preparing {
+                completedCaseReport = nil
+            } else if phase == .ready, let evidence = probe.visibility {
+                completedCaseReport = DiagnosticReport(
+                    kind: .caseVisibility, text: evidence.report(version: SettingsView.versionText))
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             // The permission alert can make the scene inactive. Only a real
             // background transition cancels the request before it completes.
@@ -96,11 +119,11 @@ struct AccessoryBatteryProbeView: View {
                     }
                     EmptyNote(text: "These are anonymous advertisement counts, not distinct devices, verified case identity or battery readings. Apple proximity-shaped data may come from other nearby devices. Zero reports does not prove the case is not broadcasting.")
                     if probe.phase == .ready {
-                        ShareLink(item: evidence.report(version: SettingsView.versionText)) {
-                            Label("Share case visibility report", systemImage: "square.and.arrow.up")
-                                .font(.caption.weight(.semibold))
+                        DiagnosticReportActions(kind: .caseVisibility, makeText: {
+                            completedCaseReport?.text ?? evidence.report(version: SettingsView.versionText)
+                        }) {
+                            presentedReport = $0
                         }
-                        .tint(.mwAccent)
                     }
                 }
             }
