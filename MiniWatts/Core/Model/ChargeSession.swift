@@ -48,6 +48,8 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     /// Bounded one-second SOC aggregates. Nil only for sessions saved before
     /// this feature existed; those can be analysed from the stored curve.
     var socAnalysis: SOCBandAnalysis?
+    /// Optional, user-entered test identifier, never inferred cable metadata.
+    var testLabel: String?
 
     var isOpen: Bool { end == nil }
     var duration: TimeInterval { (end ?? .now).timeIntervalSince(start) }
@@ -84,6 +86,7 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         self.pathMilliohms = nil
         self.pathSamples = nil
         self.socAnalysis = nil
+        self.testLabel = nil
     }
 
     /// Older history has at most the saved, possibly thinned curve. Its SOC

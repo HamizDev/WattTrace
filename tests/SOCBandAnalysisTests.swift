@@ -65,5 +65,6 @@ struct SOCBandAnalysisTests {
         near(historical.analysis.bins[0].thermalMeasuredSeconds, 5, "legacy thermal coverage")
         precondition(historical.analysis.sampleCount == 3)
         print("SOC analysis regression checks passed")
+        SOCSessionComparisonTests.run()
     }
 }

@@ -5,6 +5,7 @@ extension ChargeSession {
     /// copy and is translated. Keeping them apart is why `ChargeSession` exposes
     /// `fallbackTitle` rather than a single pre-rendered `String`.
     var titleText: Text {
+        if let testLabel { return Text(verbatim: testLabel) }
         if let adapterName { return Text(verbatim: adapterName) }
         return Text(fallbackTitle)
     }
@@ -44,6 +45,9 @@ struct SessionsView: View {
                 }
             } else {
                 summaryPanel
+                if monitor.sessions.count >= 2 {
+                    SessionComparisonLink(sessions: monitor.sessions)
+                }
                 ForEach(monitor.sessions) { session in
                     NavigationLink {
                         SessionDetailView(session: session)
@@ -170,9 +174,17 @@ struct SessionRow: View {
 }
 
 struct SessionDetailView: View {
-    let session: ChargeSession
+    let initialSession: ChargeSession
     @Environment(PowerMonitor.self) private var monitor
     @Environment(\.dismiss) private var dismiss
+    @State private var editingTestLabel = false
+    @State private var testLabelDraft = ""
+
+    init(session: ChargeSession) { initialSession = session }
+
+    private var session: ChargeSession {
+        monitor.sessions.first { $0.id == initialSession.id } ?? initialSession
+    }
 
     var body: some View {
         ZStack {
@@ -183,6 +195,9 @@ struct SessionDetailView: View {
                 energyPanel
                 powerPanel
                 socAnalysisLink
+                if monitor.sessions.count >= 2 {
+                    SessionComparisonLink(sessions: monitor.sessions, baselineID: session.id)
+                }
                 climatePanel
                 cablePanel
                 detailsPanel
@@ -191,7 +206,14 @@ struct SessionDetailView: View {
         .navigationTitle(session.titleText)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    testLabelDraft = session.testLabel ?? ""
+                    editingTestLabel = true
+                } label: {
+                    Image(systemName: "tag")
+                }
+                .accessibilityLabel("Edit test label")
                 Button(role: .destructive) {
                     monitor.deleteSession(session)
                     dismiss()
@@ -200,6 +222,15 @@ struct SessionDetailView: View {
                 }
                 .tint(.mwDanger)
             }
+        }
+        .alert("Test label", isPresented: $editingTestLabel) {
+            TextField("Charger, cable or test conditions", text: $testLabelDraft)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                monitor.setSessionTestLabel(id: session.id, label: testLabelDraft)
+            }
+        } message: {
+            Text("Optional manual label, for example: Apple 40 W · Cable A · case off. Leave blank to clear it. This does not change sensor readings.")
         }
     }
 
@@ -301,18 +332,14 @@ struct SessionDetailView: View {
         }
     }
 
-    /// Same charger, different cable — the comparison the path resistance exists for.
-    ///
-    /// A single figure is hard to judge, because it carries the charger's own
-    /// regulation and both sets of contacts as well as the cable. Two sessions on the
-    /// same charger differ only in what was plugged between them, so the gap between
-    /// rows is the part a user can do something about. Hidden entirely until there
-    /// are at least two, since one row is not a comparison.
+    /// A comparison of the whole wired path, grouped by reported adapter name.
+    /// Names are not unique device identities; a difference cannot be assigned
+    /// to a cable unless the other test conditions are controlled.
     @ViewBuilder
     private var cablePanel: some View {
         let fits = monitor.pathFitsSharingAdapter(with: session)
         if !fits.isEmpty {
-            Panel("Cable comparison", systemImage: "cable.connector.horizontal",
+            Panel("Path resistance comparison", systemImage: "cable.connector.horizontal",
                   trailing: Text("\(fits.count) sessions")) {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(fits) { fit in
@@ -321,7 +348,8 @@ struct SessionDetailView: View {
                             Image(systemName: isThis ? "largecircle.fill.circle" : "circle")
                                 .font(.system(size: 12))
                                 .foregroundStyle(isThis ? Color.mwAccent : Color.mwMuted.opacity(0.5))
-                            Text(verbatim: Formatting.timestamp(fit.start))
+                            Text(verbatim: fit.testLabel ?? Formatting.timestamp(fit.start))
+                                .lineLimit(1)
                                 .mwMono(size: 12, weight: isThis ? .semibold : .regular)
                             Spacer(minLength: 8)
                             Text(verbatim: String(format: "%.0f mΩ", fit.pathMilliohms ?? 0))
@@ -335,6 +363,7 @@ struct SessionDetailView: View {
                                 .fill(isThis ? Color.mwAccent.opacity(0.12) : Color.mwMuted.opacity(0.06))
                         )
                     }
+                    EmptyNote(text: "These records share a reported adapter name, not a verified physical charger. The estimate includes adapter regulation, cable and both contacts.")
                     if let note = comparisonNote(fits) {
                         Text(note)
                             .font(.caption)
@@ -346,18 +375,17 @@ struct SessionDetailView: View {
         }
     }
 
-    /// Where this session landed among the others on the same charger. Only the two
-    /// ends are worth a sentence — being the best says the connection is as good as
-    /// this charger has seen, and being worse than the best says by how much.
+    /// Describe the observed difference without attributing it to a cable or
+    /// asserting a causal ranking of the chargers.
     private func comparisonNote(_ fits: [ChargeSession]) -> LocalizedStringResource? {
         guard let best = fits.first?.pathMilliohms,
               let mine = fits.first(where: { $0.id == session.id })?.pathMilliohms else { return nil }
         let excess = mine - best
         guard excess >= 25 else {
-            return "The lowest path resistance recorded on this charger. Whatever was plugged in here is as good as it has seen."
+            return "This estimate is close to the lowest recorded path resistance for this reported adapter name."
         }
         let gap = String(format: "%.0f mΩ", excess)
-        return "\(gap) above the best this charger has recorded. Same charger, so that difference is the cable and the plugs — not the adapter."
+        return "\(gap) above the lowest estimate for this reported adapter name. Cable, contacts, charger regulation and test conditions may all contribute."
     }
 
     private var detailsPanel: some View {
@@ -365,6 +393,7 @@ struct SessionDetailView: View {
             VStack(spacing: 0) {
                 DetailRow(label: "Started", value: Formatting.timestamp(session.start))
                 DetailRow(label: "Ended", value: session.end.map(Formatting.timestamp))
+                DetailRow(label: "Test label", value: session.testLabel)
                 DetailRow(label: "Adapter", value: session.adapterName)
                 DetailRow(label: "Rated", value: session.adapterRatedWatts.map { String(format: "%.0f W", $0) })
                 DetailRow(label: "Peak from charger", value: session.measuredPeakInputWatts.map { String(format: "%.2f W", $0) })

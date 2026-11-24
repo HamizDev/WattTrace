@@ -94,3 +94,33 @@ No estimated charger input is invented for wireless sessions.
 The comparison-ready aggregation model and its regression tests are
 Foundation-only. Run `bash scripts/test-soc-analysis.sh` with Swift 6.2+.
 The build workflow runs the same tests before packaging the IPA.
+
+## Matched charging-session comparison (stage 2)
+
+From History or a completed session's detail, open **Compare sessions** and
+choose two different completed records. A and B are explicit selections; use
+the tag button on a session detail to save an optional test label (e.g.
+charger, cable, case and ambient conditions). Existing history decodes absent
+labels as nil. The reported adapter name remains separate from the manual label.
+
+Select 5% / 10% groups and input watts, signed battery-rail watts, mean battery
+temperature, mean hotspot temperature or high thermal pressure. Each metric
+requires at least ten valid seconds per side in the same 5% base band. The
+10% view uses only common 5% constituents, with the smaller of the two measured
+durations as the identical weight in each session. A/B values, signed B−A
+difference, matched sub-bands and per-side measurement coverage are shown.
+100% stays separate. Missing values never become zero; inadequate or
+non-overlapping data is not ranked. Temperature differences convert °C to °F
+by scale alone, and high-pressure differences are percentage points.
+
+History reconstructed from older curve samples is visibly marked as less
+certain. This is a comparison within SOC bands, not exact matching of
+temperature, SOC within the band or other experimental conditions. A common
+adapter name is not proof of the same charger, and path resistance cannot be
+attributed solely to the cable.
+
+The comparison model is Foundation-only. The existing SOC regression test
+script now covers shared weighting, non-overlapping sub-bands, short coverage,
+unavailable input, measured zeros, signed battery watts, thermal metrics and
+separate full-charge bands. CI must pass both the tests and the Xcode build
+before this revision is considered compile-verified.

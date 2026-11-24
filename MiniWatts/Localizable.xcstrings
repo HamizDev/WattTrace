@@ -1,6 +1,366 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Compare sessions" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "充电记录对比"
+          }
+        }
+      }
+    },
+    "Compare at the same battery level" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相同电量区间对比"
+          }
+        }
+      }
+    },
+    "Power, temperature and thermal pressure" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功率、温度和热压力"
+          }
+        }
+      }
+    },
+    "No comparable intervals" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可比区间"
+          }
+        }
+      }
+    },
+    "The selected metric needs at least 10 measured seconds in a common 5% sub-band on both sides. Try the battery rail or choose another session." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所选指标要求两次记录在共同的 5% 子区间内均有至少 10 秒有效测量。可以尝试电池轨指标或选择另一条记录。"
+          }
+        }
+      }
+    },
+    "Choose different sessions" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请选择不同的会话"
+          }
+        }
+      }
+    },
+    "Select two distinct completed charging sessions." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请选择两次不同的已完成充电会话。"
+          }
+        }
+      }
+    },
+    "Select sessions" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择充电记录"
+          }
+        }
+      }
+    },
+    "Session A" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录 A"
+          }
+        }
+      }
+    },
+    "Session B" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录 B"
+          }
+        }
+      }
+    },
+    "Swap A and B" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交换 A 与 B"
+          }
+        }
+      }
+    },
+    "Comparison settings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对比设置"
+          }
+        }
+      }
+    },
+    "Comparison metric" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对比指标"
+          }
+        }
+      }
+    },
+    "Matched SOC comparison" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同 SOC 区间对比"
+          }
+        }
+      }
+    },
+    "%lld matched bands" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个匹配区间"
+          }
+        }
+      }
+    },
+    "Only jointly measured bands are plotted. Their x-position follows the matched sub-bands; missing bands are not interpolated." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只绘制两次会话均有有效测量的区间。横坐标对应匹配子区间，无数据区间不做插值。"
+          }
+        }
+      }
+    },
+    "B minus A" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B 减 A"
+          }
+        }
+      }
+    },
+    "Matched sub-bands" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹配子区间"
+          }
+        }
+      }
+    },
+    "Measured A" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A 有效测量"
+          }
+        }
+      }
+    },
+    "Measured B" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B 有效测量"
+          }
+        }
+      }
+    },
+    "Shared weighting time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共同加权时长"
+          }
+        }
+      }
+    },
+    "Not enough shared measurements for this metric." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该指标的共同有效测量不足。"
+          }
+        }
+      }
+    },
+    "Comparison method" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对比方法"
+          }
+        }
+      }
+    },
+    "Each common 5% sub-band requires at least 10 valid measured seconds per session. A 10% comparison uses only the shared 5% sub-bands, with the smaller measured duration as the weight on both sides. 100% is separate." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共同的每个 5% 子区间要求两次会话各有至少 10 秒有效测量。10% 对比只使用共同的 5% 子区间，并以两次测量中较短的有效时长作为相同权重。100% 独立统计。"
+          }
+        }
+      }
+    },
+    "A and B show matched, interval-weighted values, not whole-session averages. Coverage is measured time divided by observed time within the matched sub-bands; unrecorded time is excluded. B minus A is signed, not a ranking." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A、B 显示匹配区间的时长加权数值，而非整次会话均值。覆盖率为匹配子区间内有效测量时长除以观测时长，不包括未记录时段。B 减 A 保留正负号，不表示优劣排名。"
+          }
+        }
+      }
+    },
+    "An identical adapter name or a user test label does not verify the physical charger or cable. Match the charge level, starting temperature, phone usage and environment before interpreting differences." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相同的适配器名称或用户填写的标签不能证明是同一实体充电器或线缆。分析差异时应尽量控制电量、初始温度、手机使用情况和环境条件。"
+          }
+        }
+      }
+    },
+    "At least one session was reconstructed from its saved curve. Older missing values, carried-forward levels or thinned samples can make this comparison less reliable." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "至少一条会话由历史曲线回算。旧版缺失值、沿用的电量或抽稀后的采样可能降低对比可靠性。"
+          }
+        }
+      }
+    },
+    "Mean hotspot temperature" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均热点温度"
+          }
+        }
+      }
+    },
+    "Test label" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试标签"
+          }
+        }
+      }
+    },
+    "Edit test label" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑测试标签"
+          }
+        }
+      }
+    },
+    "Charger, cable or test conditions" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "充电器、线缆或测试条件"
+          }
+        }
+      }
+    },
+    "Optional manual label, for example: Apple 40 W · Cable A · case off. Leave blank to clear it. This does not change sensor readings." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选手动标签，例如：Apple 40 W · 线缆 A · 不戴壳。留空即可清除，不会改变传感器数据。"
+          }
+        }
+      }
+    },
+    "Path resistance comparison" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "充电路径电阻对比"
+          }
+        }
+      }
+    },
+    "These records share a reported adapter name, not a verified physical charger. The estimate includes adapter regulation, cable and both contacts." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些记录的适配器报告名称相同，但无法确认是同一实体充电器。估算值包含适配器调节、线缆及两端接触电阻。"
+          }
+        }
+      }
+    },
+    "This estimate is close to the lowest recorded path resistance for this reported adapter name." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该估算值接近此适配器报告名称下记录到的最低路径电阻。"
+          }
+        }
+      }
+    },
+    "%@ above the lowest estimate for this reported adapter name. Cable, contacts, charger regulation and test conditions may all contribute." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比此适配器报告名称下的最低估算值高 %@。线缆、接触情况、适配器调节和测试条件都可能产生影响。"
+          }
+        }
+      }
+    },
     "SOC band analysis" : {
       "localizations": {
         "zh-Hans": {

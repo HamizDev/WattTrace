@@ -477,22 +477,24 @@ final class PowerMonitor {
         store.save(sessions + (currentSession.map { [$0] } ?? []))
     }
 
+    /// Update a completed record in place, so history and comparison selectors
+    /// see the same label. Empty text clears it. Existing JSON decodes nil.
+    func setSessionTestLabel(id: UUID, label: String) {
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        let trimmed = String(label.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80))
+        sessions[index].testLabel = trimmed.isEmpty ? nil : trimmed
+        persist()
+    }
+
     func deleteSession(_ session: ChargeSession) {
         sessions.removeAll { $0.id == session.id }
         persist()
     }
 
-    /// Every recorded session on the same adapter that produced a path-resistance
-    /// fit, including this one, lowest resistance first.
-    ///
-    /// This is the comparison the number is actually for. A path resistance on its
-    /// own is hard to judge — it carries the charger's regulation and both sets of
-    /// contacts as well as the cable — but the same charger measured through two
-    /// cables differs only by the cable and the plugs, so the difference between two
-    /// rows here is the thing a user can act on.
-    ///
-    /// Matched on the adapter's own name, which is hardware and is compared verbatim.
-    /// Wireless sessions are excluded: there is no cable in them to compare.
+    /// Recorded wired sessions with the same reported adapter name and a path
+    /// resistance fit. A name is not a unique hardware identifier; the fit
+    /// includes adapter regulation and both contacts as well as the cable.
+    /// Treat this as a shortlist for comparison, not a proof of cable identity.
     func pathFitsSharingAdapter(with session: ChargeSession) -> [ChargeSession] {
         // This session has to be in the comparison for the comparison to be about it.
         // Without a fit of its own it would be a list of other sessions under a
