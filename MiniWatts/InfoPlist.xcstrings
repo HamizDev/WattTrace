@@ -1,0 +1,22 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSBluetoothAlwaysUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace uses Bluetooth only when you request an accessory battery check, to discover supported Battery Services and read the selected accessory."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace 仅在你主动检查配件电量时使用蓝牙，以发现支持标准电池服务的设备并读取你选择的配件。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -27,16 +27,14 @@ EXPORT_DIR="$BUILD_DIR/export"
 
 # The version comes from git, so a release is one step: tag and push. Nothing in the
 # project file has to be edited first.
-#   MARKETING_VERSION        the highest v* tag on HEAD, without its "v"; on an untagged
-#                            commit, the nearest tag behind it. Export it to override —
-#                            CI does, from the tag that triggered the run.
+#   MARKETING_VERSION        the exact v* tag on HEAD, without its "v"; untagged
+#                            builds use the Xcode project version. Export to override.
 #   CURRENT_PROJECT_VERSION  the number of commits reachable from HEAD: it only grows on
 #                            master, and is the same locally and in CI as long as CI
 #                            checks out full history.
 # With no tags, or no git, both fall back to whatever the project file says.
 if [ -z "${MARKETING_VERSION:-}" ]; then
   tag=$(git tag --points-at HEAD --list 'v*' 2>/dev/null | sort -V | tail -1 || true)
-  [ -n "$tag" ] || tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
   [ -z "$tag" ] || MARKETING_VERSION="${tag#v}"
 fi
 if [ -z "${CURRENT_PROJECT_VERSION:-}" ]; then

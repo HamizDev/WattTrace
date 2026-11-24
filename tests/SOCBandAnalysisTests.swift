@@ -69,5 +69,6 @@ struct SOCBandAnalysisTests {
         try ThermalPowerAnalysisTests.run()
         try SessionExportTests.run()
         try WatchBatteryReadingTests.run()
+        AccessoryBatteryLevelTests.run()
     }
 }

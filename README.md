@@ -15,8 +15,8 @@ upstream changes can still be merged.
 
 ## Current work
 
-- Development: `watttrace/v0.0.1` → [PR #1](https://github.com/HamizDev/WattTrace/pull/1)
-- App version: `0.0.1`
+- Development: `watttrace/v0.0.2` → [development branch](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.2)
+- App version: `0.0.2` (development)
 - App bundle: `com.hamizdev.WattTrace`
 - Widget bundle: `com.hamizdev.WattTrace.Widget`
 - App Group: `group.com.hamizdev.WattTrace`
@@ -36,7 +36,7 @@ energy-weighted History charge-path efficiency calculated from *paired* rails.
 **GitHub Actions (from Windows or macOS)**
 
 1. Open [Actions → Build](https://github.com/HamizDev/WattTrace/actions/workflows/build.yml).
-2. Choose **Run workflow**, branch `watttrace/v0.0.1`.
+2. Choose **Run workflow**, branch `watttrace/v0.0.2`.
 3. Download the unsigned IPA artifact after the run succeeds.
 4. Sign the IPA with your own Apple developer credentials to sideload it.
 
@@ -60,6 +60,8 @@ installation and pairing must still be verified; generic sideload tools may not
 install or correctly re-sign the embedded Watch app.
 
 ## Measurements and limits
+
+The Devices page includes passive audio route information and a manual, bounded standard Bluetooth Battery Service check. AirPods 4 may not expose a readable Battery Service. See [accessory diagnostics](docs/ACCESSORY_DIAGNOSTICS.md). The new WattTrace light/dark iOS icons and watchOS icon use the approved opaque 1024×1024 artwork.
 
 Completed sessions can be exported to Files as CSV or versioned JSON. See [the export schema](docs/EXPORT_SCHEMA.md) for meter alignment, units and legacy data limitations.
 
