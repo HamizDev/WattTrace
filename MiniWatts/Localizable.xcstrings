@@ -1,6 +1,126 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "BatteryCenter returned no devices. Connected accessories may still be present in the system Batteries widget." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BatteryCenter 未返回设备。已连接的配件仍可能显示在系统电池小组件中。"
+          }
+        }
+      }
+    },
+    "Accessory battery service unavailable." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配件电量服务不可用。"
+          }
+        }
+      }
+    },
+    "BatteryCenter loaded but returned an empty device list. Previous sandboxed-device tests showed powerd XPC access failures. An empty list alone does not establish the reason on this device." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BatteryCenter 已加载，但返回空设备列表。此前沙盒真机测试出现过 powerd XPC 访问失败。仅凭空列表无法确定当前设备的具体原因。"
+          }
+        }
+      }
+    },
+    "No external accessory battery records were returned." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未返回外部配件电量记录。"
+          }
+        }
+      }
+    },
+    "BatteryCenter records" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BatteryCenter 记录数"
+          }
+        }
+      }
+    },
+    "AirPods battery percentages, left/right and case levels require actual battery records. The audio output name is not a substitute for those readings." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods 电量、左右耳及充电盒电量需要实际电池记录。音频输出名称不能替代这些读数。"
+          }
+        }
+      }
+    },
+    "Current audio output" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前音频输出"
+          }
+        }
+      }
+    },
+    "No audio output route was returned for WattTrace." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WattTrace 未获得音频输出路由。"
+          }
+        }
+      }
+    },
+    "Audio port type" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频端口类型"
+          }
+        }
+      }
+    },
+    "Accessory battery via audio route" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频路由配件电量"
+          }
+        }
+      }
+    },
+    "This is WattTrace's current audio route, not a list of connected Bluetooth devices. An AirPods name can appear here without access to its battery levels. No audio session is activated or changed by this check." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是 WattTrace 当前的音频路由，不是已连接蓝牙设备列表。即使能显示 AirPods 名称，也不代表能读取其电量。此检查不会激活或更改音频会话。"
+          }
+        }
+      }
+    },
+    "Refresh audio route" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新音频路由"
+          }
+        }
+      }
+    },
     "Apple Watch" : {
       "localizations": {
         "zh-Hans": {

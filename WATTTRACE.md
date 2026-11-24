@@ -209,3 +209,19 @@ identifiers. The unsigned build is not proof of successful device signing,
 installation, transfer or watchOS background delivery. There is no Watch
 wattmeter, internal temperature estimate or background runtime entitlement.
 See [Watch companion](docs/WATCH_COMPANION.md).
+
+## Accessory visibility diagnostics (post-v0.0.1)
+
+Devices now contains a passive Current audio output panel. It reads only the
+app's `AVAudioSession.currentRoute.outputs` names/types on appearance, audio
+route change, foreground return or manual refresh. It does not activate or
+reconfigure audio, connect to peripherals, scan BLE, infer hardware identities
+from names, or claim to read AirPods battery data.
+
+The BatteryCenter empty-state wording now distinguishes an empty returned
+device list from an inaccessible service. Prior sandboxed-device observations
+showed powerd XPC access failures, but an empty list does not prove that a
+specific current call was denied. AirPods left/right/case levels and battery
+health remain unavailable unless actual battery records are returned. The
+system Batteries widget has its own access; ordinary developer signing is
+not evidence of equivalent permissions. Real-device AirPods 4 testing pending.

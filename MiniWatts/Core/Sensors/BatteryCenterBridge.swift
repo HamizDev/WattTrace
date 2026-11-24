@@ -85,10 +85,10 @@ nonisolated struct ExternalBatteryDevice: Identifiable, Hashable {
 }
 
 /// Bridge to `BatteryCenter.framework`, the private framework behind the system
-/// Batteries widget. It loads from an ordinary sandbox and needs no entitlement,
-/// but it is private API and can change or vanish in any iOS release —
-/// every call here is defensive, and every failure is reported with the step that
-/// failed rather than as a bare empty list.
+/// Batteries widget. Loading this framework in an ordinary sandbox does not
+/// grant access to its underlying powerd service. The service may return no
+/// accessible devices; a successful framework load is not authorization.
+/// Private API and available readings may change across iOS releases.
 nonisolated final class BatteryCenterBridge {
     /// Where the bridge got to. The UI shows this verbatim, because "no devices"
     /// and "the framework would not load" look identical otherwise, and only the
@@ -112,9 +112,10 @@ nonisolated final class BatteryCenterBridge {
         var userMessage: LocalizedStringResource? {
             switch self {
             case .ready: return nil
-            case .empty, .frameworkMissing, .controllerClassMissing,
-                 .controllerUnavailable, .deviceListMissing:
-                return "Accessory battery levels aren't available on this version of iOS."
+            case .empty:
+                return "BatteryCenter returned no devices. Connected accessories may still be present in the system Batteries widget."
+            case .frameworkMissing, .controllerClassMissing, .controllerUnavailable, .deviceListMissing:
+                return "Accessory battery service unavailable."
             }
         }
 
@@ -131,7 +132,7 @@ nonisolated final class BatteryCenterBridge {
             case .deviceListMissing:
                 return "BCBatteryDeviceController exposes no device list on this iOS version."
             case .empty:
-                return "BatteryCenter loaded and answered, but reported no connected devices. Its XPC to powerd is denied: the console shows _BCPowerSourceController \"Failed to obtain power sources info\"."
+                return "BatteryCenter loaded but returned an empty device list. Previous sandboxed-device tests showed powerd XPC access failures. An empty list alone does not establish the reason on this device."
             }
         }
     }

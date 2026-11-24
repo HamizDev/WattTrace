@@ -18,6 +18,7 @@ struct DevicesView: View {
         PageScaffold("Devices", glow: .mwWireless) {
             thisPhonePanel
             AppleWatchBatteryCard()
+            AudioRouteDiagnosticPanel()
             compatibilityLink
             systemMonitorLink
             if groups.isEmpty {
@@ -131,20 +132,17 @@ struct DevicesView: View {
         }
     }
 
-    /// The accessory list is real code and renders whenever BatteryCenter answers,
-    /// but on current iOS it never does from a sandboxed app: the framework loads,
-    /// the controller is built, and `connectedDevices` comes back empty while the
-    /// system's own Batteries widget shows the same devices.
-    ///
-    /// So the section says that, rather than promising the feature is on its way. It
-    /// used to read "Coming later" under an hourglass, which is a promise this project
-    /// is not in a position to keep: what is in the way is a denied XPC call, not an
-    /// unwritten screen. `EmptyNote` is the component for a probe that legitimately has
-    /// nothing to report, and this is one.
+    /// Empty accessory battery telemetry is not evidence of a disconnected
+    /// accessory. The separate audio-route panel can report a route name even
+    /// when the private battery service returns no readable battery data.
     private var accessoriesPlaceholder: some View {
         Panel("Accessories", systemImage: "airpods") {
-            EmptyNote(text: monitor.batteryCenterStatus
-                      ?? "Accessory battery levels aren't available on this version of iOS.")
+            VStack(alignment: .leading, spacing: 10) {
+                EmptyNote(text: monitor.batteryCenterStatus
+                          ?? "No external accessory battery records were returned.")
+                DetailRow(label: "BatteryCenter records", value: String(monitor.devices.count))
+                EmptyNote(text: "AirPods battery percentages, left/right and case levels require actual battery records. The audio output name is not a substitute for those readings.", systemImage: "info.circle")
+            }
         }
     }
 
