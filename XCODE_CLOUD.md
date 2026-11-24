@@ -1,16 +1,17 @@
 # Xcode Cloud setup for WattTrace
 
-WattTrace v0.0.1 is prepared to use Xcode Cloud as its CI build/archive system.
+WattTrace can use Xcode Cloud as an optional CI build/archive system.
 
 ## Project identity
 
-- Marketing version: `0.0.1`
-- Build number: `1`
+- Marketing version: the current Xcode project version or explicitly selected release version.
+- Build number: supplied by the selected build system.
 - App bundle ID: `com.hamizdev.WattTrace`
 - Widget bundle ID: `com.hamizdev.WattTrace.Widget`
+- Watch bundle ID: `com.hamizdev.WattTrace.watchkitapp`
 - App Group: `group.com.hamizdev.WattTrace`
 - Shared scheme: `WattTrace`
-- Deployment target: iOS 17.0+
+- Deployment targets: iOS/iPadOS 17.0+, watchOS 11.0+
 
 The underlying Xcode target is still named `MiniWatts` for upstream compatibility.
 
@@ -39,11 +40,11 @@ In Xcode:
 6. Create the App Store Connect app record when prompted.
 7. Start with a simple workflow:
    - Environment: latest released Xcode 27 environment compatible with the project.
-   - Start conditions: changes to `master` and pull requests targeting `master`.
+   - Start conditions: changes to `main` and pull requests targeting `main`.
    - Actions: Build and Archive.
    - TestFlight/App Store distribution post-action: **off** for now.
 
-No custom `ci_scripts` are required for v0.0.1 because the project has no third-party
+No custom `ci_scripts` are currently required because the project has no third-party
 build dependencies.
 
 ## Important distribution note
@@ -55,11 +56,11 @@ distribution: private API use is not App Store-safe.
 For personal-device testing, use your developer signing locally after the cloud build
 has verified the commit, or export/sign an appropriate build for sideloading.
 
-## Workflow policy for v0.0.1
+## Workflow policy
 
 The recommended first workflow is deliberately conservative:
 
 - PR -> build/archive verification
-- merge to `master` -> build/archive verification
+- merge to `main` -> build/archive verification
 - no automatic TestFlight distribution
-- no release automation until the first iPhone18,2 real-device validation passes
+- publish unsigned preview releases only after CI validation and explicit maintainer approval

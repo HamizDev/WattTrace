@@ -27,9 +27,9 @@ import zipfile
 
 REPO = os.environ.get("GITHUB_REPOSITORY", "HamizDev/WattTrace")
 BUNDLE_ID = "com.hamizdev.WattTrace"
-# Images come from master, not from the tag: they are presentation, and a release tagged
+# Images come from WattTrace's main branch, not from the tag: they are presentation, and a release tagged
 # before an image existed would otherwise point at a file that is not there.
-RAW = f"https://raw.githubusercontent.com/{REPO}/master"
+RAW = f"https://raw.githubusercontent.com/{REPO}/main"
 SCREENSHOT_SIZE = (1260, 2736)
 
 DESCRIPTION = """\
@@ -39,7 +39,7 @@ every temperature sensor placed on a map of the phone, the USB-PD profiles the c
 offers, and a history of each charge.
 
 It reads private system frameworks, so it is sideload-only and can never be on the App \
-Store. It was built and verified on an iPhone Air; sensor names and scaling differ \
+Store. Sensor observations include iPhone 17 Pro Max (iPhone18,2); names and scaling differ \
 between models, so some readings may be wrong on yours.
 
 Includes a Home Screen and Lock Screen widget, a charging Live Activity and a floating \

@@ -15,14 +15,15 @@ upstream changes can still be merged.
 
 ## Current work
 
-- Development: `watttrace/v0.0.4` → [development branch](https://github.com/HamizDev/WattTrace/tree/watttrace/v0.0.4)
+- Primary branch: [`main`](https://github.com/HamizDev/WattTrace/tree/main)
+- Upstream integration: manual, reviewed merges from MiniWatts; see [upstream sync](docs/UPSTREAM_SYNC.md).
 - App version: `0.0.4` (development)
 - App bundle: `com.hamizdev.WattTrace`
 - Widget bundle: `com.hamizdev.WattTrace.Widget`
 - App Group: `group.com.hamizdev.WattTrace`
 - Shared Xcode Cloud scheme: `WattTrace`
 
-The fork now incorporates upstream MiniWatts changes through
+WattTrace incorporates upstream MiniWatts changes through
 [`0b519fd`](https://github.com/ResistanceTo/MiniWatts/commit/0b519fda61dfd7b766d4be05fdaa2114f295d5e4),
 including the 80%/100% charge forecast, °C/°F selection, iPad layout, more
 reliable power-rail/temperature handling, and charge-hold uncertainty.
@@ -36,7 +37,7 @@ energy-weighted History charge-path efficiency calculated from *paired* rails.
 **GitHub Actions (from Windows or macOS)**
 
 1. Open [Actions → Build](https://github.com/HamizDev/WattTrace/actions/workflows/build.yml).
-2. Choose **Run workflow**, branch `watttrace/v0.0.4`.
+2. Choose **Run workflow**, branch `main`.
 3. Download the unsigned IPA artifact after the run succeeds.
 4. Sign the IPA with your own Apple developer credentials to sideload it.
 
@@ -97,5 +98,5 @@ and the app cannot promise uninterrupted one-second background sampling.
 - [Upstream engineering notes](CLAUDE.md): sensor and Swift implementation notes
 - [Upstream MiniWatts](https://github.com/ResistanceTo/MiniWatts): original project
 
-WattTrace is an independently modified fork, not an official MiniWatts release.
+WattTrace is independently maintained and derived from MiniWatts; it is not an official MiniWatts release.
 See [NOTICE](NOTICE) for upstream and third-party attribution.

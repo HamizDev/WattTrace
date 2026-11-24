@@ -1,10 +1,10 @@
 name: Build
 
-# Pushing to master no longer builds. Two things do:
+# Branch pushes (including main) do not automatically build. These events do:
 #   - a `v*` tag, which builds and publishes a GitHub release
 #   - a pull request, or a manual run, which builds and checks but publishes nothing
 #
-# The cost of dropping master builds is that a broken commit is not noticed until you
+# The cost of skipping direct branch-push builds is that a broken commit is not noticed until you
 # tag. Run this workflow by hand (Actions -> Build -> Run workflow) before tagging, or
 # just build locally with ./scripts/build-ipa.sh, which runs the same steps.
 #

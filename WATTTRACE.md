@@ -276,3 +276,12 @@ not evidence of equivalent permissions. Real-device AirPods 4 testing pending.
   when leaving the diagnostic or starting another check.
 - Add regression tests for immutable report content, UTF-8 and filenames.
   UI presentation and LCSign-resigned device behavior still require testing.
+
+## Primary branch and upstream integration
+
+As of 2026-11-24, WattTrace uses `main` as its primary branch. The historical
+version branches and tags remain references to earlier work. Upstream changes
+are reviewed and merged on dedicated integration branches, rather than replacing
+WattTrace with upstream or relying on the GitHub fork relationship.
+See [manual upstream synchronization](docs/UPSTREAM_SYNC.md). The pre-detachment
+PR descriptions and release notes are archived in [docs/archive](docs/archive/).
