@@ -1,6 +1,436 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Thermal and power analysis" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度与功率分析"
+          }
+        }
+      }
+    },
+    "Power changes versus SOC and temperature" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC、温度与功率变化"
+          }
+        }
+      }
+    },
+    "Same-level thermal comparisons and coverage" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同电量热压力对比及覆盖率"
+          }
+        }
+      }
+    },
+    "Analysis settings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分析设置"
+          }
+        }
+      }
+    },
+    "Power rail" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功率测量侧"
+          }
+        }
+      }
+    },
+    "Temperature channel" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度通道"
+          }
+        }
+      }
+    },
+    "Hotspot temperature" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热点温度"
+          }
+        }
+      }
+    },
+    "Thermal statistics reconstructed from the saved curve may omit intervals or contain legacy zero values. Earlier records have only high versus non-high thermal pressure." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由历史曲线回算的热分析可能缺失区间或包含旧版零值。旧记录仅区分高热压力与非高热压力。"
+          }
+        }
+      }
+    },
+    "SOC data source" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC 数据来源"
+          }
+        }
+      }
+    },
+    "Thermal data source" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热分析数据来源"
+          }
+        }
+      }
+    },
+    "Power versus battery level" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功率随电量变化"
+          }
+        }
+      }
+    },
+    "First eligible band" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "首个有效区间"
+          }
+        }
+      }
+    },
+    "Last eligible band" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最后有效区间"
+          }
+        }
+      }
+    },
+    "Last minus first" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "末段减首段"
+          }
+        }
+      }
+    },
+    "First band measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "首段测量时长"
+          }
+        }
+      }
+    },
+    "Last band measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "末段测量时长"
+          }
+        }
+      }
+    },
+    "No SOC band has enough valid power measurements." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有 SOC 区间具有足够的有效功率测量。"
+          }
+        }
+      }
+    },
+    "Each dot is a 5% band mean with at least 10 measured seconds. Full-charge hold at 100% is excluded. A fall across SOC is descriptive, not proof of a particular limiter." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个点是至少有 10 秒有效测量的 5% SOC 区间均值。排除 100% 满电保持。功率随电量下降属于描述性结果，不能证明某种限功率机制。"
+          }
+        }
+      }
+    },
+    "Temperature relationship at equal SOC" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同电量温度相关性"
+          }
+        }
+      }
+    },
+    "Paired temperature and power" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "温度与功率共同测量"
+          }
+        }
+      }
+    },
+    "Correlation r" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相关系数 r"
+          }
+        }
+      }
+    },
+    "Power slope" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功率斜率"
+          }
+        }
+      }
+    },
+    "Modelled interval time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "纳入模型的时长"
+          }
+        }
+      }
+    },
+    "Paired intervals" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有效配对区间数"
+          }
+        }
+      }
+    },
+    "Matched integer SOC levels" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹配的整数电量数"
+          }
+        }
+      }
+    },
+    "A negative slope means higher temperatures were associated with lower power at the same displayed battery percentage. A positive slope means the opposite; neither proves causation." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "负斜率表示相同显示电量下，较高温度与较低功率相关；正斜率相反。两者都不证明因果关系。"
+          }
+        }
+      }
+    },
+    "Insufficient duration or temperature/power variation for a useful within-level correlation. No relationship is inferred." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测量时长或温度、功率变化不足，无法计算有意义的同电量相关性，不推断相关关系。"
+          }
+        }
+      }
+    },
+    "Only simultaneous valid interval midpoints are paired. Values are centered separately at each integer SOC, not compared across different charge levels. Minimum support: 20 seconds and 3 intervals per level, 60 seconds and 6 intervals overall, with measurable variation." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅配对同时有效的区间中点读数。分别在各整数电量内中心化，不跨电量比较。最低要求：每个电量 20 秒及 3 个区间，总计 60 秒及 6 个区间，并具有可测量变化。"
+          }
+        }
+      }
+    },
+    "Power at different thermal pressure" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不同热压力下的功率"
+          }
+        }
+      }
+    },
+    "Lower-pressure power time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "较低热压力功率测量时长"
+          }
+        }
+      }
+    },
+    "High-pressure power time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高热压力功率测量时长"
+          }
+        }
+      }
+    },
+    "Nominal / fair" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正常 / 轻度"
+          }
+        }
+      }
+    },
+    "Serious / critical" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "严重 / 临界"
+          }
+        }
+      }
+    },
+    "High minus lower" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高热压力减低热压力"
+          }
+        }
+      }
+    },
+    "Matched SOC values" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹配的电量值"
+          }
+        }
+      }
+    },
+    "Matched lower-pressure time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹配的低热压力时长"
+          }
+        }
+      }
+    },
+    "Matched high-pressure time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匹配的高热压力时长"
+          }
+        }
+      }
+    },
+    "No integer battery level has at least 20 seconds of measured power in both pressure groups. A thermal power difference is not inferred." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有整数电量同时具有两组各至少 20 秒的功率测量，不推断热压力功率差。"
+          }
+        }
+      }
+    },
+    "Compare nominal/fair against serious/critical only at shared integer SOC levels. Both groups use the smaller measured duration as their common weight. Unknown or changing endpoint states are excluded. System thermal pressure is not a direct charging-controller limit." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在共同整数电量下比较正常/轻度与严重/临界热压力。两组使用较短有效时长作为共同权重。排除状态未知或两端变化的区间。系统热压力不等于充电控制器的直接限功率状态。"
+          }
+        }
+      }
+    },
+    "Interpretation and limits" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结果解读与限制"
+          }
+        }
+      }
+    },
+    "The thermal model uses intervals at unchanged integer battery levels, not exact physical SOC. Gaps over 10 seconds, missing SOC, pauses and 100% hold are excluded. Coverage refers to these observed intervals, not to the entire charge." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热分析使用显示整数电量未变化的区间，不代表精确物理 SOC。排除超过 10 秒的空档、缺失电量、暂停及满电保持。覆盖率以这些观测区间为分母，而非整次充电。"
+          }
+        }
+      }
+    },
+    "These are observational associations, not independent experimental effects or statistical significance tests. Power can also heat the phone. Charger negotiation, ambient temperature, workload, battery state and unmeasured factors may explain the changes." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些是观测相关性，不是独立实验效应或统计显著性检验。功率本身也可能使手机发热。充电协商、环境温度、负载、电池状态及其他未测因素均可能解释变化。"
+          }
+        }
+      }
+    },
+    "Battery-rail watts remain signed. Missing input measurements are never substituted with zero. Temperature slope uses the selected display unit; hotspot means the hottest accepted sensor, which may change identity." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池轨功率保留正负号。缺失的输入功率不会被替换为零。温度斜率随所选单位换算；热点为当前最高有效温度传感器，其身份可能发生变化。"
+          }
+        }
+      }
+    },
     "Compare sessions" : {
       "localizations": {
         "zh-Hans": {

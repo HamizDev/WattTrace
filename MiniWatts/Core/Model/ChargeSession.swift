@@ -48,6 +48,9 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     /// Bounded one-second SOC aggregates. Nil only for sessions saved before
     /// this feature existed; those can be analysed from the stored curve.
     var socAnalysis: SOCBandAnalysis?
+    /// Same-tick thermal and power statistics stratified by integer SOC.
+    /// Optional so sessions from earlier versions remain readable.
+    var thermalPowerAnalysis: ThermalPowerAnalysis?
     /// Optional, user-entered test identifier, never inferred cable metadata.
     var testLabel: String?
 
@@ -86,6 +89,7 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         self.pathMilliohms = nil
         self.pathSamples = nil
         self.socAnalysis = nil
+        self.thermalPowerAnalysis = nil
         self.testLabel = nil
     }
 
@@ -96,8 +100,20 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     var resolvedSOCAnalysis: SOCBandAnalysis {
         if let socAnalysis { return socAnalysis }
         var accumulator = SOCBandAccumulator(source: .historicalSamples)
-        for sample in samples.sorted(by: { $0.offset < $1.offset }) {
-            accumulator.add(SOCReading(
+        for reading in historicalSOCReadings { accumulator.add(reading) }
+        return accumulator.analysis
+    }
+
+    var resolvedThermalPowerAnalysis: ThermalPowerAnalysis {
+        if let thermalPowerAnalysis { return thermalPowerAnalysis }
+        var accumulator = ThermalPowerAccumulator(source: .historicalSamples)
+        for reading in historicalSOCReadings { accumulator.add(reading) }
+        return accumulator.analysis
+    }
+
+    private var historicalSOCReadings: [SOCReading] {
+        samples.sorted(by: { $0.offset < $1.offset }).map { sample in
+            SOCReading(
                 offset: sample.offset,
                 percent: sample.percent,
                 inputWatts: totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
@@ -105,9 +121,8 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
                 batteryTemperature: sample.batteryTemperature,
                 hottestTemperature: sample.hottestTemperature,
                 pressure: sample.throttled ? .legacyHigh : .legacyNotHigh
-            ))
+            )
         }
-        return accumulator.analysis
     }
 
     /// Takes the fit if it rests on at least as much as whatever is already stored.

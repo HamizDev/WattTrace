@@ -124,3 +124,40 @@ script now covers shared weighting, non-overlapping sub-bands, short coverage,
 unavailable input, measured zeros, signed battery watts, thermal metrics and
 separate full-charge bands. CI must pass both the tests and the Xcode build
 before this revision is considered compile-verified.
+
+## Thermal and power analysis (stage 3)
+
+Open History → a completed session → **Thermal and power analysis**.
+Select measured input or signed battery-rail watts, and battery temperature or
+the hottest accepted sensor. The SOC panel describes the first-to-last change
+between adequately measured 5% bands (10 valid seconds per band), excluding
+100% hold. It is not a diagnosis of a charge limiter.
+
+New sessions save bounded thermal-power sufficient statistics for at most
+100 integer SOC levels (0–99%). Only consecutive readings with identical
+valid integer SOC, valid channel endpoints and a positive interval of at most
+10 seconds contribute; pausing breaks continuity. For temperature regression
+each interval contributes its paired midpoint and measured duration. Center
+temperature and power separately within each integer SOC level using stable
+online moments, then pool the centered sums of squares/cross-products to
+compute descriptive Pearson r and W/°C. At least 20 seconds and 3 intervals per
+eligible level, 60 seconds and 6 intervals overall, and pooled within-level
+standard deviations of at least 0.1 °C and 0.1 W are required. Slope conversion
+to Fahrenheit multiplies by 5/9. Report actual support and paired coverage.
+No p-values, independent-observation assumption, or causal attribution.
+
+For system thermal pressure, use only intervals with matching known endpoint
+states, grouped as nominal/fair versus serious/critical (legacy history
+retains its high/non-high flag). Match the two groups by integer SOC with
+at least 20 measured seconds per group; apply the smaller duration as the
+same weight to both groups. Report signed high-minus-lower difference and
+matched support, not an inferred charging-controller limit. Missing channels
+stay unknown and negative battery watts remain signed.
+
+The optional aggregate is backward compatible. Earlier sessions reconstruct
+thermal statistics from saved curve points, clearly marked as such even if
+their separate SOC aggregates were recorded live. This cannot recover lost
+samples or missing legacy metadata. The existing Foundation-only CI
+regression script now also checks confounding across SOC levels, within-level
+correlation, matched thermal pressure, missing channels, valid zero watts,
+flat data, pauses, transitions, gaps, serialization and full-charge exclusion.

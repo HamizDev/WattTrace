@@ -66,5 +66,6 @@ struct SOCBandAnalysisTests {
         precondition(historical.analysis.sampleCount == 3)
         print("SOC analysis regression checks passed")
         SOCSessionComparisonTests.run()
+        try ThermalPowerAnalysisTests.run()
     }
 }

@@ -167,6 +167,7 @@ final class PowerMonitor {
     private let batteryCenter = BatteryCenterBridge()
     private let energy = EnergyAccumulator()
     private var socAccumulator = SOCBandAccumulator()
+    private var thermalPowerAccumulator = ThermalPowerAccumulator()
     private let resistance = PathResistanceMeter()
     private let store = SessionStore()
 
@@ -276,6 +277,7 @@ final class PowerMonitor {
         task?.cancel()
         task = nil
         socAccumulator.breakContinuity()
+        thermalPowerAccumulator.breakContinuity()
         persist()
     }
 
@@ -365,6 +367,7 @@ final class PowerMonitor {
     private func openSession(_ snapshot: PowerSnapshot) {
         energy.reset()
         socAccumulator = SOCBandAccumulator()
+        thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = energy.totals
         currentSession = ChargeSession(start: snapshot.date,
                                        startPercent: snapshot.percent ?? 0,
@@ -382,7 +385,7 @@ final class PowerMonitor {
         session.totals = energy.totals
         // Use the actual SOC, not the display fallback. This is independent of
         // the five-second curve samples, which can be thinned on long sessions.
-        socAccumulator.add(SOCReading(
+        let socReading = SOCReading(
             offset: snapshot.date.timeIntervalSince(session.start),
             percent: snapshot.percent,
             inputWatts: snapshot.inputWatts,
@@ -390,8 +393,11 @@ final class PowerMonitor {
             batteryTemperature: snapshot.batteryTemperature,
             hottestTemperature: snapshot.hottestSensor?.value,
             pressure: socPressure
-        ))
+        )
+        socAccumulator.add(socReading)
+        thermalPowerAccumulator.add(socReading)
         session.socAnalysis = socAccumulator.analysis
+        session.thermalPowerAnalysis = thermalPowerAccumulator.analysis
         session.peakInputWatts = max(session.peakInputWatts, snapshot.inputWatts ?? 0)
         session.peakBatteryWatts = max(session.peakBatteryWatts, snapshot.batteryWatts ?? 0)
         if let temperature = snapshot.batteryTemperature {
@@ -453,6 +459,7 @@ final class PowerMonitor {
         currentSession = nil
         energy.reset()
         socAccumulator = SOCBandAccumulator()
+        thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = EnergyTotals()
         lastThermalObservationDate = nil
         if Self.isWorthKeeping(session) {
@@ -515,6 +522,7 @@ final class PowerMonitor {
         currentSession = nil
         energy.reset()
         socAccumulator = SOCBandAccumulator()
+        thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = EnergyTotals()
         lastThermalObservationDate = nil
         store.deleteAll()

@@ -195,6 +195,7 @@ struct SessionDetailView: View {
                 energyPanel
                 powerPanel
                 socAnalysisLink
+                thermalPowerAnalysisLink
                 if monitor.sessions.count >= 2 {
                     SessionComparisonLink(sessions: monitor.sessions, baselineID: session.id)
                 }
@@ -303,6 +304,30 @@ struct SessionDetailView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.primary)
                         Text("5% / 10% bands · means, peaks and coverage")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var thermalPowerAnalysisLink: some View {
+        NavigationLink {
+            ThermalPowerAnalysisView(session: session)
+        } label: {
+            Panel("Thermal and power analysis", systemImage: "thermometer.variable") {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Power changes versus SOC and temperature")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("Same-level thermal comparisons and coverage")
                             .font(.caption)
                             .foregroundStyle(Color.mwMuted)
                     }
