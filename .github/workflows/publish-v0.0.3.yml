@@ -1,0 +1,148 @@
+name: Publish WattTrace v0.0.3 preview (verified artifact)
+
+# One-off publication. Only this explicitly named release branch can trigger it.
+# The source tag points at the already-tested commit, not this workflow commit.
+on:
+  push:
+    branches: ["watttrace/release-v0.0.3"]
+    paths: [".github/workflows/publish-v0.0.3.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: watttrace-release-v0.0.3
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'HamizDev/WattTrace' && github.ref == 'refs/heads/watttrace/release-v0.0.3'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: "7e65baf2bce7a9cdbad47b7e800d66f47f4c35d7"
+      SOURCE_RUN: "45368183037"
+      SOURCE_ARTIFACT: "14908933362"
+      TAG: v0.0.3
+    steps:
+      - name: Checkout exact tested source
+        uses: actions/checkout@v4
+        with:
+          ref: "7e65baf2bce7a9cdbad47b7e800d66f47f4c35d7"
+          persist-credentials: false
+
+      - name: Validate and download existing successful build
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > run.json
+          jq -e --arg sha "$SOURCE_SHA" '.head_sha == $sha and .status == "completed" and .conclusion == "success"' run.json >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$SOURCE_ARTIFACT" > artifact.json
+          jq -e --argjson run "$SOURCE_RUN" '.name == "WattTrace-unsigned-ipa" and .expired == false and .workflow_run.id == $run' artifact.json >/dev/null
+          mkdir -p release
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name WattTrace-unsigned-ipa --dir release
+          test -s release/WattTrace-unsigned.ipa
+
+      - name: Check release IPA identity, version and nested Watch app
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import zipfile, plistlib
+          from pathlib import PurePosixPath
+          with zipfile.ZipFile("release/WattTrace-unsigned.ipa") as z:
+              names = set(z.namelist())
+              plists = [n for n in names if n.startswith("Payload/") and n.count("/") == 2 and n.endswith(".app/Info.plist")]
+              assert len(plists) == 1, plists
+              root = plists[0].rsplit("/", 1)[0]
+              app = plistlib.loads(z.read(plists[0]))
+              watch_root = root + "/Watch/WattTraceWatch.app"
+              watch = plistlib.loads(z.read(watch_root + "/Info.plist"))
+              assert app["CFBundleIdentifier"] == "com.hamizdev.WattTrace"
+              assert watch["CFBundleIdentifier"] == "com.hamizdev.WattTrace.watchkitapp"
+              assert watch["WKCompanionAppBundleIdentifier"] == app["CFBundleIdentifier"]
+              for info in (app, watch):
+                  assert info["CFBundleShortVersionString"] == "0.0.3"
+                  assert str(info["CFBundleVersion"]) == "65"
+              assert watch_root + "/" + watch["CFBundleExecutable"] in names
+              widgets = [n for n in names if n.startswith(root + "/PlugIns/") and n.endswith(".appex/Info.plist")]
+              assert len(widgets) == 1
+              widget = plistlib.loads(z.read(widgets[0]))
+              assert widget["CFBundleIdentifier"] == "com.hamizdev.WattTrace.Widget"
+              assert widget["CFBundleShortVersionString"] == "0.0.3"
+              assert str(widget["CFBundleVersion"]) == "65"
+              assert all("_CodeSignature" not in PurePosixPath(n).parts and PurePosixPath(n).name not in {"embedded.mobileprovision", "embedded.provisionprofile"} for n in names)
+              print("Verified iPhone, Widget and Watch bundle identity and version 0.0.3 (65)")
+          PY
+          (cd release && sha256sum WattTrace-unsigned.ipa > SHA256SUMS.txt)
+
+      - name: Publish preview with IPA and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release already exists; refusing to overwrite"
+            exit 1
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag already exists; refusing to move it"
+            exit 1
+          fi
+          cat > release-notes.md <<'NOTES'
+          ## WattTrace v0.0.3 — Preview / 测试版
+          
+          基于 [v0.0.2](https://github.com/HamizDev/WattTrace/releases/tag/v0.0.2) 继续优化 iPhone 17 Pro Max 温度诊断及 AirPods 配件可见性，保留之前所有充电分析、图标、数据导出和 Apple Watch companion 功能。
+          
+          ### 新增与优化 / What's new
+          
+          - 发热及设置页面移除上游 iPhone Air 固定验证说明，显示当前机型、系统版本、实时温度传感器数量及排除项。
+          - 新增可分享的温度验证报告，明确区分历史真机采样、当前读数和物理测温校准。
+          - PMU 校准通道单独标记，不计入实时热点；异常温度仍保留于原始数据。
+          - 配件页面新增 BatteryCenter 外部配件记录数量、最近检查时间及手动刷新。未知电量不再显示为红色零电量进度条。
+          - 蓝牙电量诊断新增 10 秒充电盒开盖广播可见性检查，不再限定 180F 服务，最多统计 512 条广播报告。仅统计匿名元数据，不保存设备标识、不主动连接、不将未知广播归属为 AirPods 电量。
+          - 补充简体中文翻译、验证文档，修复设置页仓库链接。
+          
+          ### iPhone 17 Pro Max 历史样本回归
+          
+          GitHub Actions 使用 2026-09-26 的 iPhone18,2 历史温度样本，通过生产环境 PowerSnapshot 计算代码得到：
+          
+          | 项目 | 结果 |
+          | --- | --- |
+          | 原始温度读数 | 30 |
+          | 有效实时温度读数 | 27 |
+          | 校准通道 | 1 |
+          | 排除异常值 | 2 |
+          | 电池温度中位数 | 37.9 °C |
+          | 充电芯片 | 43.7 °C |
+          | 最高有效温度 | 43.8 °C |
+          
+          这是基于既有真机数据的软件回归验证，并非新一轮实机测温或硬件精度校准。
+          
+          ### 安装与真机测试 / Installation
+          
+          下载 `WattTrace-unsigned.ipa`，使用自己的 Apple 开发者证书和匹配的描述文件签名后安装。IPA 内嵌 Watch App；手表安装需要支持嵌套 watchOS 应用的工具，推荐 Xcode。无需 TestFlight。
+          
+          - iOS / iPadOS 17+；watchOS 11+。
+          - 发热 → 温度验证 → 分享温度验证报告。
+          - 设备 → 蓝牙电量诊断 → 检查充电盒开盖广播（10 秒）。可分别在闭盖和开盖时测试。
+          - [配件诊断说明](https://github.com/HamizDev/WattTrace/blob/v0.0.3/docs/ACCESSORY_DIAGNOSTICS.md)
+          - [设备兼容性说明](https://github.com/HamizDev/WattTrace/blob/v0.0.3/docs/DEVICE_COMPATIBILITY.md)
+          - [Watch 安装说明](https://github.com/HamizDev/WattTrace/blob/v0.0.3/docs/WATCH_COMPANION.md)
+          
+          ### 验证状态 / Validation
+          
+          - [GitHub Actions #45368183037](https://github.com/HamizDev/WattTrace/actions/runs/45368183037) 第 2 次运行成功。
+          - 源码提交：`7e65baf2bce7a9cdbad47b7e800d66f47f4c35d7`；版本 0.0.3；构建号 65。
+          - 历史温度回归、蓝牙电量及匿名广播统计回归、图标资源验证、iOS / watchOS 编译、嵌入应用身份和版本校验、未签名 IPA 校验均通过。
+          - `SHA256SUMS.txt` 用于核对 IPA 完整性。
+          
+          **注意：本版本仍是预发布测试版。** AirPods 4 左右耳与充电盒实际电量访问尚未验证；广播计数不代表特定设备身份或可用电量，系统可能过滤广播。17 Pro Max 的新版本真机表现、温度绝对精度及 Watch 同步仍需验证。
+          
+          基于 [ResistanceTo/MiniWatts](https://github.com/ResistanceTo/MiniWatts)，遵循 Apache-2.0 及原项目署名要求。
+          NOTES
+          gh release create "$TAG" release/WattTrace-unsigned.ipa release/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" \
+            --title "WattTrace v0.0.3 Preview" --prerelease --notes-file release-notes.md
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,isPrerelease,isDraft,assets
