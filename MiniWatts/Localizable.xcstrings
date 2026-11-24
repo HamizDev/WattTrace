@@ -1,6 +1,396 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Bluetooth battery diagnostic" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝牙电量诊断"
+          }
+        }
+      }
+    },
+    "Standard battery service" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准电池服务"
+          }
+        }
+      }
+    },
+    "Check supported Bluetooth accessories" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检查支持的蓝牙配件"
+          }
+        }
+      }
+    },
+    "Find battery devices" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查找电池设备"
+          }
+        }
+      }
+    },
+    "Find connected devices" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查找已连接设备"
+          }
+        }
+      }
+    },
+    "Scan for battery service (10 seconds)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扫描电池服务（10 秒）"
+          }
+        }
+      }
+    },
+    "Bluetooth access is requested only when you start a check. Nearby discovery is filtered to the standard Battery Service. Choose a listed accessory before WattTrace connects to read it." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在你主动开始检查时请求蓝牙权限。附近设备扫描仅筛选标准电池服务。选择列表中的配件后，WattTrace 才连接读取。"
+          }
+        }
+      }
+    },
+    "No matching Battery Service devices were returned. This does not mean your AirPods are disconnected or that their battery is empty." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未返回匹配标准电池服务的设备。这不代表 AirPods 未连接或电量为零。"
+          }
+        }
+      }
+    },
+    "Discovered battery devices" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发现电池设备"
+          }
+        }
+      }
+    },
+    "System-connected candidate" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统已连接候选设备"
+          }
+        }
+      }
+    },
+    "Battery Service advertisement" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池服务广播"
+          }
+        }
+      }
+    },
+    "Read battery" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取电量"
+          }
+        }
+      }
+    },
+    "The name is the peripheral's reported name, not a verified model or physical identity. Repeat discovery to read a device again." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称来自外设自身报告，不代表已验证的型号或物理身份。如需再次读取，请重新查找。"
+          }
+        }
+      }
+    },
+    "Battery Service results" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池服务读取结果"
+          }
+        }
+      }
+    },
+    "Selected accessory" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所选配件"
+          }
+        }
+      }
+    },
+    "Read completed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取完成时间"
+          }
+        }
+      }
+    },
+    "Battery service %lld" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池服务 %lld"
+          }
+        }
+      }
+    },
+    "Multiple Battery Service instances are kept separate. Without a verified component mapping, WattTrace does not label them left ear, right ear or case." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多个电池服务实例分别显示。没有经过验证的部件映射时，不标为左耳、右耳或充电盒。"
+          }
+        }
+      }
+    },
+    "AirPods and accessory limits" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods 与配件限制"
+          }
+        }
+      }
+    },
+    "This reads only the public Bluetooth Battery Service (180F) and Battery Level characteristic (2A19). AirPods 4 may not expose these to a third-party app. Audio-route detection alone does not establish battery access." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅通过公开的蓝牙电池服务（180F）及电量特征（2A19）读取数据。AirPods 4 可能不会向第三方 App 暴露这些接口。音频路由识别不等于拥有电量权限。"
+          }
+        }
+      }
+    },
+    "There is no background scanning, proprietary AirPods broadcast decoding, forced pairing or automatic connection. The diagnostic disconnects its local connection when the read finishes or times out." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不进行后台扫描、AirPods 私有广播解码、强制配对或自动连接。读取完成或超时后，诊断会断开本 App 的局部连接。"
+          }
+        }
+      }
+    },
+    "For unavailable left/right/case readings, check the system Batteries widget. No battery percentage is fabricated from signal strength, audio connection or charge state." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右耳或充电盒电量不可用时，请查看系统电池小组件。不根据 RSSI、音频连接或充电状态捏造电量。"
+          }
+        }
+      }
+    },
+    "Ready for a manual battery check" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待手动检查电量"
+          }
+        }
+      }
+    },
+    "Preparing Bluetooth" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在准备蓝牙"
+          }
+        }
+      }
+    },
+    "Looking for Battery Service" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在查找电池服务"
+          }
+        }
+      }
+    },
+    "Discovery complete" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备查找完成"
+          }
+        }
+      }
+    },
+    "Connecting to selected accessory" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在连接所选配件"
+          }
+        }
+      }
+    },
+    "Reading standard battery characteristics" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在读取标准电量特征"
+          }
+        }
+      }
+    },
+    "Battery read finished" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量读取结束"
+          }
+        }
+      }
+    },
+    "Bluetooth permission denied" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝牙权限被拒绝"
+          }
+        }
+      }
+    },
+    "Bluetooth is off" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝牙已关闭"
+          }
+        }
+      }
+    },
+    "Bluetooth unavailable on this device" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备不支持蓝牙检查"
+          }
+        }
+      }
+    },
+    "Standard battery data unavailable" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准电池数据不可用"
+          }
+        }
+      }
+    },
+    "Battery check timed out" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量检查超时"
+          }
+        }
+      }
+    },
+    "Battery check cancelled" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量检查已取消"
+          }
+        }
+      }
+    },
+    "Accessory connection or read failed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配件连接或读取失败"
+          }
+        }
+      }
+    },
+    "Measured battery level" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实测电量"
+          }
+        }
+      }
+    },
+    "Unavailable" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不可用"
+          }
+        }
+      }
+    },
+    "Invalid Battery Level value" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无效的电量值"
+          }
+        }
+      }
+    },
     "BatteryCenter returned no devices. Connected accessories may still be present in the system Batteries widget." : {
       "localizations": {
         "zh-Hans": {

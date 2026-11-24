@@ -165,6 +165,7 @@ final class PowerMonitor {
 
     private let probeService = SensorProbe()
     private let batteryCenter = BatteryCenterBridge()
+    private var lastBatteryCenterStatus: BatteryCenterBridge.Status?
     private let energy = EnergyAccumulator()
     private var socAccumulator = SOCBandAccumulator()
     private var thermalPowerAccumulator = ThermalPowerAccumulator()
@@ -304,7 +305,12 @@ final class PowerMonitor {
             collectDiagnostics()
         }
         if tick % 5 == 1 {
-            devices = batteryCenter.read()
+            let next = batteryCenter.read()
+            if next != devices { devices = next }
+            if lastBatteryCenterStatus != batteryCenter.status {
+                lastBatteryCenterStatus = batteryCenter.status
+                collectDiagnostics()
+            }
         }
 
         appendLive(current)
@@ -751,10 +757,10 @@ final class PowerMonitor {
     }
 
     /// Why the accessory list is empty, in the app's voice, for the Devices screen.
-    var batteryCenterStatus: LocalizedStringResource? { batteryCenter.status.userMessage }
+    var batteryCenterStatus: LocalizedStringResource? { (lastBatteryCenterStatus ?? batteryCenter.status).userMessage }
 
     /// The same thing with the failing step named, for Raw data.
-    var batteryCenterDiagnostic: LocalizedStringResource? { batteryCenter.status.diagnostic }
+    var batteryCenterDiagnostic: LocalizedStringResource? { (lastBatteryCenterStatus ?? batteryCenter.status).diagnostic }
 
     /// Every HID service in the system, for the debug view.
     func hidInventory() async -> [HIDSensors.ServiceInfo] {

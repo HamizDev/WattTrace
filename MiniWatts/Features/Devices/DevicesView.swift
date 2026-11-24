@@ -19,6 +19,7 @@ struct DevicesView: View {
             thisPhonePanel
             AppleWatchBatteryCard()
             AudioRouteDiagnosticPanel()
+            AccessoryBatteryProbeLink()
             compatibilityLink
             systemMonitorLink
             if groups.isEmpty {

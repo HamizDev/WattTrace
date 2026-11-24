@@ -225,3 +225,22 @@ specific current call was denied. AirPods left/right/case levels and battery
 health remain unavailable unless actual battery records are returned. The
 system Batteries widget has its own access; ordinary developer signing is
 not evidence of equivalent permissions. Real-device AirPods 4 testing pending.
+
+## v0.0.2 — identity and accessory diagnostics
+
+- Replace the previous iOS/watchOS Icon Composer assets with the approved
+  opaque 1024×1024 light/dark PNG artwork. iOS uses a default and dark
+  luminosity variant; watchOS uses the dark artwork with system masking.
+  The Widget is not a separately installed app.
+- Add an opt-in, bounded public CoreBluetooth Battery Service diagnostic.
+  Discover system-connected 180F peripherals or scan for that service for
+  ten seconds; only connect after explicit candidate selection, read 2A19,
+  keep service instances separate and cancel on timeout, exit or background.
+  No persistent accessory identifiers, automatic pairing or proprietary
+  AirPods data decoding. Unknown is not zero.
+- Avoid republishing unchanged BatteryCenter device lists and refresh
+  diagnostics on bridge status changes. Add decoder and asset regression
+  checks. The app version is 0.0.2 on all three targets; untagged builds no
+  longer inherit the nearest old release tag.
+- AirPods 4 standard battery availability and actual device icon rendering
+  still require real-device validation. See docs/ACCESSORY_DIAGNOSTICS.md.
