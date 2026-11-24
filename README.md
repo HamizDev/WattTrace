@@ -1,91 +1,99 @@
-# MiniWatts
+# WattTrace
 
 **English** · [简体中文](README.zh-Hans.md)
 
-[![Build](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml/badge.svg)](https://github.com/ResistanceTo/MiniWatts/actions/workflows/build.yml)
+WattTrace is a charging and battery telemetry project for iPhone and iPad,
+derived from [ResistanceTo/MiniWatts](https://github.com/ResistanceTo/MiniWatts).
+It retains the upstream [Apache 2.0 LICENSE](LICENSE) and [NOTICE](NOTICE).
+The `MiniWatts` Xcode target and source folder names remain internal so that
+upstream changes can still be merged.
 
-An iPhone battery and charging monitor built on Apple's private APIs. It reads the
-phone's own power-management sensors — the ones iOS uses to run the charge — and shows
-what the charger is delivering, how much of it reaches the cell, where the rest goes as
-heat, and what every temperature sensor in the phone is doing while it happens.
+> **Development / sideload only.** The sensor backend calls private iOS APIs.
+> Xcode Cloud / GitHub Actions can compile and archive the project; an
+> App Store or public TestFlight release must not be assumed possible.
+> An unsigned IPA still needs appropriate signing before it can run on a device.
 
-| Power | Thermal | Adapter | History |
-|:-:|:-:|:-:|:-:|
-| <img src="docs/screenshots/power.jpg" width="200" alt="Power"> | <img src="docs/screenshots/thermal.jpg" width="200" alt="Thermal"> | <img src="docs/screenshots/adapter.jpg" width="200" alt="Adapter"> | <img src="docs/screenshots/history.jpg" width="200" alt="History"> |
+## Current work
 
-> **Sideload only.** Private APIs mean this can never be on the App Store — you sign
-> and install it yourself. There is no network code of any kind: nothing it reads
-> leaves your phone.
+- Development: `watttrace/v0.0.1` → [PR #1](https://github.com/HamizDev/WattTrace/pull/1)
+- App version: `0.0.1`
+- App bundle: `com.hamizdev.WattTrace`
+- Widget bundle: `com.hamizdev.WattTrace.Widget`
+- App Group: `group.com.hamizdev.WattTrace`
+- Shared Xcode Cloud scheme: `WattTrace`
 
-## Install
+The fork now incorporates upstream MiniWatts changes through
+[`0b519fd`](https://github.com/ResistanceTo/MiniWatts/commit/0b519fda61dfd7b766d4be05fdaa2114f295d5e4),
+including the 80%/100% charge forecast, °C/°F selection, iPad layout, more
+reliable power-rail/temperature handling, and charge-hold uncertainty.
 
-Download the latest `MiniWatts-unsigned.ipa` from
-[Releases](https://github.com/ResistanceTo/MiniWatts/releases) and sign it with your own
-Apple ID — [Sideloadly](https://sideloadly.io), [AltStore](https://altstore.io),
-[SideStore](https://sidestore.io) and Xcode all do this. A free Apple ID works; the app
-then expires after seven days and you re-sign it.
+WattTrace-specific changes include honest wireless history (unmeasured input
+power is not 0 W), preserving short battery-only wireless sessions, and
+energy-weighted History charge-path efficiency calculated from *paired* rails.
 
-Requires iPhone, iOS 17 or later.
+## Build and install
 
-Or add the source to SideStore or AltStore — including the SideStore bundled with
-LiveContainer — and install from there, so new versions show up as updates:
+**GitHub Actions (from Windows or macOS)**
 
-```
-https://github.com/ResistanceTo/MiniWatts/releases/latest/download/apps.json
-```
+1. Open [Actions → Build](https://github.com/HamizDev/WattTrace/actions/workflows/build.yml).
+2. Choose **Run workflow**, branch `watttrace/v0.0.1`.
+3. Download the unsigned IPA artifact after the run succeeds.
+4. Sign the IPA with your own Apple developer credentials to sideload it.
 
-LiveContainer cannot run app extensions, so installed inside it MiniWatts has no widget
-and no Live Activity.
+The workflow now publishes `WattTrace-unsigned-ipa`, containing
+`WattTrace-unsigned.ipa`. The internal Xcode executable remains
+`MiniWatts.app`, but the installed App displays as WattTrace.
 
-MiniWatts includes a Home Screen and Lock Screen widget, and a Live Activity while
-charging. The widget extension is one more App ID when you sign — a free Apple ID gets
-ten a week — and if your signing tool offers to remove extensions, doing so removes the
-widget.
+**Xcode / Xcode Cloud (macOS setup)**
 
-## What it can't do
+Open `MiniWatts.xcodeproj`, select the `WattTrace` shared scheme, and set your
+Apple Developer Team on the app, WidgetExtension and WattTraceWatch targets
+with automatic signing. Verify the iPhone app and widget App Group matches the value above. For first-time cloud
+configuration, see [XCODE_CLOUD.md](XCODE_CLOUD.md). Build with Xcode 26+;
+iOS/iPadOS 17+ is the deployment target.
 
-Sensor names, scales and even which sensors exist differ by iPhone model, and none of
-it is documented. This build was written and verified on an iPhone Air; on another
-model a reading can be missing or mean something other than its name suggests.
-Impossible values — a charge IC at −9199 °C, which someone really did see — are hidden
-rather than shown, but a wrong value that looks plausible cannot be caught that way.
-Please report anything surprising with your model identifier.
+A watchOS 11+ companion is embedded in the iPhone app. It monitors the Watch's
+battery percentage and charging state using public WatchKit APIs, and transfers
+bounded observations via WatchConnectivity. Open Devices → Apple Watch on iPhone.
+See [Watch companion setup and limitations](docs/WATCH_COMPANION.md). Real-device
+installation and pairing must still be verified; generic sideload tools may not
+install or correctly re-sign the embedded Watch app.
 
-Only what iOS actually hands a sandboxed app. Battery health and cycle count are
-filtered out of the registry; accessory batteries (Watch, AirPods) come back empty;
-wireless charging exposes no input current, so on MagSafe you only see what reaches the
-cell; discharge power has no sensor and is estimated from the percentage. Charging holds
-can only be inferred, and the app labels them `inferred` when that is what happened.
+## Measurements and limits
 
-Widgets refresh when iOS decides to, usually every 15 to 60 minutes, and each one shows
-when its numbers were taken. The Live Activity only updates while MiniWatts is running;
-once the app is suspended it shows the reading as paused. Neither can be made to update
-once a second — that budget is the system's to spend, not the app's.
+Completed sessions can be exported to Files as CSV or versioned JSON. See [the export schema](docs/EXPORT_SCHEMA.md) for meter alignment, units and legacy data limitations.
 
-For a reading that does move once a second while you are in another app, open the
-floating meter from Settings: a small Picture in Picture window that keeps MiniWatts
-running, so it also records the charge with the screen locked. It costs battery, and
-you close it yourself. It plays no sound — Picture in Picture is a video feature, which
-is the only reason the app declares audio playback at all.
+**iPhone 17 Pro Max:** a dedicated `iPhone18,2` profile adds separate
+physical-SIM/eSIM battery reference presets and a live Device compatibility
+screen. See [device notes and validation matrix](docs/DEVICE_COMPATIBILITY.md).
 
-## Build
 
-Xcode 26 or later, iOS 17 deployment target, no dependencies.
+WattTrace reports available USB-C input voltage/current and battery-rail
+power, charge sessions, adapter PD profiles, temperature sensors, iOS thermal
+state, and an estimated rate derived from battery percentage changes.
+The upstream charge forecast is inferred from recent SOC transitions and is
+**not** a guaranteed completion time.
 
-```bash
-./scripts/build-ipa.sh                             # unsigned, what Releases ships
-TEAM_ID=ABCDE12345 ./scripts/build-ipa.sh signed   # signed, for your own device
-```
+The input-side USB-C figure measures the phone-side rail, not the wall
+socket. A charger's rated power is a negotiated ceiling, not the current draw.
+Input minus cell power includes device consumption and charging-path losses:
+**it is not a direct measurement of heat**.
 
-[`CLAUDE.md`](CLAUDE.md) is the engineering notebook: which APIs the sandbox blocks and
-how that was established, what each sensor turned out to be, and the Swift 6 isolation
-traps this project has already fallen into.
+MagSafe may expose a coil voltage but no matching input-current sensor.
+In that case input power, input energy and input-derived efficiency are
+unavailable rather than 0. Thermal channels with known sentinel behaviour are
+excluded from *derived* measurements while remaining visible in Raw Data.
 
-## Licence
+Battery health, cycles and paired-device battery levels are not available
+through this private sensor path. iOS controls widget/Live Activity refresh,
+and the app cannot promise uninterrupted one-second background sampling.
 
-Apache 2.0 — see [LICENSE](LICENSE). The method for reading the PMU is derived from
-[ios-charging-monitor](https://github.com/gregsramblings/ios-charging-monitor) (MIT);
-`BatteryCenterBridge` owes two details to [Batsie](https://github.com/leptos-null/Batsie).
-Both are credited in [NOTICE](NOTICE), which carries the upstream MIT notice.
+## Project notes and attribution
 
-Private APIs can change or disappear in any iOS update.
+- [WATTTRACE.md](WATTTRACE.md): fork-specific changes and upstream-sync notes
+- [XCODE_CLOUD.md](XCODE_CLOUD.md): CI and signing setup
+- [Upstream engineering notes](CLAUDE.md): sensor and Swift implementation notes
+- [Upstream MiniWatts](https://github.com/ResistanceTo/MiniWatts): original project
+
+WattTrace is an independently modified fork, not an official MiniWatts release.
+See [NOTICE](NOTICE) for upstream and third-party attribution.

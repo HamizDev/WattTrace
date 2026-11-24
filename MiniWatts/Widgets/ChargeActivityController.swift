@@ -33,10 +33,13 @@ final class ChargeActivityController {
 
     func sync(_ snapshot: PowerSnapshot,
               selectedMetric: LiveActivityMetric,
+              temperatureUnit: TemperatureDisplayUnit,
               enabled: Bool,
               isForeground: Bool) {
         adoptExistingActivities()
-        let state = Self.contentState(from: snapshot, selectedMetric: selectedMetric)
+        let state = Self.contentState(from: snapshot,
+                                      selectedMetric: selectedMetric,
+                                      temperatureUnit: temperatureUnit)
         guard enabled else {
             end(with: state, dismissal: .immediate)
             return
@@ -141,32 +144,37 @@ final class ChargeActivityController {
         _ old: ChargeActivityContentState,
         _ new: ChargeActivityContentState
     ) -> Bool {
+        // The activity renders one decimal place. A larger threshold made a changing
+        // foreground reading look frozen until the periodic 20-second heartbeat.
         let oldReading = old.reading
         let newReading = new.reading
         return old.selectedMetric != new.selectedMetric
+            || old.temperatureUnit != new.temperatureUnit
             || oldReading.percent != newReading.percent
             || oldReading.source != newReading.source
             || oldReading.isCharging != newReading.isCharging
             || oldReading.isOnHold != newReading.isOnHold
             || oldReading.isFull != newReading.isFull
-            || abs((oldReading.watts ?? -1) - (newReading.watts ?? -1)) >= 0.2
+            || abs((oldReading.watts ?? -1) - (newReading.watts ?? -1)) >= 0.05
             || abs((oldReading.batteryTemperature ?? 0)
-                   - (newReading.batteryTemperature ?? 0)) >= 0.5
-            || abs((old.socTemperature ?? 0) - (new.socTemperature ?? 0)) >= 0.5
-            || abs((old.hottestTemperature ?? 0) - (new.hottestTemperature ?? 0)) >= 0.5
+                   - (newReading.batteryTemperature ?? 0)) >= 0.05
+            || abs((old.socTemperature ?? 0) - (new.socTemperature ?? 0)) >= 0.05
+            || abs((old.hottestTemperature ?? 0) - (new.hottestTemperature ?? 0)) >= 0.05
             || old.hottestSensorName != new.hottestSensorName
     }
 
     private static func contentState(
         from snapshot: PowerSnapshot,
-        selectedMetric: LiveActivityMetric
+        selectedMetric: LiveActivityMetric,
+        temperatureUnit: TemperatureDisplayUnit
     ) -> ChargeActivityContentState {
         ChargeActivityContentState(
             reading: ChargeReading(snapshot),
             socTemperature: snapshot.socTemperature,
             hottestTemperature: snapshot.hottestSensor?.value,
             hottestSensorName: snapshot.hottestSensor?.name,
-            selectedMetric: selectedMetric
+            selectedMetric: selectedMetric,
+            temperatureUnit: temperatureUnit
         )
     }
 }

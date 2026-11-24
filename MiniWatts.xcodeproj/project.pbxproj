@@ -10,6 +10,8 @@
 		7BC8FC4E3053B50B0081E0FD /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BC8FC4D3053B50B0081E0FD /* WidgetKit.framework */; };
 		7BC8FC503053B50B0081E0FD /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BC8FC4F3053B50B0081E0FD /* SwiftUI.framework */; };
 		7BC8FC613053B50E0081E0FD /* WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7BC8FC4B3053B50B0081E0FD /* WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FA710000000000000000000B /* WattTraceWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = FA7100000000000000000002 /* WattTraceWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FA710000000000000000000F /* WatchBatteryReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA710000000000000000000E /* WatchBatteryReading.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -19,6 +21,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 7BC8FC4A3053B50B0081E0FD;
 			remoteInfo = WidgetExtension;
+		};
+		FA710000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7BD6BADB3051337000B3648E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA7100000000000000000001;
+			remoteInfo = WattTraceWatch;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -34,6 +43,17 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA710000000000000000000A /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				FA710000000000000000000B /* WattTraceWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +61,8 @@
 		7BC8FC4D3053B50B0081E0FD /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		7BC8FC4F3053B50B0081E0FD /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		7BD6BAE33051337000B3648E /* MiniWatts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniWatts.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA7100000000000000000002 /* WattTraceWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WattTraceWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA710000000000000000000E /* WatchBatteryReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchBatteryReading.swift; path = MiniWatts/Shared/WatchBatteryReading.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -69,6 +91,7 @@
 				Shared/ChargeActivityAttributes.swift,
 				Shared/ChargeReading.swift,
 				Shared/ReadingWording.swift,
+				Shared/TemperatureDisplay.swift,
 				Shared/WidgetSnapshot.swift,
 			);
 			target = 7BC8FC4A3053B50B0081E0FD /* WidgetExtension */;
@@ -93,6 +116,11 @@
 			path = MiniWatts;
 			sourceTree = "<group>";
 		};
+		FA7100000000000000000003 /* WatchApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WatchApp;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +140,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA7100000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -129,6 +163,8 @@
 			children = (
 				7BD6BAE53051337000B3648E /* MiniWatts */,
 				7BC8FC513053B50B0081E0FD /* Widget */,
+				FA7100000000000000000003 /* WatchApp */,
+				FA710000000000000000000E /* WatchBatteryReading.swift */,
 				7BC8FC4C3053B50B0081E0FD /* Frameworks */,
 				7BD6BAE43051337000B3648E /* Products */,
 			);
@@ -139,6 +175,7 @@
 			children = (
 				7BD6BAE33051337000B3648E /* MiniWatts.app */,
 				7BC8FC4B3053B50B0081E0FD /* WidgetExtension.appex */,
+				FA7100000000000000000002 /* WattTraceWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,11 +213,13 @@
 				7BD6BAE03051337000B3648E /* Frameworks */,
 				7BD6BAE13051337000B3648E /* Resources */,
 				7BC8FC623053B50E0081E0FD /* Embed Foundation Extensions */,
+				FA710000000000000000000A /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				7BC8FC603053B50E0081E0FD /* PBXTargetDependency */,
+				FA710000000000000000000D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7BD6BAE53051337000B3648E /* MiniWatts */,
@@ -188,6 +227,25 @@
 			name = MiniWatts;
 			productName = MiniWatts;
 			productReference = 7BD6BAE33051337000B3648E /* MiniWatts.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FA7100000000000000000001 /* WattTraceWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA7100000000000000000007 /* Build configuration list for PBXNativeTarget "WattTraceWatch" */;
+			buildPhases = (
+				FA7100000000000000000004 /* Sources */,
+				FA7100000000000000000005 /* Frameworks */,
+				FA7100000000000000000006 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (
+				FA7100000000000000000003 /* WatchApp */,
+			);
+			name = WattTraceWatch;
+			packageProductDependencies = ();
+			productName = WattTraceWatch;
+			productReference = FA7100000000000000000002 /* WattTraceWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -200,6 +258,9 @@
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
+					FA7100000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 					7BC8FC4A3053B50B0081E0FD = {
 						CreatedOnToolsVersion = 27.0;
 					};
@@ -225,6 +286,7 @@
 			targets = (
 				7BD6BAE23051337000B3648E /* MiniWatts */,
 				7BC8FC4A3053B50B0081E0FD /* WidgetExtension */,
+				FA7100000000000000000001 /* WattTraceWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -244,6 +306,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA7100000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -261,6 +329,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA7100000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA710000000000000000000F /* WatchBatteryReading.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -268,6 +344,11 @@
 			isa = PBXTargetDependency;
 			target = 7BC8FC4A3053B50B0081E0FD /* WidgetExtension */;
 			targetProxy = 7BC8FC5F3053B50E0081E0FD /* PBXContainerItemProxy */;
+		};
+		FA710000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA7100000000000000000001 /* WattTraceWatch */;
+			targetProxy = FA710000000000000000000C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -283,7 +364,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = MiniWatts;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -291,8 +372,8 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.zhaohe.MiniWatts.Widget;
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace.Widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -300,7 +381,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -315,7 +396,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = MiniWatts;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -323,8 +404,8 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.zhaohe.MiniWatts.Widget;
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace.Widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -332,7 +413,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -471,18 +552,20 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MiniWatts/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "ZhaoHe Studio";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.zhaohe.MiniWatts;
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -490,7 +573,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -506,18 +589,20 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MiniWatts/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "ZhaoHe Studio";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.zhaohe.MiniWatts;
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -525,7 +610,63 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FA7100000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
+				INFOPLIST_KEY_WKWatchKitApp = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.hamizdev.WattTrace;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", );
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		FA7100000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = WattTrace;
+				INFOPLIST_KEY_WKWatchKitApp = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.hamizdev.WattTrace;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", );
+				MARKETING_VERSION = 0.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hamizdev.WattTrace.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
@@ -555,6 +696,15 @@
 			buildConfigurations = (
 				7BD6BAEF3051337200B3648E /* Debug */,
 				7BD6BAF03051337200B3648E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FA7100000000000000000007 /* Build configuration list for PBXNativeTarget "WattTraceWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA7100000000000000000008 /* Debug */,
+				FA7100000000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

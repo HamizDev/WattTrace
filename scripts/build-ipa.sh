@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds MiniWatts as an .ipa.
+# Builds WattTrace as an .ipa (MiniWatts remains the internal Xcode target).
 #
 #   ./scripts/build-ipa.sh              unsigned  — for distribution
 #   TEAM_ID=XXXXXXXXXX ./scripts/build-ipa.sh signed
@@ -19,6 +19,7 @@ cd "$(dirname "$0")/.."
 
 SCHEME="MiniWatts"
 PROJECT="MiniWatts.xcodeproj"
+OUTPUT_NAME="WattTrace"
 BUILD_DIR="build"
 DERIVED="$BUILD_DIR/DerivedData"
 ARCHIVE="$BUILD_DIR/$SCHEME.xcarchive"
@@ -59,7 +60,7 @@ mkdir -p "$BUILD_DIR"
 
 # The version worked out above is handed to xcodebuild here. Bundle identifiers are
 # not: they come from the project exactly as Xcode has them —
-# org.zhaohe.MiniWatts for the app, org.zhaohe.MiniWatts.Widget for the widget. A build
+# com.hamizdev.WattTrace for the app, com.hamizdev.WattTrace.Widget for the widget. A build
 # setting given on the xcodebuild command line applies to every target at once, so the
 # BUNDLE_ID override this script used to have handed the widget extension the app's own
 # identifier, and iOS rejects an extension whose identifier does not extend its app's.
@@ -108,17 +109,18 @@ if [ "$MODE" = "unsigned" ]; then
   # debug and local symbols removes them. The dSYM in DerivedData keeps whatever
   # is needed to symbolicate a crash later.
   xcrun strip -S -x "$BUILD_DIR/Payload/$SCHEME.app/$SCHEME"
-  # App extensions — the widget — are bundles of their own inside PlugIns, with their
-  # own executable, their own signature directory and their own debug map. Stripping
-  # only the app binary shipped the extension's build paths untouched.
-  while IFS= read -r -d '' appex; do
-    rm -rf "$appex/_CodeSignature"
-    executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$appex/Info.plist")"
-    xcrun strip -S -x "$appex/$executable"
-  done < <(find "$BUILD_DIR/Payload/$SCHEME.app" -name '*.appex' -type d -print0)
-  (cd "$BUILD_DIR" && zip -qry "export/$SCHEME-unsigned.ipa" Payload)
+  # The Widget extension and embedded watchOS app are separate executable bundles.
+  while IFS= read -r -d '' nested; do
+    rm -rf "$nested/_CodeSignature"
+    executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$nested/Info.plist")"
+    xcrun strip -S -x "$nested/$executable"
+  done < <(find "$BUILD_DIR/Payload/$SCHEME.app" -mindepth 1 -type d \( -name '*.appex' -o -name '*.app' \) -print0)
+  [ -d "$BUILD_DIR/Payload/$SCHEME.app/Watch/WattTraceWatch.app" ] || {
+    echo "Missing embedded Watch companion" >&2; exit 1;
+  }
+  (cd "$BUILD_DIR" && zip -qry "export/$OUTPUT_NAME-unsigned.ipa" Payload)
   rm -rf "$BUILD_DIR/Payload"
-  IPA="$EXPORT_DIR/$SCHEME-unsigned.ipa"
+  IPA="$EXPORT_DIR/$OUTPUT_NAME-unsigned.ipa"
 else
   echo "==> Archiving ($METHOD)"
   xcodebuild archive \
@@ -151,7 +153,7 @@ PLIST
     -exportOptionsPlist "$BUILD_DIR/ExportOptions.plist" \
     -exportPath "$EXPORT_DIR" \
     -allowProvisioningUpdates
-  IPA="$EXPORT_DIR/$SCHEME.ipa"
+  IPA="$EXPORT_DIR/$OUTPUT_NAME.ipa"
 fi
 
 if [ "$MODE" = "unsigned" ]; then

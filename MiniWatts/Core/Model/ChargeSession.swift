@@ -1,22 +1,26 @@
 import Foundation
 
 /// One point on a session's charge curve.
-nonisolated struct ChargeSample: Codable, Hashable, Identifiable {
+nonisolated struct ChargeSample: Codable, Hashable, Identifiable, Sendable {
     /// Seconds since the session started.
     let offset: TimeInterval
-    let inputWatts: Double
-    let batteryWatts: Double
+    /// Nil means that rail was unavailable for that sample. Older session files
+    /// contain numeric values here and decode unchanged through Optional.
+    let inputWatts: Double?
+    let batteryWatts: Double?
     let percent: Int
     let batteryTemperature: Double?
     let hottestTemperature: Double?
     /// True while `ProcessInfo.thermalState` was `.serious` or `.critical`.
     let throttled: Bool
+    /// New curve-point channels. Optional for history recorded before this revision.
+    var details: ChargeSampleDetails? = nil
 
     var id: TimeInterval { offset }
 }
 
 /// Everything recorded between plugging in and unplugging.
-nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
+nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
     let start: Date
     var end: Date?
@@ -43,6 +47,16 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     /// How many samples that fit rested on, so a thin fit is not read as equal to a
     /// solid one when two sessions are compared.
     var pathSamples: Int?
+    /// Bounded one-second SOC aggregates. Nil only for sessions saved before
+    /// this feature existed; those can be analysed from the stored curve.
+    var socAnalysis: SOCBandAnalysis?
+    /// Same-tick thermal and power statistics stratified by integer SOC.
+    /// Optional so sessions from earlier versions remain readable.
+    var thermalPowerAnalysis: ThermalPowerAnalysis?
+    /// Optional, user-entered test identifier, never inferred cable metadata.
+    var testLabel: String?
+    /// Recorded at session start; never filled using the current export device.
+    var captureDevice: SessionCaptureDevice?
 
     var isOpen: Bool { end == nil }
     var duration: TimeInterval { (end ?? .now).timeIntervalSince(start) }
@@ -78,6 +92,86 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         self.throttledSeconds = 0
         self.pathMilliohms = nil
         self.pathSamples = nil
+        self.socAnalysis = nil
+        self.thermalPowerAnalysis = nil
+        self.testLabel = nil
+        self.captureDevice = nil
+    }
+
+    /// Older history has at most the saved, possibly thinned curve. Its SOC
+    /// may have been carried forward during a missing reading; older formats
+    /// also wrote some missing rail values as zero. Respect session-level
+    /// evidence of a measured rail and label the reconstruction separately.
+    var resolvedSOCAnalysis: SOCBandAnalysis {
+        if let socAnalysis { return socAnalysis }
+        var accumulator = SOCBandAccumulator(source: .historicalSamples)
+        for reading in historicalSOCReadings { accumulator.add(reading) }
+        return accumulator.analysis
+    }
+
+    var resolvedThermalPowerAnalysis: ThermalPowerAnalysis {
+        if let thermalPowerAnalysis { return thermalPowerAnalysis }
+        var accumulator = ThermalPowerAccumulator(source: .historicalSamples)
+        for reading in historicalSOCReadings { accumulator.add(reading) }
+        return accumulator.analysis
+    }
+
+    private var historicalSOCReadings: [SOCReading] {
+        samples.sorted(by: { $0.offset < $1.offset }).map { sample in
+            SOCReading(
+                offset: sample.offset,
+                percent: sample.details != nil ? sample.details?.observedPercent : sample.percent,
+                inputWatts: sample.details != nil || totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
+                batteryWatts: sample.details != nil || totals.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
+                batteryTemperature: sample.batteryTemperature,
+                hottestTemperature: sample.hottestTemperature,
+                pressure: sample.details != nil
+                    ? sample.details?.thermalPressure
+                    : (sample.throttled ? .legacyHigh : .legacyNotHigh)
+            )
+        }
+    }
+
+    /// Make an immutable export snapshot from the completed session. The
+    /// persisted sample values are preserved; old ambiguous zeros remain
+    /// explicitly flagged instead of being promoted to new observations.
+    var exportRecord: SessionExportRecord? {
+        guard let end else { return nil }
+        let t = totals
+        let soc = resolvedSOCAnalysis
+        let summary = SessionExportSummary(
+            id: id, start: start, end: end, startPercent: startPercent, endPercent: endPercent,
+            testLabel: testLabel, adapterName: adapterName, adapterRatedWatts: adapterRatedWatts,
+            isWireless: isWireless, captureDevice: captureDevice,
+            totals: SessionExportTotals(
+                inputWattHours: t.inputMeasuredSeconds > 0 ? t.inputWattHours : nil,
+                batteryWattHours: t.batteryMeasuredSeconds > 0 ? t.batteryWattHours : nil,
+                batteryMilliampHours: t.batteryCurrentMeasuredSeconds > 0 ? t.batteryMilliAmpHours : nil,
+                observedSeconds: t.integratedSeconds, inputMeasuredSeconds: t.inputMeasuredSeconds,
+                batteryMeasuredSeconds: t.batteryMeasuredSeconds, batteryCurrentMeasuredSeconds: t.batteryCurrentMeasuredSeconds,
+                pairedInputWattHours: t.pairedInputWattHours > 0.001 ? t.pairedInputWattHours : nil,
+                pairedBatteryWattHours: t.pairedInputWattHours > 0.001 ? t.pairedBatteryWattHours : nil,
+                chargePathEfficiencyPercent: t.chargePathEfficiencyPercent, loadAndLossWattHours: t.unaccountedWattHours
+            ),
+            peakInputWatts: t.inputMeasuredSeconds > 0 || peakInputWatts > 0 ? peakInputWatts : nil,
+            peakBatteryWatts: t.batteryMeasuredSeconds > 0 || peakBatteryWatts > 0 ? peakBatteryWatts : nil,
+            peakBatteryTemperatureCelsius: peakBatteryTemperature, thermalHighSeconds: throttledSeconds,
+            pathMilliohms: pathMilliohms, pathSamples: pathSamples
+        )
+        let newCurve = soc.source == .live
+        let exportSamples = samples.sorted { $0.offset < $1.offset }.map { sample in
+            SessionExportSample(
+                timestamp: start.addingTimeInterval(sample.offset), offsetSeconds: sample.offset,
+                recordedPercent: sample.percent, storedInputWatts: sample.inputWatts,
+                storedBatteryWatts: sample.batteryWatts,
+                analysisInputWatts: newCurve || sample.details != nil || t.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
+                analysisBatteryWatts: newCurve || sample.details != nil || t.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
+                batteryTemperatureCelsius: sample.batteryTemperature,
+                hotspotTemperatureCelsius: sample.hottestTemperature, highThermalPressure: sample.throttled,
+                details: sample.details
+            )
+        }
+        return SessionExportRecord(summary: summary, samples: exportSamples, soc: soc, thermal: resolvedThermalPowerAnalysis)
     }
 
     /// Takes the fit if it rests on at least as much as whatever is already stored.
@@ -116,9 +210,12 @@ nonisolated final class SessionStore: @unchecked Sendable {
     static let sampleInterval: TimeInterval = 5
 
     private let url: URL
-    private let queue = DispatchQueue(label: "org.zhaohe.MiniWatts.sessions", qos: .utility)
+    private let queue = DispatchQueue(label: "com.hamizdev.WattTrace.sessions", qos: .utility)
     /// Guarded by `queue`. Holds at most the newest pending write.
     private var pending: [ChargeSession]?
+    /// Set on the queue when a history file exists but cannot be decoded. The
+    /// original is moved aside before a later save is allowed to replace it.
+    private var lastReadWarning: String?
 
     init(filename: String = "charge-sessions.json") {
         let directory = (try? FileManager.default.url(for: .applicationSupportDirectory,
@@ -131,14 +228,36 @@ nonisolated final class SessionStore: @unchecked Sendable {
 
     /// Reads the file. Call this off the main thread — `loaded()` does that for you.
     private func read() -> [ChargeSession] {
-        guard let data = try? Data(contentsOf: url),
-              let sessions = try? JSONDecoder().decode([ChargeSession].self, from: data) else { return [] }
-        return sessions.sorted { $0.start > $1.start }
+        lastReadWarning = nil
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        do {
+            let sessions = try JSONDecoder().decode([ChargeSession].self, from: data)
+            return sessions.sorted { $0.start > $1.start }
+        } catch {
+            let stamp = Int(Date.now.timeIntervalSince1970)
+            let backupURL = url.deletingPathExtension()
+                .appendingPathExtension("corrupt-\(stamp).json")
+            // Moved, not copied. A copy left the unreadable file where it was, so
+            // until a session was saved over it every launch set aside another
+            // one, several megabytes each at the size this file can reach. If the
+            // move fails the copy is still better than nothing.
+            if (try? FileManager.default.moveItem(at: url, to: backupURL)) == nil {
+                try? data.write(to: backupURL, options: .atomic)
+            }
+            lastReadWarning = "Session history could not be decoded; the original was kept as \(backupURL.lastPathComponent)."
+            return []
+        }
     }
 
     func loaded() async -> [ChargeSession] {
         await withCheckedContinuation { continuation in
             queue.async { continuation.resume(returning: self.read()) }
+        }
+    }
+
+    func readWarning() async -> String? {
+        await withCheckedContinuation { continuation in
+            queue.async { continuation.resume(returning: self.lastReadWarning) }
         }
     }
 

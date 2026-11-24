@@ -44,22 +44,27 @@ by several entries.
   temperature four times did four linear scans and called `SensorCatalog.zone(for:)`
   (which lowercases and splits) once per sensor per scan. Registry lookups stay
   computed: those are single hash hits. Also here:
+  `LevelRateCheck` sets the level's rise against the cell sensors (see *Sensor notes*);
   `EnergyAccumulator` integrates ∫V·I dt; `ChargeSession` + `SessionStore` persist charges
-  as one JSON file in Application Support.
+  as one JSON file in Application Support; `ChargeForecast` is time to 80 % and to full
+  (see *Charge forecast*).
 - `Core/PowerMonitor.swift` — `@Observable`, 1 s tick, drives everything and owns session
   lifecycle. Injected once in `MiniWattsApp`, read via `@Environment(PowerMonitor.self)`.
   `headline` lives here rather than on the snapshot: its last fallback is the %-rate
   estimate, which is derived across several snapshots and so is not a snapshot's to give.
 - `Design/` — palette (`Color.mw(light:dark:)`, no asset catalog entries), `Panel`/
-  `Metric`/`Pill`/`BarRow`, `PowerRing`, Swift Charts wrappers, `PhoneHeatMap`.
+  `Metric`/`Pill`/`BarRow`, `PowerRing`, Swift Charts wrappers, `DeviceHeatMap` (an
+  iPhone or an iPad outline, see *iPad*), and `PanelLayout` — `PanelScroll`, the
+  scrolling column every page goes through, and `PanelColumns`, its two-column layout.
 - `Features/` — one folder per tab, plus Settings. `DebugView` (Raw data) is reached
   from the bottom of Settings, not the main toolbar. It ships in release builds: its
   probes answer questions only hardware this project does not have can answer, and
   those answers arrive as dumps from people running the release. Nothing it reads may
   be gated on `#if DEBUG` — `PowerMonitor.powerSources` was, and its panel reported no
   power sources in every release build.
-- `Shared/` — the four files compiled into both targets: `ChargeReading`,
-  `ChargeActivityAttributes`, `WidgetSnapshot`, `ReadingWording`. `Widgets/` — the app
+- `Shared/` — the five files compiled into both targets: `ChargeReading`,
+  `ChargeActivityAttributes`, `WidgetSnapshot`, `ReadingWording`, `TemperatureDisplay`
+  (see *Temperature unit*). `Widgets/` — the app
   side of the widget and the live activity (`WidgetPublisher`, `ChargeActivityController`),
   driven from the tick. `Floating/` — the Picture in Picture readout; see *The floating
   meter*. `Shortcuts/` — the Shortcuts action; see *Shortcuts*. `Widget/`, at the top
@@ -137,7 +142,16 @@ returns `LocalizedStringResource?` — nil means "show the raw sensor name".
 
 Watch for: `String(format:)` still hardcodes the decimal separator, and
 `Formatting.duration` hardcodes h/m/s. `Formatting.timestamp`/`clock` were moved to
-`Date.FormatStyle` and do follow the locale.
+`Date.FormatStyle` and do follow the locale; so does the charge forecast's duration
+(`Duration.formatted(.units(…))`).
+
+**A literal `%` in a string with an interpolation is keyed as `%%`.** `"…past 80%, …
+\(x)"` is extracted and looked up as `…past 80%%, …`; a key that stores it with one `%`
+never matches and the string shows in English. Adapter's one-sample resistance note was
+like that for several releases. A string with no interpolation keeps its single `%` (`To 80%`).
+`xcodebuild` does not sync the catalog, Xcode's IDE build does: to see what the extractor
+emits without opening Xcode, read the `.stringsdata` files under the build's
+`Objects-normal/arm64/` and diff their keys against the catalog.
 
 ## Verified blocked (don't retry)
 
@@ -145,7 +159,8 @@ Watch for: `String(format:)` still hardcodes the decimal separator, and
 `ExternalConnected`; `IOReport`; `IOPMCopyBatteryInfo`; `IOPSCopyChargeStatus`,
 `IOPSCopyBatteryLevelLimits`, `IOPSCopyPowerSourcesInfoPrecise` (all
 `kIOReturnNotPrivileged`); PowerUI XPC (Optimized Charging, charge limit); powerd
-`Time to Empty` (always 0).
+`Time to Empty` (always 0); powerd `Time to Full Charge` (−1 while charging in both
+iOS 27 dumps taken on a charger, #14 and #16 — hence `ChargeForecast`).
 
 **Nothing about the charger's identity, and nothing about the cable.** Raw data has
 a probe button for this (`AccessoryProbe`); re-run it on a new iOS rather than
@@ -217,8 +232,16 @@ current into the cell fell from 0.76 A to 0.51 A; over USB-C the same pair equal
 `UsbHvcMenu` profile's `MaxVoltage` × `MaxCurrent` exactly (5 V × 3 A) while the phone
 drew 3.9 W. Use it for the rating, never for live draw.
 
+**A `UsbHvcMenu` entry of 65535 mV × 65535 mA is a placeholder, not a profile.** An
+iPhone 18 Pro Max listed one as its seventh entry; `adapterProfiles` drops it. What it
+stands for is not known.
+
 **No discharge-current sensor exists.** Discharge power comes from the %-rate estimate
-against a pack energy the user sets in Settings.
+against a pack energy the user sets in Settings. Until they do, `PowerMonitor.modelRating`
+supplies it for the few models a rating was found for (18 Pro Max 21.75 Wh, 17 Pro Max
+19.7 Wh), and 15 Wh otherwise. Keep that table to checked figures: a wrong default is
+shown to the user as a number. powerd's `Current Capacity` came in multiples of 5 in all
+four iOS 27 dumps in the issues, iPhone 11 included.
 
 ## Sensor notes (iPhone 17 / iPhone18,4)
 
@@ -230,8 +253,25 @@ against a pack energy the user sets in Settings.
   map showed a permanently red 52° SoC pin while the "Hottest" readout an inch below it,
   which did exclude `tcal`, said 44°. `ZoneTemperatures.hottest` is the live-only
   maximum; `readings` keeps everything, with constants sorted last.
-- Four separate sensors are all named `gas gauge battery`. `HIDSensors.Reading.id`
+- **Sensors are identified by SMC key, not name.** Each service's `LocationID` is the
+  four-letter SMC key in ASCII (`0x49513075` = `IQ0u`); `HIDSensors.Reading.key` carries
+  it, and Raw data prints it beside the name. Names repeat across keys (`PMU tdie1` is
+  both TP1b and TP1l), and **iOS 27 publishes every key through two services** — every
+  sensor appears twice in an iPhone 18 Pro Max dump. `PowerSnapshot.mergingCopies`
+  averages the copies of a key into one reading, never sums them: ChargeSpeed found one
+  service read twice 2 ms apart varies as much as the copies differ, and meters matched
+  a single copy at 14–30 W. Everything derived reads `PowerSnapshot.readings`, the merged
+  list; `sensors` stays unedited for Raw data. A service with no key falls back to its name.
+- Four separate sensors are all named `gas gauge battery` (ChargeSpeed: TG0B, TG0C, TG0H,
+  TG0V; TG0B is the one that runs hot). `HIDSensors.Reading.id`
   therefore includes the service index — name alone gave `ForEach` duplicate ids.
+  `PowerSnapshot.batteryTemperature` now uses the median of the live battery-zone
+  readings, so one duplicate service reporting a high value cannot become the phone's
+  representative battery temperature; the Thermal page names the aggregation and keeps
+  every indexed source visible below it. The battery zone's `representative` — the heat
+  map's pin and the zone header — is that same median, for the reason `tcal` is excluded
+  at the grouping: one screen must not show two battery temperatures. "Hottest" still
+  ranks every live sensor, so the high gas-gauge service can lead it, under its own name.
 - `Charger QQ0u` (usage 2) and `Charger WQ0u` (usage 3) look like **accumulators**,
   not readings, and stay out of every derived value until that is settled. They sit
   on the USB-C port, so they cannot be the wireless input; and `WQ0u` is not
@@ -246,6 +286,14 @@ against a pack energy the user sets in Settings.
   falsified by the second sample, the ratios having matched to four digits once and
   then differed by 2.4%. To pin it: sample repeatedly *without* unplugging, check
   ΔQ/Δt against `IQ0u`, and check whether both reset on unplug.
+- **Zones match words, and run-together names are split into words.** An iPhone 11 has
+  `FrontCameraDie`, `CGRearCam`, `BCMLBSkin`; as one word `frontcameradie` matched
+  "front" and was filed as chassis. `SensorCatalog.words(in:)` splits at each change of
+  case (front · camera · die) and keeps the whole word too, so nothing that matched before
+  stops matching. A capital before a digit does not split: `TQ0d` stays one word. The CPU
+  clusters (`pACC …`, `eACC …`), the image processor (`ISP MTR …`), `PMGR` and `AMC ODTS`
+  count as SoC: on an iPad Pro and an iPhone 11 they sat under "Other sensors", and a
+  53 °C `pACC Temp Sensor0` was missing from the SoC zone.
 - Enumerating **all** HID services needs `IOHIDEventSystemClientSetMatching(client, NULL)`.
   An empty matching dictionary matches nothing, which made the debug button look dead.
 - `PMU tdie14`–`tdie17` appear in the service list but return NaN; they are skipped.
@@ -256,11 +304,56 @@ against a pack energy the user sets in Settings.
   data shows unedited, and never reaches a zone, the heat map or a widget.
   `registryTemperature` goes through the same check, since its ÷100 scaling is only
   known to hold on the models checked here.
-  Only temperature is filtered — volts and amps have shown no comparable sentinel, and
-  a range tight enough to catch one would risk hiding a real rail on an unseen model.
+  Only temperature is filtered. Volts and amps do have sentinels — iOS 27 PMU rails
+  (`ildo*`, `vbuck*`, `vldo*`) read 14,800–16,450 or below −17,000, an iPad's `vldo*`
+  4294.96 — but no derived value reads those rails, and a range tight enough to catch
+  them would risk hiding a real rail on an unseen model.
   This catches impossible values, not merely wrong ones: Settings → About and the
   Thermal page both say which model the build was verified on, because a mis-scaled
   reading that still looks plausible cannot be caught in code.
+  Two additional model-specific sentinels are guarded at the same boundary: a `tdev`
+  value below −10 °C, and a charge-IC die `TQ<n>d` above 85 °C without a matching warm
+  `TQ<n>j` junction on the same rail — any rail, since an iPad Pro M1 does on `TQ2d`
+  what an iPhone 11 does on `TQ0d`. A third: a temperature of exactly 0.0 °C, which an
+  iPhone 11 reports for nine switched-off sensors (camera dies, `AMC ODTS`, `TV1s`–`TV5s`). Both remain in Raw data with an exclusion reason, but do not feed the heat
+  map, hottest reading or session history.
+
+- **`VQ0u × IQ0u` is not the whole input on every model.** An iPad Pro M1 (iPad13,4)
+  showed 6.41 W from the charger beside 16.6 W into the cell; an iPhone 18 Pro Max read
+  21.8 W while an inline meter on the same cable read 14.55 V × 2.99 A = 43.5 W — the
+  voltage right, the current half, and only in the high-power mode (at 26 W and 14 W the
+  two agreed). `IQ0u` evidently sees one of several input paths there; which sensor
+  carries the rest is not known, and needs a raw dump taken at full power on that model.
+  Until then the snapshot checks the physics: when the cell is receiving more than the
+  input sensors account for (over 1.2× and by more than 1.5 W), `inputWatts` is nil and
+  the product is kept in `partialInputWatts`. Being nil, it is a missing reading
+  everywhere — the dial drops to "into battery", nothing is integrated, no efficiency or
+  utilisation is worked out, and the path-resistance figures refuse — and the Power and
+  Adapter pages say why. The check cannot catch a short reading on a model whose
+  cell-side sensor is also short, or absent.
+
+  **The iPhone 18 Pro is exactly that model.** ChargeSpeed's author measured the onset
+  on their own 18 Pro Max: input ramped to ~23 W, sat at `IQ0u` ≈ 1.5 A for ~7 s, read
+  30 W for 2 s, then half — and `IQ0B` halved at the same tick. Issue #16's dump after
+  v1.5.1 agrees: 21.6 W in, 19.3 W into the cell, so the check above never fires. One
+  user reports readings agree again above about 70 %. Two things answer it, neither of
+  which changes a number:
+  - `PowerSnapshot.mayReadHalfInput` (iPhone19,x, wired, negotiated profile > 30 W) is a
+    caution, not a detection: no sensor tells the modes apart, and ChargeSpeed removed a
+    "current pinned at half the contract" detector after it nearly fired on an ordinary
+    pause. While it holds, the cable figures (`inputPathMilliohms`,
+    `inputCurrentUtilisation`, the resistance fit) refuse, since a halved current would
+    be blamed on the cable, and the Adapter page shows the caution instead of its
+    headroom reason.
+  - `LevelRateCheck`, in `PowerMonitor`, sets the battery level's rise (as watts, against
+    the pack energy) beside the integral of the cell sensors' watts over the same
+    stretch — the one comparison that does not lean on the sensors being checked. It
+    needs a 3 % rise over 90 s, 90 % of it watched; a ratio ≥ 1.6 says the sensors are
+    short, 0.7–1.3 agrees, and an agreeing check hides the caution. It is coarse — the
+    level is costed at 3.87 V while the sensors use the real ~4.2 V, and a worn pack
+    holds less than its rating — so the bands are wide.
+  Not verified on an 18 Pro: either the check's ratio there, or that powerd's level
+  rises at the rate of the whole charge.
 
 ## Widgets and Live Activity
 
@@ -270,8 +363,8 @@ app, but **without** `SWIFT_DEFAULT_ACTOR_ISOLATION`: WidgetKit's providers are
 nonisolated, and the extension has no main-actor state to protect.
 
 **Shared code is listed in the pbxproj, not kept in a folder.** The extension compiles
-eight files from `MiniWatts/` — the sensor readers, `PowerSnapshot` and what it depends
-on, and the three files in `MiniWatts/Shared/`. They are named in a
+ten files from `MiniWatts/` — the sensor readers, `PowerSnapshot` and what it depends
+on, and the five files in `MiniWatts/Shared/`. They are named in a
 `PBXFileSystemSynchronizedBuildFileExceptionSet` on the `MiniWatts` folder with
 `target = WidgetExtension`. For a folder that *is* synchronised into a target an exception
 set removes files; for one that is not, it adds them — confirmed by the extension's build,
@@ -511,7 +604,11 @@ folder is synchronised into the target, so the file also needs a membership exce
 or it is copied into the bundle as a resource as well — the same exception Xcode
 writes for the widget's own `Info.plist`.
 
-`PageScaffold` uses a `LazyVStack`. History puts up to sixty session panels through it.
+`PanelScroll` uses a `LazyVStack` on one column. History puts up to sixty session panels
+through it. On two columns a page's panels go through `PanelColumns`, a `Layout`, which is
+not lazy: it measures every panel to balance the columns. That is fine for a page of a
+dozen panels, all on screen at that width anyway, and is why History asks for `.list`
+instead, a two-column `LazyVGrid`.
 
 **A tick must re-run panels, not pages.** An iPhone 15 Pro user reported a hitch once
 a second in any scroll, on every tab, charging or not. Average CPU never shows that;
@@ -573,6 +670,130 @@ snapshot assembly have moved to `SensorProbe`, an actor outside the main actor;
 `PowerMonitor` publishes the result on the main actor. Scrolled by hand on a device
 after these changes, shipped in v1.4.1: no hitch. Not yet re-recorded with Time
 Profiler.
+
+## iPad
+
+The target has included the iPad family since v1.5.1 (#13), and lays out as an iPad app
+rather than a phone app on a bigger screen (#22).
+
+- **Two columns from 960 pt wide** (`widePanelsMinimumWidth`): every iPad in landscape
+  and the 13-inch in portrait. Narrower — an 11-inch in portrait, Split View, Slide Over
+  — stays one column capped at 760 pt. `PanelColumns` fills in reading order, first
+  panels down the left, and splits where the columns come out closest in height. It is
+  deliberately not a masonry layout: panel heights change every tick, and "next panel
+  into the shorter column" made panels hop columns while the page was being read. The
+  split is kept in the layout's cache (`updateCache` is a no-op on purpose — the default
+  rebuilds the cache whenever a subview changes, which is every tick) and only moves when
+  that gains more than 80 pt. A page with one panel uses the full width.
+- **The width comes from a `GeometryReader` around the scroll view, never from the scroll
+  view.** The column was pinned with `containerRelativeFrame`, whose container is the scroll
+  view, and a scroll view takes its cross-axis width from its content. Under a fixed 760 pt
+  cap that loop never showed; with a two-column cap it locked — turned to portrait, the
+  page stayed 1,210 pt wide on an 834 pt screen and overflowed both edges, while
+  `RootView` had already measured 834. Landscape to portrait and back is the test. The
+  reader also has the width on the first layout pass, so a page `TabPage` has just
+  rebuilt starts in the right number of columns rather than jumping on every tab switch.
+- **`DeviceForm.current`** comes from the model identifier (`iPad…` is `.tablet`), so the
+  simulator draws the device it simulates. It picks the heat map's outline and the zone
+  positions (`ThermalZone.position(on:)`), and the iPad glyphs on Thermal, Devices and
+  Settings. The iPad positions follow the iPad Pro 11-inch, the one iPad a dump came from:
+  iFixit's teardown finds its logic board between the two battery cells, so the battery
+  glows on both sides (`glowPositions(on:)`) with the SoC and storage down the middle and
+  the charge IC by the USB-C port. Other iPads are built differently and the caption says so.
+- **The map stays upright** in landscape. It is a legend; turning it would only move the
+  pins away from the list they key.
+- `SessionDetailView` used to have no width cap at all and ran edge to edge on an iPad; it
+  goes through `PanelScroll` now too. Settings is a form sheet on an iPad and keeps its
+  single 760 pt column.
+
+Checked in the simulator only (iPad Pro 11-inch M5, iOS 27), with the #13 dump's
+temperatures fed in through a temporary hook: the two-column Power and Thermal pages, the
+iPad outline, °F throughout. Not on an iPad.
+
+**What the iPad dump (#13, iPad13,4, unplugged) adds and does not.** 151 HID services: a
+second PMU (`PMU2 …`, filed as SoC like the first), the Smart Connector's `Orion acc_pwr` /
+`ext_vbus`, CPU-cluster and ISP sensors (now SoC, see *Sensor notes*), and `Charger IQ1u`
+and `IQ1B` with no `VQ1u`. The input-shortfall case in the same issue — 6.41 W at the port
+against 16.6 W into the cell — would fit `IQ1u` carrying the rest of the input, but the
+dump was taken on battery, every one of those read 0, and nothing derived reads them. It
+needs a dump taken while charging.
+
+## Temperature unit
+
+Settings → Units: Automatic, °C or °F (#25). Every temperature is still measured, stored,
+coloured and compared in Celsius — the sentinels, `Color.mwTemperature`, the session file,
+the live activity's payload — and converted only where a number is written
+(`TemperatureDisplayUnit.number`/`reading`/`value(fromCelsius:)`). Charts plot converted
+values so their axes read in the chosen unit. Raw data and the exclusion list stay in °C:
+they show what the sensors returned.
+
+- **Automatic** is `TemperatureDisplayUnit.regional`. No API names the unit:
+  `Locale.measurementSystem` says `.us` for a US region set to Celsius, and
+  `MeasurementFormatter` never converts temperatures at all. A measurement format style with
+  `usage: .weather` does follow both the region and the Temperature override (the locale's
+  `mu` keyword) — 100 °C formats as 212 in `en_US` and in `zh_CN@mu=fahrenhe`, and as 100 in
+  `en_US@mu=celsius`, checked on macOS. Worked out once per launch.
+- The app keeps the setting in the standard defaults and mirrors it into the App Group's
+  suite; the widget reads the suite and, without an App Group, finds nothing and follows
+  the system. The live activity gets the unit in its content state (optional, so an older
+  build's state still decodes) and keeps a bare `°` after the number, for width. The
+  floating meter gets it in `FloatingMeterData`. Shortcuts' Get Reading has its own unit
+  parameter and is not affected.
+
+## Charge forecast
+
+Time to 80 % and to 100 % on the Power page while charging (#27), from `ChargeForecast`.
+powerd's `Time to Full Charge` is −1 while charging on iOS 27, so it is worked out from the
+same log of level changes as the %-rate estimate — which needs neither the pack energy (a
+guess on most models) nor the cell sensors (half on an 18 Pro at high power).
+
+- Each percent has a relative cost on a typical curve (`ChargeForecast.weight`): 1 below
+  80 %, then 2, 3 and 4.5 for 80–90, 90–95 and 95–100. The measured stretch is divided by
+  its own weight, so a rate measured above 80 % is not mistaken for the full rate. 80→100
+  comes to 2.9× the same twenty points below 80. A generic curve, not this battery's: a
+  slow charger reaches the taper later and is overestimated past 80 %. The page says the
+  time past 80 % is approximate.
+- Time already spent at the current level comes off, never more than that step should take,
+  so a level that is late to move holds the forecast rather than running it to zero. The
+  step is the smallest rise in the log — 1, or 5 if powerd really does move in fives.
+- Hidden on hold, full, or not charging. A charge limit stops the battery before 100 % and
+  cannot be read (`IOPSCopyBatteryLevelLimits` is blocked), so the note says so.
+
+The math is checked against hand-worked cases; the panel was seen in the simulator with a
+faked level rising 1 % per 15 s. Not on a device.
+
+## Missing readings, energy totals and hold state
+
+- **A missing reading is `nil` all the way down**, not 0: `LiveSample` and `ChargeSample`
+  carry optional watts, the charts break their lines at a hole (`runPoints` in
+  `Charts.swift`; a reading alone between two holes is a dot), and `EnergyAccumulator`
+  integrates a rail only over intervals where both ends were read. Files written before
+  v1.5.0 stored a missing input as 0, so "was the adapter side measured" is asked of the
+  totals (`measuredInputWattHours`), never of the samples.
+- **`EnergyTotals` keeps a paired total.** Efficiency ("Cell share") and the remainder
+  ("Load + loss") come from `pairedInputWattHours` / `pairedBatteryWattHours`, the energy
+  over intervals where *both* rails answered. Dividing the two full totals compares
+  stretches of different length whenever one rail drops out. `integratedSeconds` is every
+  watched interval, whichever rails answered — History sets it against the session's
+  length — and the per-rail coverage is in the `…MeasuredSeconds` fields.
+- **The remainder is not heat.** Input minus what reaches the cell is the phone's own load
+  plus conversion loss, so it is labelled "Load + loss", never "lost as heat".
+- **Hold state has three values.** `.unknown` means no battery-current reading at all, not
+  "not sure yet". `measuredHoldState` reads the merged `batteryCurrent` (HID rail, or the
+  registry where that answers instead — the simulator). `PowerMonitor` debounces *changes*
+  for 30 s; the first reading of a run is taken as it stands, or every cold launch during
+  a real hold — most launches, with an 80 % limit — showed "unknown" for half a minute.
+- **The rate estimate survives a short background.** `pause()` leaves the percent log
+  alone; a hole over 120 s clears it, a shorter one restarts it only if the level moved
+  inside the hole.
+- **An unreadable history file is moved aside**, to `charge-sessions.corrupt-<time>.json`,
+  and Raw data says so. Moved, not copied, or every launch sets aside another one.
+- A build older than v1.5.0 cannot read a v1.5.0 history file (optional samples), and
+  would overwrite it. Nothing to do about that from here; it only bites on a downgrade.
+
+Checked in the simulator only, where the Mac's battery stands in: the wired input side —
+"Load + loss", "Cell share", the input line on the charts — has not been seen on a device
+since these changes.
 
 ## Conventions
 

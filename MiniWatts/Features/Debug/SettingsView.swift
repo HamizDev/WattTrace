@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct SettingsView: View {
     @Environment(PowerMonitor.self) private var monitor
@@ -14,6 +15,7 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: 14) {
                         recordingPanel(keepAwake: $monitor.keepScreenAwakeWhileCharging)
+                        unitsPanel(temperature: $monitor.temperatureUnitSetting)
                         glancesPanel(liveActivity: $monitor.showsLiveActivityWhileCharging,
                                      metric: $monitor.liveActivityMetric)
                         floatingPanel(showPower: $floatingMeter.showPower,
@@ -32,11 +34,18 @@ struct SettingsView: View {
                     // ideal width — the text unwrapped onto one line — and
                     // `.frame(maxWidth: .infinity)` only expands, it does not clamp, so
                     // that width propagates up and the page starts scrolling sideways.
-                    .containerRelativeFrame(.horizontal)
+                    // The cap is part of the pin: see `PageScaffold`.
+                    .containerRelativeFrame(.horizontal) { width, _ in min(width, 760) }
+                    .frame(maxWidth: .infinity)
                 }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            // A widget shows the battery temperature too. Asked from the foreground, the
+            // reload does not count against its refresh budget.
+            .onChange(of: monitor.temperatureUnitSetting) {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Done") { dismiss() }.tint(.mwAccent)
@@ -53,11 +62,32 @@ struct SettingsView: View {
                         .font(.system(size: 14, weight: .medium))
                 }
                 .tint(.mwAccent)
-                Text("Sensors can only be read while MiniWatts is on screen, so a charge is only recorded for as long as the phone stays awake. With this on, the screen is held on — but only while a charger is connected, never on battery.")
+                Text("Sensors can only be read while WattTrace is on screen, so a charge is only recorded for as long as the phone stays awake. With this on, the screen is held on — but only while a charger is connected, never on battery.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("A charge session survives the app being backgrounded: it ends when you unplug, not when you switch away. Any stretch the app missed is left out of the totals rather than estimated, and the session says how much of itself was actually measured.")
+                    .font(.caption)
+                    .foregroundStyle(Color.mwMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// Temperatures are read, stored and coloured in Celsius; this only changes how
+    /// they are written (#25).
+    private func unitsPanel(temperature: Binding<TemperatureUnitSetting>) -> some View {
+        Panel("Units", systemImage: "thermometer.medium") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Temperature")
+                    .font(.system(size: 14, weight: .medium))
+                Picker("Temperature", selection: temperature) {
+                    Text("Automatic").tag(TemperatureUnitSetting.automatic)
+                    Text(verbatim: "°C").tag(TemperatureUnitSetting.celsius)
+                    Text(verbatim: "°F").tag(TemperatureUnitSetting.fahrenheit)
+                }
+                .pickerStyle(.segmented)
+                Text("Automatic follows your region and the Temperature setting under General › Language & Region in the Settings app, which is \(TemperatureDisplayUnit.regional.symbol) on this device. Applies to the app, the floating meter, the Live Activity and the widget. Raw data always shows the sensors' own °C.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -93,11 +123,11 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("The activity starts while a charger is connected and MiniWatts is in front, refreshes while MiniWatts runs, and marks the reading paused once the app is suspended. Unplug with MiniWatts running and it ends two minutes later; unplug while it is suspended and it stays until MiniWatts runs again. Tap End on the activity to close it at any time.")
+                Text("The activity starts while a charger is connected and WattTrace is in front, refreshes while WattTrace runs, and marks the reading paused once the app is suspended. Unplug with WattTrace running and it ends two minutes later; unplug while it is suspended and it stays until WattTrace runs again. Tap End on the activity to close it at any time.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Widgets read the sensors themselves whenever iOS refreshes them — usually every 15 to 60 minutes — and straight away when you plug in or unplug with MiniWatts open. Each one says when its numbers were taken.")
+                Text("Widgets read the sensors themselves whenever iOS refreshes them — usually every 15 to 60 minutes — and straight away when you plug in or unplug with WattTrace open. Each one says when its numbers were taken.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -164,7 +194,7 @@ struct SettingsView: View {
                     EmptyNote(text: "This device does not support Picture in Picture.")
                 default:
                     if floatingMeter.status == .notReady {
-                        EmptyNote(text: "iOS will not open the window yet. Leave MiniWatts on screen for a moment and try again.",
+                        EmptyNote(text: "iOS will not open the window yet. Leave WattTrace on screen for a moment and try again.",
                                   systemImage: "clock")
                     }
                     Button {
@@ -193,7 +223,7 @@ struct SettingsView: View {
                               || (!floatingMeter.isRunning && !floatingMeter.hasSelectedContent))
                 }
 
-                Text("Puts the reading in a floating window that stays on top of other apps and keeps updating once a second. It is the only place iOS lets an app keep a number moving while it is off screen: a widget is refreshed a few times an hour, and the Lock Screen activity only moves while MiniWatts itself is running.")
+                Text("Puts the reading in a floating window that stays on top of other apps and keeps updating once a second. It is the only place iOS lets an app keep a number moving while it is off screen: a widget is refreshed a few times an hour, and the Lock Screen activity only moves while WattTrace itself is running.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -201,7 +231,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("While the window is open MiniWatts keeps running, so it also records the charge with the screen locked — and it draws more power than being suspended. Close the window when you are done with it. No sound is ever played; the window uses the same system feature as a video playing in the corner, which is why the app declares audio playback at all.")
+                Text("While the window is open WattTrace keeps running, so it also records the charge with the screen locked — and it draws more power than being suspended. Close the window when you are done with it. No sound is ever played; the window uses the same system feature as a video playing in the corner, which is why the app declares audio playback at all.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -226,10 +256,26 @@ struct SettingsView: View {
                     Stepper("", value: capacity, in: 5...40, step: 0.1)
                         .labelsHidden()
                 }
-                Text("Used only for the %-rate estimate, which is the sole way to see discharge power: no discharge-current sensor is exposed to a sandboxed app. Look up your model's rating — an iPhone 17 Pro Max is about 19.7 Wh — and enter it here.")
+                Text("Used for the %-rate estimate, which is the sole way to see discharge power — no discharge-current sensor is exposed to a sandboxed app — and for checking the charging sensors against how fast the battery level rises. Look up your model's rating and enter it here.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)
+                if DeviceCompatibilityProfile.isIPhone17ProMax {
+                    iPhone17ProMaxBatteryPresets(capacity: capacity)
+                } else if let rating = PowerMonitor.modelRating {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Rated for this model: \(String(format: "%.2f", rating.wattHours)) Wh (\(rating.source))")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        if abs(capacity.wrappedValue - rating.wattHours) > 0.05 {
+                            Button("Use") { capacity.wrappedValue = rating.wattHours }
+                                .font(.caption.weight(.semibold))
+                                .tint(.mwAccent)
+                        }
+                    }
+                }
                 if let designCapacity = monitor.snapshot.designCapacity, designCapacity > 0 {
                     EmptyNote(text: "IOKit reported a design capacity of \(designCapacity) mAh on this system, so that value is being used instead.",
                               systemImage: "checkmark.circle")
@@ -238,8 +284,47 @@ struct SettingsView: View {
         }
     }
 
+    private func iPhone17ProMaxBatteryPresets(capacity: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("iPhone 17 Pro Max battery presets")
+                .font(.system(size: 14, weight: .semibold))
+            ForEach(DeviceCompatibilityProfile.BatteryVariant.allCases) { variant in
+                Button {
+                    capacity.wrappedValue = variant.estimatedWattHours
+                } label: {
+                    HStack(alignment: .center, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(variant.title)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text(verbatim: "\(variant.ratedMilliampHours) mAh · ≈ \(String(format: "%.1f", variant.estimatedWattHours)) Wh")
+                                .font(.caption)
+                                .foregroundStyle(Color.mwMuted)
+                        }
+                        Spacer(minLength: 6)
+                        if abs(capacity.wrappedValue - variant.estimatedWattHours) < 0.05 {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.mwBattery)
+                        } else {
+                            Text("Use")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.mwAccent)
+                        }
+                    }
+                    .padding(.vertical, 5)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            EmptyNote(text: "Both hardware variants share iPhone18,2. Select the variant by the presence of a physical SIM tray, not by whether an eSIM is currently active. These are approximate rated energy presets, not measured usable battery capacity.",
+                      systemImage: "info.circle")
+            EmptyNote(text: "The original 19.7 Wh fallback assumes the larger pack; it does not identify your hardware. Your existing custom value is preserved until you choose a preset.",
+                      systemImage: "info.circle")
+        }
+    }
+
     private var devicePanel: some View {
-        Panel("Device", systemImage: "iphone") {
+        Panel("Device", systemImage: DeviceForm.current == .tablet ? "ipad" : "iphone") {
             VStack(spacing: 0) {
                 DetailRow(label: "Model identifier", value: monitor.deviceModelIdentifier)
                 DetailRow(label: "System", value: "iOS \(UIDevice.current.systemVersion)")
@@ -288,11 +373,23 @@ struct SettingsView: View {
 
     /// Where the source lives. Kept as a constant rather than built inline: a typo in
     /// a string literal would only show up as a force-unwrap crash on this screen.
-    private static let repository = URL(string: "https://github.com/ResistanceTo/MiniWatts")!
+    private static let repository = URL(string: "https://github.com/ResistanceTo/WattTrace")!
+
+    /// "1.6.0 (412)": the release tag and the commit count, which `build-ipa.sh` writes
+    /// into the bundle. A build run from Xcode carries the project file's 1.0 (1).
+    static var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "—"
+        guard let build = info?["CFBundleVersion"] as? String else { return version }
+        return "\(version) (\(build))"
+    }
 
     private var aboutPanel: some View {
         Panel("About", systemImage: "info.circle") {
             VStack(alignment: .leading, spacing: 10) {
+                // Asked for in #27: there was no way to tell from inside the app which
+                // release was installed, and so whether a newer one was worth fetching.
+                DetailRow(label: "Version", value: Self.versionText)
                 HStack(spacing: 10) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
                         .font(.system(size: 14, weight: .semibold))
@@ -309,7 +406,7 @@ struct SettingsView: View {
                 }
                 Link(destination: Self.repository) {
                     HStack(spacing: 8) {
-                        Text(verbatim: "github.com/ResistanceTo/MiniWatts")
+                        Text(verbatim: "github.com/ResistanceTo/WattTrace")
                             .mwMono(size: 12, weight: .medium)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -326,7 +423,7 @@ struct SettingsView: View {
                     )
                 }
                 .padding(.bottom, 4)
-                Text("MiniWatts reads the phone's own power management sensors through private frameworks — IOKit, IOHIDEventSystemClient and BatteryCenter. Nothing leaves the device and nothing is written outside the app's own container.")
+                Text("WattTrace reads the phone's own power management sensors through private frameworks — IOKit, IOHIDEventSystemClient and BatteryCenter. Nothing leaves the device and nothing is written outside the app's own container.")
                     .font(.caption)
                     .foregroundStyle(Color.mwMuted)
                     .fixedSize(horizontal: false, vertical: true)

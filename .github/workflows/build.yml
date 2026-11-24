@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
 
+# A burst of commits to the same PR should only consume macOS minutes for
+# the newest commit. Never cancel a tag release mid-upload.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ipa:
     name: Unsigned ipa
@@ -77,12 +83,15 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "MARKETING_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
+      - name: Test SOC analysis
+        run: bash scripts/test-soc-analysis.sh
+
       - name: Build unsigned ipa
         run: ./scripts/build-ipa.sh
 
       # Nothing about the machine that produced the build may reach the artifact.
       - name: Verify the ipa carries no identifying data
-        run: ./scripts/verify-clean.sh build/export/MiniWatts-unsigned.ipa
+        run: ./scripts/verify-clean.sh build/export/WattTrace-unsigned.ipa
 
       # The version reaches the bundle only as a build-setting override. If that ever
       # stops working, a release named v1.2.0 would quietly ship a binary saying 1.0.
@@ -90,7 +99,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           work=$(mktemp -d)
-          unzip -q build/export/MiniWatts-unsigned.ipa -d "$work"
+          unzip -q build/export/WattTrace-unsigned.ipa -d "$work"
           plist="$(ls -d "$work"/Payload/*.app)/Info.plist"
           built=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")
           number=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")
@@ -103,8 +112,8 @@ jobs:
       - name: Upload ipa
         uses: actions/upload-artifact@v4
         with:
-          name: MiniWatts-unsigned-ipa
-          path: build/export/MiniWatts-unsigned.ipa
+          name: WattTrace-unsigned-ipa
+          path: build/export/WattTrace-unsigned.ipa
           if-no-files-found: error
 
       # Kept separately: the ipa is stripped, so a crash report needs this to
@@ -112,8 +121,10 @@ jobs:
       - name: Upload dSYM
         uses: actions/upload-artifact@v4
         with:
-          name: MiniWatts-dSYM
-          path: build/DerivedData/Build/Products/Release-iphoneos/*.dSYM
+          name: WattTrace-dSYM
+          path: |
+            build/DerivedData/Build/Products/Release-iphoneos/*.dSYM
+            build/DerivedData/Build/Products/Release-watchos/*.dSYM
           if-no-files-found: warn
 
       # The AltStore / SideStore source, published next to the ipa. Its address never
@@ -124,14 +135,14 @@ jobs:
       # disagrees with its source on any of them.
       - name: Write the app source
         if: startsWith(github.ref, 'refs/tags/v')
-        run: python3 scripts/make-source.py build/export/MiniWatts-unsigned.ipa "$GITHUB_REF_NAME" > build/export/apps.json
+        run: python3 scripts/make-source.py build/export/WattTrace-unsigned.ipa "$GITHUB_REF_NAME" > build/export/apps.json
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/export/MiniWatts-unsigned.ipa
+            build/export/WattTrace-unsigned.ipa
             build/export/apps.json
           fail_on_unmatched_files: true
           generate_release_notes: true

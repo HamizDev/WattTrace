@@ -7,10 +7,14 @@ struct MiniWattsApp: App {
     /// One per process, and alive for as long as the app is: the layer Picture in
     /// Picture draws from cannot come and go with a settings sheet.
     @State private var floatingMeter = FloatingMeterController()
+    @StateObject private var watchBridge: PhoneWatchBridge
 
     init() {
         let monitor = PowerMonitor()
         _monitor = State(initialValue: monitor)
+        let bridge = PhoneWatchBridge()
+        _watchBridge = StateObject(wrappedValue: bridge)
+        bridge.start()
         // The Shortcuts action runs in this process — launched in the background, with
         // no scene, when the app is not already running — and has to read through this
         // monitor's sensors rather than open its own: a process gets one working HID
@@ -24,6 +28,7 @@ struct MiniWattsApp: App {
             RootView()
                 .environment(monitor)
                 .environment(floatingMeter)
+                .environmentObject(watchBridge)
         }
     }
 }

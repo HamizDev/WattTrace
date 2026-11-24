@@ -5,8 +5,27 @@ extension ChargeSession {
     /// copy and is translated. Keeping them apart is why `ChargeSession` exposes
     /// `fallbackTitle` rather than a single pre-rendered `String`.
     var titleText: Text {
+        if let testLabel { return Text(verbatim: testLabel) }
         if let adapterName { return Text(verbatim: adapterName) }
         return Text(fallbackTitle)
+    }
+
+    /// Nil when the adapter side was never measured — every wireless charge, and
+    /// anything recorded where the input rail does not answer. The stored peak is
+    /// 0 then, and a row reading "0.00 W" beside a 60 W charge curve said the
+    /// charger delivered nothing.
+    var measuredPeakInputWatts: Double? {
+        totals.measuredInputWattHours != nil && peakInputWatts > 0 ? peakInputWatts : nil
+    }
+
+    /// The curve a list row draws: the adapter's when it was measured, otherwise
+    /// the battery's, in the colour of the energy figure beside it. Older files
+    /// wrote a missing input reading as 0, so "has input samples" cannot decide.
+    var sparkline: (values: [Double], tint: Color) {
+        if totals.measuredInputWattHours != nil {
+            return (samples.compactMap(\.inputWatts), .mwAccent)
+        }
+        return (samples.compactMap(\.batteryWatts), .mwBattery)
     }
 }
 
@@ -15,17 +34,21 @@ struct SessionsView: View {
     @State private var confirmingDelete = false
 
     var body: some View {
-        PageScaffold("History", glow: .mwBattery, toolbar: AnyView(toolbar)) {
+        PageScaffold("History", glow: .mwBattery, toolbar: AnyView(toolbar), layout: .list) {
             if let session = monitor.currentSession {
                 currentPanel(session)
             }
             if monitor.sessions.isEmpty {
                 Panel("No finished charges yet", systemImage: "clock.arrow.circlepath") {
-                    EmptyNote(text: "A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep MiniWatts in the foreground for the totals to cover the whole charge.",
+                    EmptyNote(text: "A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep WattTrace in the foreground for the totals to cover the whole charge.",
                               systemImage: "bolt.badge.clock")
                 }
             } else {
                 summaryPanel
+                SessionExportLink(sessions: monitor.sessions)
+                if monitor.sessions.count >= 2 {
+                    SessionComparisonLink(sessions: monitor.sessions)
+                }
                 ForEach(monitor.sessions) { session in
                     NavigationLink {
                         SessionDetailView(session: session)
@@ -77,19 +100,27 @@ struct SessionsView: View {
     }
 
     private var summaryPanel: some View {
-        let totalDelivered = monitor.sessions.reduce(0) { $0 + $1.totals.inputWattHours }
+        // Nil, not 0, when no session measured the adapter side.
+        let delivered = monitor.sessions.compactMap(\.totals.measuredInputWattHours)
+        let totalDelivered = delivered.isEmpty ? nil : delivered.reduce(0, +)
         let totalStored = monitor.sessions.reduce(0) { $0 + $1.totals.batteryWattHours }
-        let efficiencies = monitor.sessions.compactMap(\.totals.efficiencyPercent)
-        let averageEfficiency = efficiencies.isEmpty ? nil : efficiencies.reduce(0, +) / Double(efficiencies.count)
+        // Aggregate with the same paired sampling intervals as the per-session
+        // charge-path efficiency. A plain mean gives a five-minute session the
+        // same weight as a two-hour session, which biases the History summary.
+        let pairedInput = monitor.sessions.reduce(0) { $0 + $1.totals.pairedInputWattHours }
+        let pairedCell = monitor.sessions.reduce(0) { $0 + $1.totals.pairedBatteryWattHours }
+        let averageEfficiency: Double? = pairedInput > 0.001 && pairedCell > 0
+            ? min(pairedCell / pairedInput, 1) * 100
+            : nil
         return Panel("All sessions", systemImage: "sum", trailing: Text(verbatim: "\(monitor.sessions.count)")) {
             HStack(alignment: .top, spacing: 10) {
                 Metric(caption: "Delivered",
-                       value: String(format: "%.1f", totalDelivered),
+                       value: totalDelivered.map { String(format: "%.1f", $0) } ?? "—",
                        unit: "Wh", tint: .mwAccent, size: 21)
                 Metric(caption: "Stored",
                        value: String(format: "%.1f", totalStored),
                        unit: "Wh", tint: .mwBattery, size: 21)
-                Metric(caption: "Round trip",
+                Metric(caption: "Cell share",
                        value: averageEfficiency.map { String(format: "%.0f", $0) } ?? "—",
                        unit: "%", tint: .mwLoss, size: 21)
             }
@@ -125,9 +156,9 @@ struct SessionRow: View {
                     }
                 }
                 HStack(spacing: 10) {
-                    Sparkline(values: session.samples.map(\.inputWatts))
+                    Sparkline(values: session.sparkline.values, tint: session.sparkline.tint)
                         .frame(height: 26)
-                    if let efficiency = session.totals.efficiencyPercent {
+                    if let efficiency = session.totals.chargePathEfficiencyPercent {
                         Pill(text: Text(verbatim: String(format: "%.0f%%", efficiency)), systemImage: "arrow.triangle.swap", tint: .mwLoss)
                     }
                     if session.throttledFraction > 0.05 {
@@ -144,35 +175,48 @@ struct SessionRow: View {
 }
 
 struct SessionDetailView: View {
-    let session: ChargeSession
+    let initialSession: ChargeSession
     @Environment(PowerMonitor.self) private var monitor
     @Environment(\.dismiss) private var dismiss
+    @State private var editingTestLabel = false
+    @State private var testLabelDraft = ""
+
+    init(session: ChargeSession) { initialSession = session }
+
+    private var session: ChargeSession {
+        monitor.sessions.first { $0.id == initialSession.id } ?? initialSession
+    }
 
     var body: some View {
         ZStack {
             Backdrop(glow: .mwBattery)
-            ScrollView {
-                VStack(spacing: 14) {
-                    energyPanel
-                    powerPanel
-                    climatePanel
-                    cablePanel
-                    detailsPanel
+            // The same column as the tabs: capped on an iPad, two columns on a wide
+            // one. It used to have no cap at all and ran edge to edge.
+            PanelScroll {
+                energyPanel
+                powerPanel
+                socAnalysisLink
+                thermalPowerAnalysisLink
+                if monitor.sessions.count >= 2 {
+                    SessionComparisonLink(sessions: monitor.sessions, baselineID: session.id)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
-                // Pinned to the container's width so nothing inside can widen the
-                // scroll content. A paragraph inside an HStack reports an enormous
-                // ideal width — the text unwrapped onto one line — and
-                // `.frame(maxWidth: .infinity)` only expands, it does not clamp, so
-                // that width propagates up and the page starts scrolling sideways.
-                .containerRelativeFrame(.horizontal)
+                climatePanel
+                SessionExportLink(sessions: [session])
+                cablePanel
+                detailsPanel
             }
         }
         .navigationTitle(session.titleText)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    testLabelDraft = session.testLabel ?? ""
+                    editingTestLabel = true
+                } label: {
+                    Image(systemName: "tag")
+                }
+                .accessibilityLabel("Edit test label")
                 Button(role: .destructive) {
                     monitor.deleteSession(session)
                     dismiss()
@@ -181,6 +225,15 @@ struct SessionDetailView: View {
                 }
                 .tint(.mwDanger)
             }
+        }
+        .alert("Test label", isPresented: $editingTestLabel) {
+            TextField("Charger, cable or test conditions", text: $testLabelDraft)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                monitor.setSessionTestLabel(id: session.id, label: testLabelDraft)
+            }
+        } message: {
+            Text("Optional manual label, for example: Apple 40 W · Cable A · case off. Leave blank to clear it. This does not change sensor readings.")
         }
     }
 
@@ -195,16 +248,16 @@ struct SessionDetailView: View {
                     Metric(caption: "Stored",
                            value: String(format: "%.2f", session.totals.batteryWattHours),
                            unit: "Wh", tint: .mwBattery, size: 21)
-                    Metric(caption: "Lost",
-                           value: String(format: "%.2f", session.totals.lossWattHours),
+                    Metric(caption: "Load + loss",
+                           value: session.totals.unaccountedWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwLoss, size: 21)
                 }
                 HStack(alignment: .top, spacing: 10) {
                     Metric(caption: "Into cell",
                            value: String(format: "%.0f", session.totals.batteryMilliAmpHours),
                            unit: "mAh", size: 21)
-                    Metric(caption: "Round trip",
-                           value: session.totals.efficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
+                    Metric(caption: "Cell share",
+                           value: session.totals.chargePathEfficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "%", tint: .mwLoss, size: 21)
                     Metric(caption: "Gained",
                            value: "+\(session.gainedPercent)",
@@ -222,14 +275,16 @@ struct SessionDetailView: View {
 
     private var powerPanel: some View {
         Panel("Charge curve", systemImage: "chart.xyaxis.line",
-              trailing: Text("peak \(String(format: "%.1f", session.peakInputWatts)) W")) {
+              trailing: Text("peak \(String(format: "%.1f", session.measuredPeakInputWatts ?? session.peakBatteryWatts)) W")) {
             if session.samples.isEmpty {
                 EmptyNote(text: "This session ended before the first sample was written.")
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     SessionPowerChart(samples: session.samples)
                     HStack(spacing: 14) {
-                        LegendDot(color: .mwAccent, text: "From charger")
+                        if session.measuredPeakInputWatts != nil {
+                            LegendDot(color: .mwAccent, text: "From charger")
+                        }
                         LegendDot(color: .mwBattery, text: "Into battery", dashed: true)
                         if session.throttledFraction > 0 {
                             LegendDot(color: .mwDanger.opacity(0.4), text: "Throttled")
@@ -240,34 +295,78 @@ struct SessionDetailView: View {
         }
     }
 
+    private var socAnalysisLink: some View {
+        NavigationLink {
+            SOCAnalysisView(session: session)
+        } label: {
+            Panel("SOC band analysis", systemImage: "chart.bar.xaxis") {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Power and thermal by battery level")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("5% / 10% bands · means, peaks and coverage")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var thermalPowerAnalysisLink: some View {
+        NavigationLink {
+            ThermalPowerAnalysisView(session: session)
+        } label: {
+            Panel("Thermal and power analysis", systemImage: "thermometer.variable") {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Power changes versus SOC and temperature")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("Same-level thermal comparisons and coverage")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     private var climatePanel: some View {
         Panel("Level and temperature", systemImage: "thermometer.variable") {
             if session.samples.isEmpty {
                 EmptyNote(text: "No samples recorded.")
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    SessionClimateChart(samples: session.samples)
+                    SessionClimateChart(samples: session.samples, unit: monitor.temperatureUnit)
                     HStack(spacing: 14) {
                         LegendDot(color: .mwWireless, text: "Charge %")
-                        LegendDot(color: .mwLoss, text: "Battery °C")
+                        LegendDot(color: .mwLoss, text: "Battery temperature")
                     }
                 }
             }
         }
     }
 
-    /// Same charger, different cable — the comparison the path resistance exists for.
-    ///
-    /// A single figure is hard to judge, because it carries the charger's own
-    /// regulation and both sets of contacts as well as the cable. Two sessions on the
-    /// same charger differ only in what was plugged between them, so the gap between
-    /// rows is the part a user can do something about. Hidden entirely until there
-    /// are at least two, since one row is not a comparison.
+    /// A comparison of the whole wired path, grouped by reported adapter name.
+    /// Names are not unique device identities; a difference cannot be assigned
+    /// to a cable unless the other test conditions are controlled.
     @ViewBuilder
     private var cablePanel: some View {
         let fits = monitor.pathFitsSharingAdapter(with: session)
         if !fits.isEmpty {
-            Panel("Cable comparison", systemImage: "cable.connector.horizontal",
+            Panel("Path resistance comparison", systemImage: "cable.connector.horizontal",
                   trailing: Text("\(fits.count) sessions")) {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(fits) { fit in
@@ -276,7 +375,8 @@ struct SessionDetailView: View {
                             Image(systemName: isThis ? "largecircle.fill.circle" : "circle")
                                 .font(.system(size: 12))
                                 .foregroundStyle(isThis ? Color.mwAccent : Color.mwMuted.opacity(0.5))
-                            Text(verbatim: Formatting.timestamp(fit.start))
+                            Text(verbatim: fit.testLabel ?? Formatting.timestamp(fit.start))
+                                .lineLimit(1)
                                 .mwMono(size: 12, weight: isThis ? .semibold : .regular)
                             Spacer(minLength: 8)
                             Text(verbatim: String(format: "%.0f mΩ", fit.pathMilliohms ?? 0))
@@ -290,6 +390,7 @@ struct SessionDetailView: View {
                                 .fill(isThis ? Color.mwAccent.opacity(0.12) : Color.mwMuted.opacity(0.06))
                         )
                     }
+                    EmptyNote(text: "These records share a reported adapter name, not a verified physical charger. The estimate includes adapter regulation, cable and both contacts.")
                     if let note = comparisonNote(fits) {
                         Text(note)
                             .font(.caption)
@@ -301,18 +402,17 @@ struct SessionDetailView: View {
         }
     }
 
-    /// Where this session landed among the others on the same charger. Only the two
-    /// ends are worth a sentence — being the best says the connection is as good as
-    /// this charger has seen, and being worse than the best says by how much.
+    /// Describe the observed difference without attributing it to a cable or
+    /// asserting a causal ranking of the chargers.
     private func comparisonNote(_ fits: [ChargeSession]) -> LocalizedStringResource? {
         guard let best = fits.first?.pathMilliohms,
               let mine = fits.first(where: { $0.id == session.id })?.pathMilliohms else { return nil }
         let excess = mine - best
         guard excess >= 25 else {
-            return "The lowest path resistance recorded on this charger. Whatever was plugged in here is as good as it has seen."
+            return "This estimate is close to the lowest recorded path resistance for this reported adapter name."
         }
         let gap = String(format: "%.0f mΩ", excess)
-        return "\(gap) above the best this charger has recorded. Same charger, so that difference is the cable and the plugs — not the adapter."
+        return "\(gap) above the lowest estimate for this reported adapter name. Cable, contacts, charger regulation and test conditions may all contribute."
     }
 
     private var detailsPanel: some View {
@@ -320,15 +420,18 @@ struct SessionDetailView: View {
             VStack(spacing: 0) {
                 DetailRow(label: "Started", value: Formatting.timestamp(session.start))
                 DetailRow(label: "Ended", value: session.end.map(Formatting.timestamp))
+                DetailRow(label: "Test label", value: session.testLabel)
                 DetailRow(label: "Adapter", value: session.adapterName)
                 DetailRow(label: "Rated", value: session.adapterRatedWatts.map { String(format: "%.0f W", $0) })
-                DetailRow(label: "Peak from charger", value: String(format: "%.2f W", session.peakInputWatts))
+                DetailRow(label: "Peak from charger", value: session.measuredPeakInputWatts.map { String(format: "%.2f W", $0) })
                 DetailRow(label: "Peak into cell", value: String(format: "%.2f W", session.peakBatteryWatts))
-                DetailRow(label: "Peak cell temp", value: session.peakBatteryTemperature.map { String(format: "%.1f °C", $0) })
+                DetailRow(label: "Peak cell temp", value: session.peakBatteryTemperature.map { monitor.temperatureUnit.reading($0) })
                 DetailRow(label: "Average in", value: session.totals.averageInputWatts.map { String(format: "%.2f W", $0) })
                 DetailRow(label: "Path resistance",
                           value: session.pathMilliohms.map { String(format: "%.0f mΩ", $0) })
                 DetailRow(label: "Throttled", value: Formatting.duration(session.throttledSeconds))
+                DetailRow(label: "Input measured", value: Formatting.duration(session.totals.inputMeasuredSeconds))
+                DetailRow(label: "Cell measured", value: Formatting.duration(session.totals.batteryMeasuredSeconds))
                 DetailRow(label: "Samples", value: "\(session.samples.count)")
                 DetailRow(label: "Transport", value: DetailRow.transportName(wireless: session.isWireless))
             }

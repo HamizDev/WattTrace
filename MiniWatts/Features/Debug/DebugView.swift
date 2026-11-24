@@ -26,6 +26,7 @@ struct DebugView: View {
                 VStack(spacing: 14) {
                     diagnosticsPanel
                     sensorsPanel
+                    temperatureWarningsPanel
                     inventoryPanel
                     accessoryPanel
                     dictionaryPanel("IOPMPowerSource", systemImage: "cpu", dictionary: monitor.snapshot.registry)
@@ -42,7 +43,9 @@ struct DebugView: View {
                 // ideal width — the text unwrapped onto one line — and
                 // `.frame(maxWidth: .infinity)` only expands, it does not clamp, so
                 // that width propagates up and the page starts scrolling sideways.
-                .containerRelativeFrame(.horizontal)
+                // The cap is part of the pin: see `PageScaffold`.
+                .containerRelativeFrame(.horizontal) { width, _ in min(width, 760) }
+                .frame(maxWidth: .infinity)
             }
         }
         .navigationTitle("Raw data")
@@ -84,7 +87,27 @@ struct DebugView: View {
                     ForEach(monitor.snapshot.sensors
                         .filter { matches($0.name, $0.formatted) }
                         .sorted { $0.name < $1.name }) { reading in
-                        DetailRow(rawLabel: reading.name, value: reading.formatted)
+                        DetailRow(rawLabel: reading.key.isEmpty
+                                      ? "[\(reading.index)] \(reading.name)"
+                                      : "[\(reading.index)] \(reading.name) (\(reading.key))",
+                                  value: reading.formatted)
+                    }
+                }
+            }
+        }
+    }
+
+    private var temperatureWarningsPanel: some View {
+        Panel("Derived temperature filters", systemImage: "thermometer.variable.and.figure") {
+            if monitor.snapshot.temperatureWarnings.isEmpty {
+                EmptyNote(text: "No temperature readings were excluded from derived values.")
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(monitor.snapshot.temperatureWarnings, id: \.self) { warning in
+                        Text(verbatim: warning)
+                            .mwMono(size: 11)
+                            .foregroundStyle(Color.mwMuted)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -120,7 +143,7 @@ struct DebugView: View {
         }
     }
 
-    /// The accessory-manager scan. This is the panel that decides whether MiniWatts
+    /// The accessory-manager scan. This is the panel that decides whether WattTrace
     /// can ever say anything about the charger's own identity or the cable, so the
     /// rows that came back empty are shown as well as the ones that answered: a key
     /// that is absent everywhere is the finding.
@@ -252,10 +275,37 @@ struct DebugView: View {
     }
 
     private func fullDump() -> String {
-        var lines: [String] = ["MiniWatts raw dump — \(Formatting.timestamp(.now))"]
+        var lines: [String] = ["WattTrace \(SettingsView.versionText) raw dump — \(Formatting.timestamp(.now))"]
         lines.append(contentsOf: monitor.diagnostics)
         lines.append("\n# Sensors")
-        lines.append(contentsOf: monitor.snapshot.sensors.sorted { $0.name < $1.name }.map { "\($0.name) = \($0.formatted)" })
+        lines.append(contentsOf: monitor.snapshot.sensors.sorted { ($0.name, $0.index) < ($1.name, $1.index) }
+            .map { $0.key.isEmpty
+                ? "[\($0.index)] \($0.name) = \($0.formatted)"
+                : "[\($0.index)] \($0.name) (\($0.key)) = \($0.formatted)" })
+        if monitor.snapshot.mergedCopyCount > 0 {
+            lines.append("(\(monitor.snapshot.mergedCopyCount) services are second copies of a key and are averaged with the first in derived values)")
+        }
+        if !monitor.snapshot.temperatureWarnings.isEmpty {
+            lines.append("\n# Derived temperature filters")
+            lines.append(contentsOf: monitor.snapshot.temperatureWarnings)
+        }
+        var powerLines: [String] = []
+        if let partial = monitor.snapshot.partialInputWatts, let cell = monitor.snapshot.batteryWatts {
+            powerLines.append(String(format: "input sensors = %.2f W, into cell = %.2f W — input excluded from derived values: less than the cell receives",
+                                     partial, cell))
+        }
+        if monitor.snapshot.mayReadHalfInput {
+            powerLines.append("iPhone19,x on a wired profile above 30 W — readings may be about half; cable figures withheld")
+        }
+        if let check = monitor.levelRateCheck {
+            powerLines.append(String(format: "level check: +%d%% in %.0f s = %.2f W at %.2f Wh, cell sensors %.2f W, ratio %.2f — %@",
+                                     check.percentRise, check.span, check.levelWatts, check.packWattHours,
+                                     check.cellWatts, check.ratio, String(describing: check.verdict)))
+        }
+        if !powerLines.isEmpty {
+            lines.append("\n# Derived power checks")
+            lines.append(contentsOf: powerLines)
+        }
         if !inventory.isEmpty {
             lines.append("\n# HID inventory")
             lines.append(contentsOf: inventory.map { String(format: "%@  0x%04x / %d", $0.name, $0.usagePage, $0.usage) })
