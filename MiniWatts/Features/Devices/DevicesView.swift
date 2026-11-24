@@ -17,6 +17,7 @@ struct DevicesView: View {
     var body: some View {
         PageScaffold("Devices", glow: .mwWireless) {
             thisPhonePanel
+            AppleWatchBatteryCard()
             compatibilityLink
             systemMonitorLink
             if groups.isEmpty {

@@ -47,13 +47,17 @@ The workflow now publishes `WattTrace-unsigned-ipa`, containing
 **Xcode / Xcode Cloud (macOS setup)**
 
 Open `MiniWatts.xcodeproj`, select the `WattTrace` shared scheme, and set your
-Apple Developer Team on the app and WidgetExtension targets with automatic
-signing. Verify the App Group matches the value above. For first-time cloud
+Apple Developer Team on the app, WidgetExtension and WattTraceWatch targets
+with automatic signing. Verify the iPhone app and widget App Group matches the value above. For first-time cloud
 configuration, see [XCODE_CLOUD.md](XCODE_CLOUD.md). Build with Xcode 26+;
 iOS/iPadOS 17+ is the deployment target.
 
-The app is not currently a watchOS app. A Watch companion and WatchConnectivity
-sync are planned separately.
+A watchOS 11+ companion is embedded in the iPhone app. It monitors the Watch's
+battery percentage and charging state using public WatchKit APIs, and transfers
+bounded observations via WatchConnectivity. Open Devices → Apple Watch on iPhone.
+See [Watch companion setup and limitations](docs/WATCH_COMPANION.md). Real-device
+installation and pairing must still be verified; generic sideload tools may not
+install or correctly re-sign the embedded Watch app.
 
 ## Measurements and limits
 

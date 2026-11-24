@@ -191,3 +191,21 @@ results per temperature channel. See [Export schema](docs/EXPORT_SCHEMA.md).
 Foundation-only regression checks cover schema, CSV quoting/formula
 protection, column counts, signed watts, unknown versus measured zero,
 legacy fields, UTC timestamps and JSON structure.
+
+## Apple Watch companion (stage 5)
+
+A separate SwiftUI `WattTraceWatch` target (watchOS 11+) is embedded in the
+iPhone app. WatchKit reports local battery percentage and charging state;
+unknown is not zero. Foreground sampling every ~15 seconds publishes on
+state/level changes, a ~60-second heartbeat, or manual sync. Latest context,
+reachable messages and bounded queued user info share the same sample ID.
+The phone validates, deduplicates and sorts received observations, keeping
+up to 500 for the active watch in its WatchConnectivity-specific directory.
+Memory-only fallback and stale readings are labelled. These observations do
+not enter iPhone session analysis or exports.
+
+A shared Watch scheme and packaging checks validate embedding and companion
+identifiers. The unsigned build is not proof of successful device signing,
+installation, transfer or watchOS background delivery. There is no Watch
+wattmeter, internal temperature estimate or background runtime entitlement.
+See [Watch companion](docs/WATCH_COMPANION.md).

@@ -109,14 +109,15 @@ if [ "$MODE" = "unsigned" ]; then
   # debug and local symbols removes them. The dSYM in DerivedData keeps whatever
   # is needed to symbolicate a crash later.
   xcrun strip -S -x "$BUILD_DIR/Payload/$SCHEME.app/$SCHEME"
-  # App extensions — the widget — are bundles of their own inside PlugIns, with their
-  # own executable, their own signature directory and their own debug map. Stripping
-  # only the app binary shipped the extension's build paths untouched.
-  while IFS= read -r -d '' appex; do
-    rm -rf "$appex/_CodeSignature"
-    executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$appex/Info.plist")"
-    xcrun strip -S -x "$appex/$executable"
-  done < <(find "$BUILD_DIR/Payload/$SCHEME.app" -name '*.appex' -type d -print0)
+  # The Widget extension and embedded watchOS app are separate executable bundles.
+  while IFS= read -r -d '' nested; do
+    rm -rf "$nested/_CodeSignature"
+    executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$nested/Info.plist")"
+    xcrun strip -S -x "$nested/$executable"
+  done < <(find "$BUILD_DIR/Payload/$SCHEME.app" -mindepth 1 -type d \( -name '*.appex' -o -name '*.app' \) -print0)
+  [ -d "$BUILD_DIR/Payload/$SCHEME.app/Watch/WattTraceWatch.app" ] || {
+    echo "Missing embedded Watch companion" >&2; exit 1;
+  }
   (cd "$BUILD_DIR" && zip -qry "export/$OUTPUT_NAME-unsigned.ipa" Payload)
   rm -rf "$BUILD_DIR/Payload"
   IPA="$EXPORT_DIR/$OUTPUT_NAME-unsigned.ipa"

@@ -122,7 +122,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WattTrace-dSYM
-          path: build/DerivedData/Build/Products/Release-iphoneos/*.dSYM
+          path: |
+            build/DerivedData/Build/Products/Release-iphoneos/*.dSYM
+            build/DerivedData/Build/Products/Release-watchos/*.dSYM
           if-no-files-found: warn
 
       # The AltStore / SideStore source, published next to the ipa. Its address never

@@ -17,10 +17,10 @@ The underlying Xcode target is still named `MiniWatts` for upstream compatibilit
 ## Before the first cloud build
 
 1. Clone/open `MiniWatts.xcodeproj` in Xcode 27 or later.
-2. Select the app target and the WidgetExtension target.
+2. Select the app target, WidgetExtension target and WattTraceWatch target.
 3. In **Signing & Capabilities**, select your Apple Developer team and keep
    **Automatically manage signing** enabled.
-4. Confirm the App Groups capability on both targets contains
+4. Confirm the App Groups capability on the iPhone app and widget targets contains
    `group.com.hamizdev.WattTrace`. If Xcode asks to register the App Group, allow it.
 5. Make one local build first. This catches signing/capability issues before Cloud.
 

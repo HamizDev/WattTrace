@@ -45,11 +45,11 @@ GitHub Actions 的 Artifact 已调整为 `WattTrace-unsigned-ipa`，
 **Xcode / Xcode Cloud（首次配置需 Mac）**
 
 打开 `MiniWatts.xcodeproj`，选择共享 Scheme `WattTrace`，
-给主 App 和 WidgetExtension 选择开发者 Team，使用自动签名，
-检查两个 target 的 App Group 一致。详细见 [XCODE_CLOUD.md](XCODE_CLOUD.md)。
+给主 App、WidgetExtension 和 WattTraceWatch 选择开发者 Team，使用自动签名，
+检查主 App 与 Widget 的 App Group 一致。详细见 [XCODE_CLOUD.md](XCODE_CLOUD.md)。
 需要 Xcode 26 或更新版本；部署目标为 iOS/iPadOS 17+。
 
-目前尚无 watchOS target，后续计划另做 Watch companion 和 WatchConnectivity 同步。
+新增 watchOS 11+ 配套应用，嵌入 iPhone App。使用公开 WatchKit 接口采集手表电量与充电状态，经 WatchConnectivity 发送数据，在手机 Devices → Apple Watch 查看。详见 [手表安装与限制](docs/WATCH_COMPANION.md)。尚需实机签名、安装和配对测试；普通侧载工具未必支持手表 App。
 
 ## 功能与限制
 

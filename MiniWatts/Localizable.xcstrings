@@ -1,6 +1,216 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Apple Watch" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        }
+      }
+    },
+    "Watch battery" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表电量"
+          }
+        }
+      }
+    },
+    "Recent reading" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近期读数"
+          }
+        }
+      }
+    },
+    "Last known · stale" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次读数 · 已过时"
+          }
+        }
+      }
+    },
+    "Watch sample time" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表采样时间"
+          }
+        }
+      }
+    },
+    "Watch system" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表系统"
+          }
+        }
+      }
+    },
+    "Watch battery history" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表电量历史"
+          }
+        }
+      }
+    },
+    "Watch history is available only in memory because local storage is unavailable." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本地存储不可用，手表历史暂时仅保存在内存中。"
+          }
+        }
+      }
+    },
+    "Install and open WattTrace on the paired Apple Watch to send its battery level and charging state." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在已配对的 Apple Watch 上安装并打开 WattTrace，以发送电量和充电状态。"
+          }
+        }
+      }
+    },
+    "Watch data is separate from iPhone charging sessions. Updates may be delayed; this is not continuous background monitoring." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表数据与 iPhone 充电会话分开保存。更新可能延迟，并非持续后台监测。"
+          }
+        }
+      }
+    },
+    "WatchConnectivity unavailable" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WatchConnectivity 不可用"
+          }
+        }
+      }
+    },
+    "Watch connection activation failed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表连接激活失败"
+          }
+        }
+      }
+    },
+    "Connecting to Apple Watch" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在连接 Apple Watch"
+          }
+        }
+      }
+    },
+    "No paired Apple Watch" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有已配对的 Apple Watch"
+          }
+        }
+      }
+    },
+    "Watch companion not installed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未安装手表配套应用"
+          }
+        }
+      }
+    },
+    "Watch reachable" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表当前可达"
+          }
+        }
+      }
+    },
+    "Watch not reachable" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表当前不可达"
+          }
+        }
+      }
+    },
+    "Watch observations" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表采样记录"
+          }
+        }
+      }
+    },
+    "Up to 500 received observations are kept for the active paired watch. Gaps are not filled in, and Watch watts and energy are not estimated." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为当前配对手表最多保留 500 条已接收记录。不补齐采样空档，也不估算手表功率与能量。"
+          }
+        }
+      }
+    },
+    "No Watch observations" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂无手表采样记录"
+          }
+        }
+      }
+    },
+    "Open WattTrace on the Watch to collect a reading." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在手表上打开 WattTrace 以获取电量读数。"
+          }
+        }
+      }
+    },
     "Export charging data" : {
       "localizations": {
         "zh-Hans": {
