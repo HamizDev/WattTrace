@@ -70,5 +70,6 @@ struct SOCBandAnalysisTests {
         try SessionExportTests.run()
         try WatchBatteryReadingTests.run()
         AccessoryBatteryLevelTests.run()
+        DiagnosticReportTests.run()
     }
 }

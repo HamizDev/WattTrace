@@ -263,3 +263,16 @@ not evidence of equivalent permissions. Real-device AirPods 4 testing pending.
   payload storage, device identifiers, ownership assignment or battery
   decoding. Standard BAS reads remain separate. AirPods 4 battery access
   remains unverified/unavailable if the OS does not expose real records.
+
+## v0.0.4 — report sharing fallback
+
+- Capture the thermal report only when Copy or View is pressed, rather than
+  rebuilding a changing ShareLink payload on every sensor sample.
+- Add direct clipboard copying, selectable frozen report preview, UTF-8
+  plain-text export through Files, and optional system sharing from the
+  captured report. The clipboard path does not require a share extension.
+- Retain a completed case visibility report in memory if the app backgrounds;
+  the BLE probe still stops and releases its state. Clear the stored report
+  when leaving the diagnostic or starting another check.
+- Add regression tests for immutable report content, UTF-8 and filenames.
+  UI presentation and LCSign-resigned device behavior still require testing.
