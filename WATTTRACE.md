@@ -73,3 +73,24 @@ executing steps, so it did not deliver a compiler diagnostic.
 
 See [Device compatibility and real-device test matrix](docs/DEVICE_COMPATIBILITY.md).
 Fresh compile and device validation are pending.
+
+## SOC-banded session analysis (development)
+
+Open History → a completed charge → SOC band analysis. Toggle 5% / 10%
+bands; 100% is separate from the final taper band. New sessions aggregate
+the existing one-second snapshots into at most 21 buckets, independent of
+the thinned curve. Means use trapezoid weighting and each metric's own valid
+interval duration; peaks are actual sampled maxima. Battery watts remain
+signed. Only adjacent samples in the same five-percent bucket with a
+positive interval of at most 10 seconds are integrated. Missing SOC,
+app pauses, and band transitions break continuity. Thermal durations require
+matching states at both endpoints; older files only distinguish high/not-high.
+
+The optional persisted aggregate is backward-compatible. Earlier history
+is rebuilt from stored curve points and labelled separately because it may
+contain carried-forward SOC, thinned samples or ambiguous legacy zeros.
+No estimated charger input is invented for wireless sessions.
+
+The comparison-ready aggregation model and its regression tests are
+Foundation-only. Run `bash scripts/test-soc-analysis.sh` with Swift 6.2+.
+The build workflow runs the same tests before packaging the IPA.

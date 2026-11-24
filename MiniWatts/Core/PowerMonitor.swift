@@ -166,6 +166,7 @@ final class PowerMonitor {
     private let probeService = SensorProbe()
     private let batteryCenter = BatteryCenterBridge()
     private let energy = EnergyAccumulator()
+    private var socAccumulator = SOCBandAccumulator()
     private let resistance = PathResistanceMeter()
     private let store = SessionStore()
 
@@ -274,6 +275,7 @@ final class PowerMonitor {
     func pause() {
         task?.cancel()
         task = nil
+        socAccumulator.breakContinuity()
         persist()
     }
 
@@ -362,6 +364,7 @@ final class PowerMonitor {
 
     private func openSession(_ snapshot: PowerSnapshot) {
         energy.reset()
+        socAccumulator = SOCBandAccumulator()
         sessionTotals = energy.totals
         currentSession = ChargeSession(start: snapshot.date,
                                        startPercent: snapshot.percent ?? 0,
@@ -377,6 +380,18 @@ final class PowerMonitor {
 
         session.endPercent = snapshot.percent ?? session.endPercent
         session.totals = energy.totals
+        // Use the actual SOC, not the display fallback. This is independent of
+        // the five-second curve samples, which can be thinned on long sessions.
+        socAccumulator.add(SOCReading(
+            offset: snapshot.date.timeIntervalSince(session.start),
+            percent: snapshot.percent,
+            inputWatts: snapshot.inputWatts,
+            batteryWatts: snapshot.batteryWatts,
+            batteryTemperature: snapshot.batteryTemperature,
+            hottestTemperature: snapshot.hottestSensor?.value,
+            pressure: socPressure
+        ))
+        session.socAnalysis = socAccumulator.analysis
         session.peakInputWatts = max(session.peakInputWatts, snapshot.inputWatts ?? 0)
         session.peakBatteryWatts = max(session.peakBatteryWatts, snapshot.batteryWatts ?? 0)
         if let temperature = snapshot.batteryTemperature {
@@ -416,6 +431,16 @@ final class PowerMonitor {
         currentSession = session
     }
 
+    private var socPressure: SOCPressure? {
+        switch thermal.state {
+        case .nominal: return .nominal
+        case .fair: return .fair
+        case .serious: return .serious
+        case .critical: return .critical
+        @unknown default: return nil
+        }
+    }
+
     private func closeSessionIfNeeded() {
         guard var session = currentSession else { return }
         // The end is the last moment the charger was actually seen, not now. Unplug
@@ -427,6 +452,7 @@ final class PowerMonitor {
         session.totals = energy.totals
         currentSession = nil
         energy.reset()
+        socAccumulator = SOCBandAccumulator()
         sessionTotals = EnergyTotals()
         lastThermalObservationDate = nil
         if Self.isWorthKeeping(session) {
@@ -486,6 +512,7 @@ final class PowerMonitor {
         sessions.removeAll()
         currentSession = nil
         energy.reset()
+        socAccumulator = SOCBandAccumulator()
         sessionTotals = EnergyTotals()
         lastThermalObservationDate = nil
         store.deleteAll()

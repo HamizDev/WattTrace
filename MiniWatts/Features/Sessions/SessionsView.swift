@@ -182,6 +182,7 @@ struct SessionDetailView: View {
             PanelScroll {
                 energyPanel
                 powerPanel
+                socAnalysisLink
                 climatePanel
                 cablePanel
                 detailsPanel
@@ -258,6 +259,30 @@ struct SessionDetailView: View {
                 }
             }
         }
+    }
+
+    private var socAnalysisLink: some View {
+        NavigationLink {
+            SOCAnalysisView(session: session)
+        } label: {
+            Panel("SOC band analysis", systemImage: "chart.bar.xaxis") {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Power and thermal by battery level")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("5% / 10% bands · means, peaks and coverage")
+                            .font(.caption)
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color.mwMuted)
+                }
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private var climatePanel: some View {

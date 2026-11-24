@@ -1,6 +1,326 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "SOC band analysis" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC 分段分析"
+          }
+        }
+      }
+    },
+    "Power and thermal by battery level" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按电量分析功率和温度"
+          }
+        }
+      }
+    },
+    "5% / 10% bands · means, peaks and coverage" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5% / 10% 区间 · 均值、峰值与覆盖率"
+          }
+        }
+      }
+    },
+    "No SOC readings" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无 SOC 读数"
+          }
+        }
+      }
+    },
+    "No valid battery-level samples were recorded for this session." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本次会话未记录有效的电池电量采样。"
+          }
+        }
+      }
+    },
+    "SOC bands" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量分段"
+          }
+        }
+      }
+    },
+    "Band width" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "区间宽度"
+          }
+        }
+      }
+    },
+    "Analysis source" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分析数据来源"
+          }
+        }
+      }
+    },
+    "SOC samples" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC 采样数"
+          }
+        }
+      }
+    },
+    "Within-band observed" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "区间内有效观测时长"
+          }
+        }
+      }
+    },
+    "Reconstructed from the saved curve. Older or thinned samples may omit intervals or contain legacy zero values, and the original thermal states cannot be recovered." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由已保存的曲线回算。较早或抽稀后的采样可能缺少部分区间，旧版本的零值可能有歧义，且无法恢复原始的完整热压力等级。"
+          }
+        }
+      }
+    },
+    "Intervals longer than 10 seconds, missing battery levels and band crossings are excluded. 100% is its own band. Means use only valid pairs of readings; peaks can include isolated samples." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超过 10 秒的采样间隔、电量缺失和跨区间的间隔均不累计。100% 独立统计。均值仅使用两端均有效的读数；峰值可包含独立采样点。"
+          }
+        }
+      }
+    },
+    "Live sensor aggregation" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时传感器累计"
+          }
+        }
+      }
+    },
+    "Saved curve reconstruction" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史曲线回算"
+          }
+        }
+      }
+    },
+    "Power by SOC" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOC 功率分布"
+          }
+        }
+      }
+    },
+    "Battery level (%)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池电量 (%)"
+          }
+        }
+      }
+    },
+    "Power (W)" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功率 (W)"
+          }
+        }
+      }
+    },
+    "Mean input" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均输入功率"
+          }
+        }
+      }
+    },
+    "Mean battery rail" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均电池轨功率"
+          }
+        }
+      }
+    },
+    "Dots are measured interval-weighted means at each band's midpoint. Missing bands have no dot. Battery-rail watts are signed: negative means net discharge." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圆点或方点代表各区间中点的实测时长加权均值。无数据的区间不绘制点。电池轨功率保留正负符号，负值表示净放电。"
+          }
+        }
+      }
+    },
+    "No continuous power intervals could be measured in these bands." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些区间没有可用于连续积分的功率读数。"
+          }
+        }
+      }
+    },
+    "SOC band" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量区间"
+          }
+        }
+      }
+    },
+    "Input peak" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入峰值功率"
+          }
+        }
+      }
+    },
+    "Battery rail peak" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池轨峰值功率"
+          }
+        }
+      }
+    },
+    "Mean cell temperature" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均电池温度"
+          }
+        }
+      }
+    },
+    "Peak hotspot temperature" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最高热点温度"
+          }
+        }
+      }
+    },
+    "High thermal pressure" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高热压力"
+          }
+        }
+      }
+    },
+    "Coverage and thermal states" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测量覆盖率与热压力状态"
+          }
+        }
+      }
+    },
+    "Cell temperature measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池温度有效时长"
+          }
+        }
+      }
+    },
+    "Hotspot temperature measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热点温度有效时长"
+          }
+        }
+      }
+    },
+    "Thermal state measured" : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "热压力状态有效时长"
+          }
+        }
+      }
+    },
+    "Legacy history records only whether high thermal pressure was present." : {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "旧版历史只记录是否存在高热压力。"
+          }
+        }
+      }
+    },
     "Device compatibility" : {
       "localizations": {
         "zh-Hans": {

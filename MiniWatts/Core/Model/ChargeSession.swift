@@ -45,6 +45,9 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
     /// How many samples that fit rested on, so a thin fit is not read as equal to a
     /// solid one when two sessions are compared.
     var pathSamples: Int?
+    /// Bounded one-second SOC aggregates. Nil only for sessions saved before
+    /// this feature existed; those can be analysed from the stored curve.
+    var socAnalysis: SOCBandAnalysis?
 
     var isOpen: Bool { end == nil }
     var duration: TimeInterval { (end ?? .now).timeIntervalSince(start) }
@@ -80,6 +83,28 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable {
         self.throttledSeconds = 0
         self.pathMilliohms = nil
         self.pathSamples = nil
+        self.socAnalysis = nil
+    }
+
+    /// Older history has at most the saved, possibly thinned curve. Its SOC
+    /// may have been carried forward during a missing reading; older formats
+    /// also wrote some missing rail values as zero. Respect session-level
+    /// evidence of a measured rail and label the reconstruction separately.
+    var resolvedSOCAnalysis: SOCBandAnalysis {
+        if let socAnalysis { return socAnalysis }
+        var accumulator = SOCBandAccumulator(source: .historicalSamples)
+        for sample in samples.sorted(by: { $0.offset < $1.offset }) {
+            accumulator.add(SOCReading(
+                offset: sample.offset,
+                percent: sample.percent,
+                inputWatts: totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
+                batteryWatts: totals.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
+                batteryTemperature: sample.batteryTemperature,
+                hottestTemperature: sample.hottestTemperature,
+                pressure: sample.throttled ? .legacyHigh : .legacyNotHigh
+            ))
+        }
+        return accumulator.analysis
     }
 
     /// Takes the fit if it rests on at least as much as whatever is already stored.
