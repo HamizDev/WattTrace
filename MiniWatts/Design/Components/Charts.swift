@@ -1,5 +1,6 @@
 import Charts
 import SwiftUI
+import UIKit
 
 /// One plotted reading, and the unbroken run of readings it belongs to.
 ///
@@ -123,15 +124,6 @@ struct LivePowerChart: View {
         }
     }
 
-    private var selection: Binding<Date?> {
-        Binding {
-            selectedDate
-        } set: { date in
-            // Keep the inspected sample visible after the gesture ends.
-            if let date { selectedDate = date }
-        }
-    }
-
     private var selectedSample: LiveSample? {
         guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date else { return nil }
         // Some iOS 27.2 builds lack the Date comparison overloads weak-linked by the SDK.
@@ -191,16 +183,25 @@ struct LivePowerChart: View {
                 }
             }
         }
-        .chartXSelection(value: selection)
-        .chartGesture { proxy in
-            DragGesture(minimumDistance: 12)
-                .onChanged { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
-                    proxy.selectXValue(at: gesture.location.x)
-                }
+        .chartOverlay { proxy in
+            selectionOverlay(proxy)
         }
         .chartLegend(.hidden)
         .frame(height: 154)
+    }
+
+    private func selectionOverlay(_ proxy: ChartProxy) -> some View {
+        GeometryReader { geometry in
+            if let plotFrame = proxy.plotFrame {
+                let frame = geometry[plotFrame]
+                ChartScrubber { x in
+                    if let date = proxy.value(atX: x, as: Date.self) { selectedDate = date }
+                }
+                .frame(width: frame.width, height: frame.height)
+                .position(x: frame.midX, y: frame.midY)
+                .accessibilityHidden(true)
+            }
+        }
     }
 
     @ChartContentBuilder
@@ -246,6 +247,47 @@ struct LivePowerChart: View {
     private func formatted(_ watts: Double?) -> String {
         guard let watts, watts.isFinite else { return "—" }
         return Formatting.watts(watts)
+    }
+}
+
+/// Reject vertical movement before recognizing a gesture so the page can scroll from the plot.
+private struct ChartScrubber: UIViewRepresentable {
+    let onPan: (CGFloat) -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pan(_:)))
+        pan.delegate = context.coordinator
+        view.addGestureRecognizer(pan)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.onPan = onPan
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPan: onPan)
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var onPan: (CGFloat) -> Void
+
+        init(onPan: @escaping (CGFloat) -> Void) {
+            self.onPan = onPan
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y)
+        }
+
+        @objc func pan(_ recognizer: UIPanGestureRecognizer) {
+            guard recognizer.state == .began || recognizer.state == .changed else { return }
+            onPan(recognizer.location(in: recognizer.view).x)
+        }
     }
 }
 
