@@ -23,7 +23,7 @@ struct ThermalView: View {
     }
 
     var body: some View {
-        PageScaffold("Thermal", glow: glowColor) {
+        PageScaffold("Thermal") {
             statePanel
             if snapshot.temperatures.isEmpty {
                 Panel("Sensors", systemImage: "sensor") {
@@ -117,10 +117,6 @@ struct ThermalView: View {
         return lines.joined(separator: "\n")
     }
 
-    private var glowColor: Color {
-        snapshot.hottestSensor.map { Color.mwTemperature($0.value) } ?? .mwAccent
-    }
-
     // MARK: System verdict
 
     private var statePanel: some View {
@@ -208,7 +204,7 @@ struct ThermalView: View {
                     // reading is, so the raw name adds where it came from rather than
                     // repeating it, and on this screen "which die is hottest right now"
                     // is the whole question.
-                    HStack(alignment: .top, spacing: 10) {
+                    MetricGroup(spacing: 10) {
                         Metric(caption: "Hottest",
                                value: unit.number(hottest.value),
                                unit: unit.symbol,

@@ -15,7 +15,7 @@ struct DevicesView: View {
     }
 
     var body: some View {
-        PageScaffold("Devices", glow: .mwWireless) {
+        PageScaffold("Devices") {
             thisPhonePanel
             AppleWatchBatteryCard()
             AudioRouteDiagnosticPanel()
@@ -64,7 +64,6 @@ struct DevicesView: View {
                 }
                 if let percent = snapshot.percent {
                     ChargeBar(percent: Double(percent),
-                              isCharging: snapshot.isCharging,
                               tint: percent <= 20 ? .mwDanger : .mwBattery)
                 }
             }
@@ -234,7 +233,6 @@ struct DeviceCard: View {
                     }
                 } else if let percent = group.percent {
                     ChargeBar(percent: Double(percent),
-                              isCharging: group.isCharging,
                               tint: tint(percent))
                 }
             }
@@ -268,9 +266,7 @@ struct PartGauge: View {
                 .mwReadout(size: 15)
             if let percent = entry.percent {
                 ChargeBar(percent: Double(percent),
-                          isCharging: entry.isCharging,
-                          tint: percent <= 20 ? .mwDanger : .mwBattery,
-                          height: 4)
+                          tint: percent <= 20 ? .mwDanger : .mwBattery)
             } else {
                 Capsule().fill(Color.mwMuted.opacity(0.15)).frame(height: 4)
             }
@@ -284,23 +280,13 @@ struct PartGauge: View {
     }
 }
 
-struct ChargeBar: View {
+private struct ChargeBar: View {
     let percent: Double
-    var isCharging: Bool = false
-    var tint: Color = .mwBattery
-    var height: CGFloat = 7
+    let tint: Color
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.mwMuted.opacity(0.15))
-                Capsule()
-                    .fill(Theme.gradient(tint))
-                    .frame(width: max(height, geometry.size.width * min(max(percent / 100, 0), 1)))
-                    .shadow(color: isCharging ? tint.opacity(0.5) : .clear, radius: 5)
-            }
-        }
-        .frame(height: height)
-        .animation(.easeOut(duration: 0.4), value: percent)
+        ProgressView(value: min(max(percent, 0), 100), total: 100)
+            .tint(tint)
+            .accessibilityHidden(true)
     }
 }

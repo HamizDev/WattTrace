@@ -21,7 +21,7 @@ struct DebugView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwMuted, glowIntensity: 0.5)
+            Backdrop()
             ScrollView {
                 VStack(spacing: 14) {
                     diagnosticsPanel

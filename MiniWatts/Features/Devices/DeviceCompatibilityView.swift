@@ -10,7 +10,7 @@ struct DeviceCompatibilityView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwWireless)
+            Backdrop()
             PanelScroll {
                 identityPanel
                 electricalPanel

@@ -34,7 +34,7 @@ struct AccessoryBatteryProbeView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwWireless)
+            Backdrop()
             PanelScroll {
                 controls
                 if probe.visibility != nil { caseVisibilityPanel }
@@ -86,7 +86,7 @@ struct AccessoryBatteryProbeView: View {
                         .buttonStyle(.bordered)
                 } else {
                     Button("Find connected devices") { probe.discover(.connected) }
-                        .buttonStyle(.borderedProminent)
+                        .primaryActionStyle()
                         .tint(.mwAccent)
                     Button("Scan for battery service (10 seconds)") { probe.discover(.nearby) }
                         .buttonStyle(.bordered)

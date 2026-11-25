@@ -52,7 +52,7 @@ struct SessionComparisonView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwWireless)
+            Backdrop()
             PanelScroll {
                 selectionPanel
                 optionsPanel
@@ -201,7 +201,7 @@ struct SessionComparisonView: View {
         Panel("SOC band", systemImage: "battery.50percent", trailing: Text(verbatim: band.label)) {
             if let pair = band.pair {
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .top, spacing: 8) {
+                    MetricGroup(spacing: 8) {
                         Metric(caption: "Session A", value: formatted(pair.a), tint: .mwAccent, size: 18)
                         Metric(caption: "Session B", value: formatted(pair.b), tint: .mwWireless, size: 18)
                         Metric(caption: "B minus A", value: formatted(pair.delta, delta: true),

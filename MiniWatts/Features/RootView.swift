@@ -7,20 +7,10 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var liveActivity = ChargeActivityController()
     @State private var widgets = WidgetPublisher()
+    @State private var selectedTab: AppTab = .power
 
     var body: some View {
-        TabView {
-            TabPage { DashboardView() }
-                .tabItem { Label("Power", systemImage: "bolt.fill") }
-            TabPage { ThermalView() }
-                .tabItem { Label("Thermal", systemImage: "thermometer.medium") }
-            TabPage { AdapterView() }
-                .tabItem { Label("Adapter", systemImage: "powerplug.fill") }
-            TabPage { DevicesView() }
-                .tabItem { Label("Devices", systemImage: "square.stack.3d.up.fill") }
-            TabPage { SessionsView() }
-                .tabItem { Label("History", systemImage: "chart.xyaxis.line") }
-        }
+        tabs
         .tint(.mwAccent)
         .background { ScreenAwakeHolder() }
         // The layer Picture in Picture draws from has to be on screen for the system
@@ -72,6 +62,57 @@ struct RootView: View {
                 // of it: a pulled-down Control Center, the app switcher, an
                 // incoming call. Nothing to do.
                 break
+            }
+        }
+    }
+
+    @ViewBuilder private var tabs: some View {
+        if #available(iOS 18, *) {
+            TabView(selection: $selectedTab) {
+                ForEach(AppTab.allCases) { tab in
+                    Tab(value: tab) { tab.page } label: { tab.label }
+                }
+            }
+            .tabViewStyle(.sidebarAdaptable)
+        } else {
+            TabView(selection: $selectedTab) {
+                ForEach(AppTab.allCases) { tab in
+                    tab.page
+                        .tabItem { tab.label }
+                        .tag(tab)
+                }
+            }
+        }
+    }
+}
+
+private enum AppTab: CaseIterable, Identifiable {
+    case power, thermal, adapter, devices, history
+
+    var id: Self { self }
+
+    private var appearance: (title: LocalizedStringResource, symbol: String) {
+        switch self {
+        case .power: ("Power", "bolt.fill")
+        case .thermal: ("Thermal", "thermometer.medium")
+        case .adapter: ("Adapter", "powerplug.fill")
+        case .devices: ("Devices", "square.stack.3d.up.fill")
+        case .history: ("History", "chart.xyaxis.line")
+        }
+    }
+
+    var label: some View {
+        Label { Text(appearance.title) } icon: { Image(systemName: appearance.symbol) }
+    }
+
+    var page: some View {
+        TabPage {
+            switch self {
+            case .power: DashboardView()
+            case .thermal: ThermalView()
+            case .adapter: AdapterView()
+            case .devices: DevicesView()
+            case .history: SessionsView()
             }
         }
     }
@@ -130,30 +171,19 @@ private struct ScreenAwakeHolder: View {
     }
 }
 
-/// Shared page chrome: the instrument backdrop behind a scrolling column of panels —
-/// two columns on a wide iPad, see `PanelScroll`.
-///
-/// The page's content and glow are closures, called by small views of their own
-/// rather than here. Every page reads the monitor, and whatever a body reads
-/// during evaluation re-runs that body when it changes: called here, a page's
-/// reads made this scaffold re-run every tick, and with it the navigation stack,
-/// the title, the toolbar and the scroll view. Now only `PageContent` and
-/// `PageBackdrop` re-run, and the chrome stays as it is. For the same reason a
-/// page must not read the monitor in its own body outside these closures.
+/// System navigation around panels. PageContent contains the live dependencies
+/// so the title and toolbar do not need to be evaluated on each sensor tick.
 struct PageScaffold<Content: View>: View {
     let title: LocalizedStringResource
-    var glow: () -> Color
     var toolbar: AnyView?
     var layout: PanelLayout
     @ViewBuilder var content: () -> Content
 
     init(_ title: LocalizedStringResource,
-         glow: @autoclosure @escaping () -> Color = .mwAccent,
          toolbar: AnyView? = nil,
          layout: PanelLayout = .panels,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
-        self.glow = glow
         self.toolbar = toolbar
         self.layout = layout
         self.content = content
@@ -161,27 +191,16 @@ struct PageScaffold<Content: View>: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                PageBackdrop(glow: glow)
-                PanelScroll(layout: layout, content: content)
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                if let toolbar {
-                    ToolbarItem(placement: .topBarTrailing) { toolbar }
+            PanelScroll(layout: layout, content: content)
+                .background { Backdrop() }
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.large)
+                .toolbar {
+                    if let toolbar {
+                        ToolbarItem(placement: .topBarTrailing) { toolbar }
+                    }
                 }
-            }
         }
-    }
-}
-
-/// The backdrop, with its glow read here for the same reason.
-private struct PageBackdrop: View {
-    let glow: () -> Color
-
-    var body: some View {
-        Backdrop(glow: glow())
     }
 }
 
@@ -205,7 +224,8 @@ struct EmptyNote: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: systemImage)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.footnote.weight(.medium))
+                .accessibilityHidden(true)
                 .foregroundStyle(Color.mwMuted)
             Text(text)
                 .font(.footnote)

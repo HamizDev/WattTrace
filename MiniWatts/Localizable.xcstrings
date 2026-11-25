@@ -5888,6 +5888,46 @@
           }
         }
       }
+    },
+    "This keeps the screen awake while a charger is connected. Sessions stay open in the background, and totals include the time covered by samples." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接充电器时保持屏幕常亮。切到后台仍会保留会话，总量只累计有采样的时段。"
+          }
+        }
+      }
+    },
+    "Automatic uses the system unit (%@). Widgets, Live Activities and the floating meter follow this setting. Raw diagnostics use Celsius." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“自动”使用系统单位（%@），小组件、实时活动和悬浮读数也会跟随。原始诊断保留摄氏度。"
+          }
+        }
+      }
+    },
+    "Touch and hold the Live Activity to see all readings. It shows when sampling is paused. Widgets display the time of the latest reading." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "长按实时活动查看全部读数。采样暂停时，活动会标明状态。小组件会注明最近读数的时间。"
+          }
+        }
+      }
+    },
+    "Picture in Picture keeps readings and charge recording active while you use other apps. Close it when done to save power. Separate pages switches readings every four seconds." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用其他 App 时，画中画会继续采样和记录充电。用完请关闭以节省电量。分开显示时每四秒切换一次。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

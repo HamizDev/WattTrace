@@ -32,7 +32,7 @@ struct SessionsView: View {
     @State private var confirmingDelete = false
 
     var body: some View {
-        PageScaffold("History", glow: .mwBattery, toolbar: AnyView(toolbar), layout: .list) {
+        PageScaffold("History", toolbar: AnyView(toolbar), layout: .list) {
             if let session = monitor.currentSession {
                 currentPanel(session)
             }
@@ -75,7 +75,7 @@ struct SessionsView: View {
         Panel("In progress", systemImage: "bolt.fill",
               trailing: Text(verbatim: Formatting.duration(session.duration))) {
             VStack(spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: "Delivered",
                            value: monitor.sessionTotals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwAccent, size: 21)
@@ -111,7 +111,7 @@ struct SessionsView: View {
             ? min(pairedCell / pairedInput, 1) * 100
             : nil
         return Panel("All sessions", systemImage: "sum", trailing: Text(verbatim: "\(monitor.sessions.count)")) {
-            HStack(alignment: .top, spacing: 10) {
+            MetricGroup(spacing: 10) {
                 Metric(caption: "Delivered",
                        value: totalDelivered.map { String(format: "%.1f", $0) } ?? "—",
                        unit: "Wh", tint: .mwAccent, size: 21)
@@ -187,7 +187,7 @@ struct SessionDetailView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwBattery)
+            Backdrop()
             // The same column as the tabs: capped on an iPad, two columns on a wide
             // one. It used to have no cap at all and ran edge to edge.
             PanelScroll {
@@ -239,7 +239,7 @@ struct SessionDetailView: View {
         Panel("Energy", systemImage: "bolt.circle",
               trailing: Text(verbatim: Formatting.duration(session.duration))) {
             VStack(spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: "Delivered",
                            value: session.totals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwAccent, size: 21)
@@ -250,7 +250,7 @@ struct SessionDetailView: View {
                            value: session.totals.unaccountedWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwLoss, size: 21)
                 }
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: "Into cell",
                            value: session.totals.measuredBatteryMilliAmpHours.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "mAh", size: 21)

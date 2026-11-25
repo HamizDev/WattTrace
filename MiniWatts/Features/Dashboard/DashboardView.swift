@@ -8,7 +8,7 @@ struct DashboardView: View {
     private var plugged: Bool { snapshot.externalConnected }
 
     var body: some View {
-        PageScaffold("WattTrace", glow: glowColor, toolbar: AnyView(toolbarButtons)) {
+        PageScaffold("WattTrace", toolbar: AnyView(toolbarButtons)) {
             heroPanel
             if monitor.thermal.state.isThrottling { throttleBanner }
             batteryPanel
@@ -21,15 +21,15 @@ struct DashboardView: View {
         .sheet(isPresented: $showingSettings) { SettingsView() }
     }
 
-    private var glowColor: Color {
+    private var powerTint: Color {
         if monitor.thermal.state.isThrottling { return .mwDanger }
         if snapshot.isWirelessInput { return .mwWireless }
         return plugged ? .mwAccent : .mwLoss
     }
 
     private var toolbarButtons: some View {
-        Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-            .tint(.mwAccent)
+        Button("Settings", systemImage: "gearshape") { showingSettings = true }
+            .labelStyle(.iconOnly)
     }
 
     // MARK: Hero
@@ -41,10 +41,9 @@ struct DashboardView: View {
                           batteryWatts: plugged && snapshot.inputWatts != nil ? snapshot.batteryWatts : nil,
                           fullScale: fullScale,
                           caption: monitor.headline?.caption,
-                          tint: glowColor)
-                    .padding(.top, 4)
+                          tint: powerTint)
 
-                FlowRow(spacing: 6) {
+                FlowRow(spacing: 7) {
                     Pill(text: Text(snapshot.statusText),
                          systemImage: plugged ? "bolt.fill" : "battery.50",
                          tint: plugged ? .mwAccent : .mwMuted)
@@ -143,7 +142,7 @@ struct DashboardView: View {
                                                           : Text("empty in \(remaining)")
                            })
                 }
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: "Cell voltage",
                            value: snapshot.batteryVoltage.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "V", size: 20)
@@ -173,7 +172,7 @@ struct DashboardView: View {
             Panel("Charge forecast", systemImage: "clock") {
                 if let forecast = monitor.chargeForecast {
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack(alignment: .top, spacing: 10) {
+                        MetricGroup(spacing: 10) {
                             if percent < ChargeForecast.taperStart {
                                 Metric(caption: "To 80%",
                                        value: Self.duration(forecast.secondsRemaining(to: 80, from: percent, at: snapshot.date)),
@@ -220,7 +219,7 @@ struct DashboardView: View {
         Panel("Power path", systemImage: "arrow.triangle.branch",
               trailing: snapshot.adapterUtilisation.map { Text("\(Int($0 * 100))% of adapter") }) {
             VStack(spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: snapshot.isWirelessInput ? "At charging coil" : "At phone port",
                            value: snapshot.inputWatts.map(Formatting.watts) ?? "—",
                            unit: "W",
@@ -233,7 +232,7 @@ struct DashboardView: View {
                            value: snapshot.batteryWatts.map { Formatting.watts(max($0, 0)) } ?? "—",
                            unit: "W", tint: .mwBattery, size: 22)
                 }
-                HStack(alignment: .top, spacing: 10) {
+                MetricGroup(spacing: 10) {
                     Metric(caption: "Load + loss",
                            value: snapshot.unaccountedPowerWatts.map(Formatting.watts) ?? "—",
                            unit: "W", tint: .mwLoss, size: 22)
@@ -289,7 +288,7 @@ struct DashboardView: View {
             if monitor.currentSession != nil {
                 let totals = monitor.sessionTotals
                 VStack(spacing: 12) {
-                    HStack(alignment: .top, spacing: 10) {
+                    MetricGroup(spacing: 10) {
                         Metric(caption: "Delivered",
                                value: totals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
                                unit: "Wh", tint: .mwAccent, size: 20)
@@ -297,7 +296,7 @@ struct DashboardView: View {
                                value: totals.measuredBatteryWattHours.map { String(format: "%.2f", $0) } ?? "—",
                                unit: "Wh", tint: .mwBattery, size: 20)
                     }
-                    HStack(alignment: .top, spacing: 10) {
+                    MetricGroup(spacing: 10) {
                         Metric(caption: "Into cell",
                                value: totals.measuredBatteryMilliAmpHours.map { String(format: "%.0f", $0) } ?? "—",
                                unit: "mAh", size: 20)
@@ -332,10 +331,10 @@ struct PowerFlowBar: View {
                 let stored = CGFloat(min(toBattery / input, 1))
                 HStack(spacing: 2) {
                     Capsule()
-                        .fill(Theme.gradient(.mwBattery))
+                        .fill(Color.mwBattery)
                         .frame(width: max(2, geometry.size.width * stored - 1))
                     Capsule()
-                        .fill(Theme.gradient(.mwLoss).opacity(0.7))
+                        .fill(Color.mwLoss.opacity(0.7))
                 }
             }
             .frame(height: 8)

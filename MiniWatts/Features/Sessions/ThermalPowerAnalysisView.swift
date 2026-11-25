@@ -18,7 +18,7 @@ struct ThermalPowerAnalysisView: View {
         let relationship = thermal.relationship(rail: rail, temperature: temperature)
         let pressure = thermal.pressure(rail: rail)
         ZStack {
-            Backdrop(glow: .mwWireless)
+            Backdrop()
             PanelScroll {
                 optionsPanel
                 taperPanel(trend)
@@ -76,7 +76,7 @@ struct ThermalPowerAnalysisView: View {
                     .frame(height: 180)
                     if let first = trend.points.first, let last = trend.points.last,
                        let difference = trend.difference {
-                        HStack(alignment: .top, spacing: 8) {
+                        MetricGroup(spacing: 8) {
                             Metric(caption: "First eligible band", value: watts(first.watts),
                                    footnote: Text(verbatim: first.label), size: 18)
                             Metric(caption: "Last eligible band", value: watts(last.watts),
@@ -99,7 +99,7 @@ struct ThermalPowerAnalysisView: View {
             VStack(alignment: .leading, spacing: 12) {
                 DetailRow(label: "Paired temperature and power", value: coverage(report.pairedSeconds, of: report.observedSeconds))
                 if let result = report.relationship {
-                    HStack(alignment: .top, spacing: 12) {
+                    MetricGroup(spacing: 12) {
                         Metric(caption: "Correlation r",
                                value: String(format: "%+.2f", result.correlation),
                                size: 24)
@@ -127,7 +127,7 @@ struct ThermalPowerAnalysisView: View {
                     DetailRow(label: "High-pressure power time", value: coverage(report.highSeconds, of: report.observedSeconds))
                 }
                 if let matched = report.matched {
-                    HStack(alignment: .top, spacing: 8) {
+                    MetricGroup(spacing: 8) {
                         Metric(caption: "Nominal / fair", value: watts(matched.lowerWatts),
                                tint: .mwBattery, size: 18)
                         Metric(caption: "Serious / critical", value: watts(matched.highWatts),

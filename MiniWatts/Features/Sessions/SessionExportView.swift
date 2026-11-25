@@ -66,7 +66,7 @@ struct SessionExportView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwBattery)
+            Backdrop()
             PanelScroll {
                 formatPanel
                 contentPanel
@@ -124,7 +124,7 @@ struct SessionExportView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .primaryActionStyle()
                 .tint(.mwAccent)
                 .disabled(preparing || sessions.isEmpty)
                 if didSave {

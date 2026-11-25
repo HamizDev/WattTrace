@@ -20,7 +20,7 @@ struct DiagnosticReportActions: View {
                 Label("Copy diagnostic report", systemImage: copied ? "checkmark" : "doc.on.doc")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .buttonStyle(.borderedProminent)
+            .primaryActionStyle()
             .tint(.mwAccent)
 
             Button {
@@ -91,7 +91,7 @@ struct DiagnosticReportPreview: View {
                     Label("Copy diagnostic report", systemImage: copied ? "checkmark" : "doc.on.doc")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .primaryActionStyle()
                 .tint(.mwAccent)
                 if copied {
                     Text("Report copied. Return to your chat and paste it.")
@@ -127,7 +127,7 @@ struct DiagnosticReportPreview: View {
             .navigationTitle(Text(title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
             }

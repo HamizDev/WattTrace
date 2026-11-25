@@ -17,7 +17,7 @@ struct SOCAnalysisView: View {
     var body: some View {
         let bands = analysis.grouped(width)
         ZStack {
-            Backdrop(glow: .mwBattery)
+            Backdrop()
             PanelScroll {
                 overviewPanel
                 if bands.isEmpty {
@@ -117,7 +117,7 @@ struct SOCAnalysisView: View {
         Panel("SOC band", systemImage: "battery.50percent",
               trailing: Text(verbatim: band.label)) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
+                MetricGroup(spacing: 12) {
                     Metric(caption: "Mean input", value: band.input.mean.map(Formatting.watts) ?? "—",
                            unit: "W", tint: .mwAccent, size: 21)
                     Metric(caption: "Mean battery rail", value: band.battery.mean.map(Formatting.watts) ?? "—",
