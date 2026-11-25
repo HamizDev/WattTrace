@@ -11,9 +11,9 @@ struct DashboardView: View {
         PageScaffold("WattTrace", toolbar: AnyView(toolbarButtons)) {
             heroPanel
             if monitor.thermal.state.isThrottling { throttleBanner }
+            livePanel
             batteryPanel
             forecastPanel
-            livePanel
             breakdownPanel
             sessionPanel
             if !monitor.sensorsAvailable { sensorNote }
@@ -43,6 +43,15 @@ struct DashboardView: View {
                          tint: plugged ? .mwAccent : .mwMuted)
                     if snapshot.isWirelessInput {
                         Pill(text: Text("MagSafe"), systemImage: "wave.3.right", tint: .mwWireless)
+                    }
+                    if let percent = snapshot.percent {
+                        let level = (Double(percent) / 100).formatted(.percent.precision(.fractionLength(0)))
+                        let iconFill = min(max(percent, 0), 100) / 25 * 25
+                        Pill(text: Text(verbatim: level), systemImage: "battery.\(iconFill)",
+                             tint: percent <= 20 ? .mwDanger : .mwBattery)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text("Charge level"))
+                            .accessibilityValue(Text(verbatim: level))
                     }
                 }
 

@@ -85,7 +85,6 @@ private func runAreas<X: Plottable & Hashable>(_ points: [RunPoint<X>],
 /// Rolling three-minute view of input and battery power with exact sample inspection.
 struct LivePowerChart: View {
     let samples: [LiveSample]
-    var height: CGFloat = 130
     @State private var selectedDate: Date?
 
     var body: some View {
@@ -160,20 +159,34 @@ struct LivePowerChart: View {
                      style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             if let selected {
                 RuleMark(x: .value("Time", selected.date))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.mwMuted)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                selectedPoint(at: selected.date, watts: selected.inputWatts, color: .mwAccent)
+                selectedPoint(at: selected.date, watts: selected.batteryWatts, color: .mwBattery)
             }
         }
         .chartYScale(domain: lower...upper)
-        .chartXAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 3)) { value in
+                AxisTick().foregroundStyle(Color.mwGrid)
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        Text(verbatim: Formatting.clock(date))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(Color.mwMuted)
+                    }
+                }
+            }
+        }
         .chartYAxis {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { value in
-                AxisGridLine().foregroundStyle(Color.mwGrid)
-                AxisValueLabel {
-                    if let watts = value.as(Double.self) {
+                if let watts = value.as(Double.self) {
+                    AxisGridLine()
+                        .foregroundStyle(watts == 0 ? Color.mwMuted.opacity(0.42) : Color.mwGrid)
+                    AxisValueLabel {
                         Text(verbatim: "\(watts.formatted(.number.precision(.fractionLength(0...1)))) W")
-                            .mwMono(size: 9)
-                            .foregroundStyle(.secondary)
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(Color.mwMuted)
                     }
                 }
             }
@@ -187,21 +200,34 @@ struct LivePowerChart: View {
                 }
         }
         .chartLegend(.hidden)
-        .frame(height: height)
-        .clipped()
+        .frame(height: 154)
+    }
+
+    @ChartContentBuilder
+    private func selectedPoint(at date: Date, watts: Double?, color: Color) -> some ChartContent {
+        if let watts, watts.isFinite {
+            PointMark(x: .value("Time", date), y: .value("Watts", watts))
+                .symbolSize(54)
+                .foregroundStyle(color)
+        }
     }
 
     private func sampleDetails(_ sample: LiveSample) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
                 Label(Formatting.clock(sample.date), systemImage: "clock")
-                    .font(.caption)
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
                 Spacer(minLength: 6)
-                Button("Clear selection", systemImage: "xmark.circle") { selectedDate = nil }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
+                Button {
+                    selectedDate = nil
+                } label: {
+                    Label("Clear selection", systemImage: "xmark.circle")
+                        .labelStyle(.iconOnly)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
             }
             MetricGroup {
                 Metric(caption: "From charger", value: formatted(sample.inputWatts),
