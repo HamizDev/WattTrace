@@ -124,6 +124,15 @@ struct LivePowerChart: View {
         }
     }
 
+    private var selection: Binding<Date?> {
+        Binding {
+            selectedDate
+        } set: { date in
+            // Keep the inspected sample visible after the gesture ends.
+            if let date { selectedDate = date }
+        }
+    }
+
     private var selectedSample: LiveSample? {
         guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date,
               selectedDate >= start, selectedDate <= end else { return nil }
@@ -166,7 +175,14 @@ struct LivePowerChart: View {
                 }
             }
         }
-        .chartXSelection(value: $selectedDate)
+        .chartXSelection(value: selection)
+        .chartGesture { proxy in
+            DragGesture(minimumDistance: 12)
+                .onChanged { gesture in
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
+                    proxy.selectXValue(at: gesture.location.x)
+                }
+        }
         .chartLegend(.hidden)
         .frame(height: height)
         .clipped()
