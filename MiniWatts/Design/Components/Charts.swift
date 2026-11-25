@@ -1,5 +1,6 @@
 import Charts
 import SwiftUI
+import UIKit
 
 /// One plotted reading, and the unbroken run of readings it belongs to.
 ///
@@ -85,7 +86,6 @@ private func runAreas<X: Plottable & Hashable>(_ points: [RunPoint<X>],
 /// Rolling three-minute view of input and battery power with exact sample inspection.
 struct LivePowerChart: View {
     let samples: [LiveSample]
-    var height: CGFloat = 130
     @State private var selectedDate: Date?
 
     var body: some View {
@@ -124,15 +124,6 @@ struct LivePowerChart: View {
         }
     }
 
-    private var selection: Binding<Date?> {
-        Binding {
-            selectedDate
-        } set: { date in
-            // Keep the inspected sample visible after the gesture ends.
-            if let date { selectedDate = date }
-        }
-    }
-
     private var selectedSample: LiveSample? {
         guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date else { return nil }
         // Some iOS 27.2 builds lack the Date comparison overloads weak-linked by the SDK.
@@ -160,48 +151,84 @@ struct LivePowerChart: View {
                      style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             if let selected {
                 RuleMark(x: .value("Time", selected.date))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.mwMuted)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                selectedPoint(at: selected.date, watts: selected.inputWatts, color: .mwAccent)
+                selectedPoint(at: selected.date, watts: selected.batteryWatts, color: .mwBattery)
             }
         }
         .chartYScale(domain: lower...upper)
-        .chartXAxis(.hidden)
-        .chartYAxis {
-            AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { value in
-                AxisGridLine().foregroundStyle(Color.mwGrid)
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 3)) { value in
+                AxisTick().foregroundStyle(Color.mwGrid)
                 AxisValueLabel {
-                    if let watts = value.as(Double.self) {
-                        Text(verbatim: "\(watts.formatted(.number.precision(.fractionLength(0...1)))) W")
-                            .mwMono(size: 9)
-                            .foregroundStyle(.secondary)
+                    if let date = value.as(Date.self) {
+                        Text(verbatim: Formatting.clock(date))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(Color.mwMuted)
                     }
                 }
             }
         }
-        .chartXSelection(value: selection)
-        .chartGesture { proxy in
-            DragGesture(minimumDistance: 12)
-                .onChanged { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
-                    proxy.selectXValue(at: gesture.location.x)
+        .chartYAxis {
+            AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { value in
+                if let watts = value.as(Double.self) {
+                    AxisGridLine()
+                        .foregroundStyle(watts == 0 ? Color.mwMuted.opacity(0.42) : Color.mwGrid)
+                    AxisValueLabel {
+                        Text(verbatim: "\(watts.formatted(.number.precision(.fractionLength(0...1)))) W")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(Color.mwMuted)
+                    }
                 }
+            }
+        }
+        .chartOverlay { proxy in
+            selectionOverlay(proxy)
         }
         .chartLegend(.hidden)
-        .frame(height: height)
-        .clipped()
+        .frame(height: 154)
+    }
+
+    private func selectionOverlay(_ proxy: ChartProxy) -> some View {
+        GeometryReader { geometry in
+            if let plotFrame = proxy.plotFrame {
+                let frame = geometry[plotFrame]
+                ChartScrubber { x in
+                    if let date = proxy.value(atX: x, as: Date.self) { selectedDate = date }
+                }
+                .frame(width: frame.width, height: frame.height)
+                .position(x: frame.midX, y: frame.midY)
+                .accessibilityHidden(true)
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private func selectedPoint(at date: Date, watts: Double?, color: Color) -> some ChartContent {
+        if let watts, watts.isFinite {
+            PointMark(x: .value("Time", date), y: .value("Watts", watts))
+                .symbolSize(54)
+                .foregroundStyle(color)
+        }
     }
 
     private func sampleDetails(_ sample: LiveSample) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
                 Label(Formatting.clock(sample.date), systemImage: "clock")
-                    .font(.caption)
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
                 Spacer(minLength: 6)
-                Button("Clear selection", systemImage: "xmark.circle") { selectedDate = nil }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
+                Button {
+                    selectedDate = nil
+                } label: {
+                    Label("Clear selection", systemImage: "xmark.circle")
+                        .labelStyle(.iconOnly)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
             }
             MetricGroup {
                 Metric(caption: "From charger", value: formatted(sample.inputWatts),
@@ -220,6 +247,47 @@ struct LivePowerChart: View {
     private func formatted(_ watts: Double?) -> String {
         guard let watts, watts.isFinite else { return "—" }
         return Formatting.watts(watts)
+    }
+}
+
+/// Reject vertical movement before recognizing a gesture so the page can scroll from the plot.
+private struct ChartScrubber: UIViewRepresentable {
+    let onPan: (CGFloat) -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pan(_:)))
+        pan.delegate = context.coordinator
+        view.addGestureRecognizer(pan)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.onPan = onPan
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPan: onPan)
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var onPan: (CGFloat) -> Void
+
+        init(onPan: @escaping (CGFloat) -> Void) {
+            self.onPan = onPan
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y)
+        }
+
+        @objc func pan(_ recognizer: UIPanGestureRecognizer) {
+            guard recognizer.state == .began || recognizer.state == .changed else { return }
+            onPan(recognizer.location(in: recognizer.view).x)
+        }
     }
 }
 
