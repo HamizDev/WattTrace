@@ -37,9 +37,12 @@ struct SessionsView: View {
                 currentPanel(session)
             }
             if monitor.sessions.isEmpty {
-                Panel("No finished charges yet", systemImage: "clock.arrow.circlepath") {
-                    EmptyNote(text: "A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep WattTrace in the foreground for the totals to cover the whole charge.",
-                              systemImage: "bolt.badge.clock")
+                Panel {
+                    ContentUnavailableView {
+                        Label("No finished charges yet", systemImage: "clock.arrow.circlepath")
+                    } description: {
+                        Text("A session starts when you plug in and is saved when you unplug. Energy is integrated from the live sensors, so keep WattTrace in the foreground for the totals to cover the whole charge.")
+                    }
                 }
             } else {
                 summaryPanel
@@ -53,7 +56,7 @@ struct SessionsView: View {
                     } label: {
                         SessionRow(session: session)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PanelPressStyle())
                 }
             }
         }
@@ -73,7 +76,7 @@ struct SessionsView: View {
 
     private func currentPanel(_ session: ChargeSession) -> some View {
         Panel("In progress", systemImage: "bolt.fill",
-              trailing: Text(verbatim: Formatting.duration(session.duration))) {
+              trailing: Text(verbatim: Formatting.duration(session.duration)), accent: .mwAccent) {
             VStack(spacing: 12) {
                 MetricGroup(spacing: 10) {
                     Metric(caption: "Delivered",
@@ -91,10 +94,6 @@ struct SessionsView: View {
                 }
             }
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
-                .strokeBorder(Color.mwAccent.opacity(0.4), lineWidth: 1)
-        )
     }
 
     private var summaryPanel: some View {
@@ -127,46 +126,75 @@ struct SessionsView: View {
 }
 
 struct SessionRow: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let session: ChargeSession
 
     var body: some View {
+        let profile = session.sparkline
         Panel {
-            VStack(spacing: 10) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        session.titleText
-                            .font(.system(size: 14, weight: .semibold))
-                            .lineLimit(1)
-                        Text("\(Formatting.timestamp(session.start)) · \(Formatting.duration(session.duration))")
-                            .mwMono(size: 10)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 8)
-                    VStack(alignment: .trailing, spacing: 2) {
-                        let wattHours = session.totals.measuredInputWattHours ?? session.totals.measuredBatteryWattHours
-                        Text(verbatim: wattHours.map { String(format: "%.2f Wh", $0) } ?? "—")
-                            .mwReadout(size: 16)
-                            .foregroundStyle(session.totals.measuredInputWattHours == nil
-                                             ? Color.mwBattery : Color.mwAccent)
-                        Text(verbatim: session.batteryLevelRange)
-                            .mwMono(size: 10)
-                            .foregroundStyle(Color.mwMuted)
-                    }
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 10) {
+                    summary
+                    Image(systemName: "chevron.forward")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
                 }
-                HStack(spacing: 10) {
-                    Sparkline(values: session.sparkline.values, tint: session.sparkline.tint)
-                        .frame(height: 26)
-                    if let efficiency = session.totals.chargePathEfficiencyPercent {
-                        Pill(text: Text(verbatim: String(format: "%.0f%%", efficiency)), systemImage: "arrow.triangle.swap", tint: .mwLoss)
-                    }
-                    if session.throttledFraction > 0.05 {
-                        Pill(text: Text("\(String(format: "%.0f%%", session.throttledFraction * 100)) hot"),
-                             systemImage: "thermometer.high", tint: .mwDanger)
-                    }
-                    if session.isWireless {
-                        Pill(text: Text("MagSafe"), systemImage: "wave.3.right", tint: .mwWireless)
-                    }
+                if profile.values.count >= 2 {
+                    Sparkline(values: profile.values, tint: profile.tint)
+                        .frame(height: 28)
+                        .accessibilityHidden(true)
                 }
+                if session.totals.chargePathEfficiencyPercent != nil
+                    || session.throttledFraction > 0.05 || session.isWireless {
+                    badges
+                }
+            }
+        }
+    }
+
+    private var summary: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 8))
+        let wattHours = session.totals.measuredInputWattHours ?? session.totals.measuredBatteryWattHours
+        return layout {
+            VStack(alignment: .leading, spacing: 4) {
+                session.titleText
+                    .font(.headline)
+                Text("\(Formatting.timestamp(session.start)) · \(Formatting.duration(session.duration))")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
+            VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
+                Text(verbatim: wattHours.map { String(format: "%.2f Wh", $0) } ?? "—")
+                    .font(.body.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(wattHours == nil ? Color.mwMuted
+                        : (session.totals.measuredInputWattHours == nil ? .mwBattery : .mwAccent))
+                Text(verbatim: session.batteryLevelRange)
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var badges: some View {
+        FlowRow(spacing: 7) {
+            if let efficiency = session.totals.chargePathEfficiencyPercent {
+                Pill(text: Text(verbatim: String(format: "%.0f%%", efficiency)),
+                     systemImage: "arrow.triangle.swap", tint: .mwLoss)
+            }
+            if session.throttledFraction > 0.05 {
+                Pill(text: Text("\(String(format: "%.0f%%", session.throttledFraction * 100)) hot"),
+                     systemImage: "thermometer.high", tint: .mwDanger)
+            }
+            if session.isWireless {
+                Pill(text: Text("MagSafe"), systemImage: "wave.3.right", tint: .mwWireless)
             }
         }
     }
@@ -295,51 +323,17 @@ struct SessionDetailView: View {
     }
 
     private var socAnalysisLink: some View {
-        NavigationLink {
+        PanelLink("SOC band analysis", detail: "5% / 10% bands · means, peaks and coverage",
+                  systemImage: "chart.bar.xaxis") {
             SOCAnalysisView(session: session)
-        } label: {
-            Panel("SOC band analysis", systemImage: "chart.bar.xaxis") {
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Power and thermal by battery level")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("5% / 10% bands · means, peaks and coverage")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
         }
-        .buttonStyle(.plain)
     }
 
     private var thermalPowerAnalysisLink: some View {
-        NavigationLink {
+        PanelLink("Thermal and power analysis", detail: "Same-level thermal comparisons and coverage",
+                  systemImage: "thermometer.variable", tint: .mwLoss) {
             ThermalPowerAnalysisView(session: session)
-        } label: {
-            Panel("Thermal and power analysis", systemImage: "thermometer.variable") {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Power changes versus SOC and temperature")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("Same-level thermal comparisons and coverage")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
         }
-        .buttonStyle(.plain)
     }
 
     private var climatePanel: some View {

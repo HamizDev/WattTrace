@@ -71,11 +71,10 @@ private func runAreas<X: Plottable & Hashable>(_ points: [RunPoint<X>],
                                                axis: String,
                                                topOpacity: Double) -> some ChartContent {
     ForEach(points) { point in
-        // Unstacked: these are stretches of one quantity, not parts of a whole.
         AreaMark(x: .value(axis, point.x),
-                 y: .value("Watts", point.watts),
-                 series: .value("Run", point.run),
-                 stacking: .unstacked)
+                 yStart: .value("Zero", 0.0),
+                 yEnd: .value("Watts", point.watts),
+                 series: .value("Run", point.run))
             .foregroundStyle(LinearGradient(colors: [Color.mwAccent.opacity(topOpacity), Color.mwAccent.opacity(0.02)],
                                             startPoint: .top,
                                             endPoint: .bottom))
@@ -83,49 +82,141 @@ private func runAreas<X: Plottable & Hashable>(_ points: [RunPoint<X>],
     }
 }
 
-/// Rolling three-minute view of adapter power against battery power. The area is
-/// what comes in; the line is what reaches the cell.
+/// Rolling three-minute view of input and battery power with exact sample inspection.
 struct LivePowerChart: View {
     let samples: [LiveSample]
     var height: CGFloat = 130
-
-    private var inputPoints: [RunPoint<Date>] { runPoints(samples, x: \.date, watts: \.inputWatts) }
-    private var batteryPoints: [RunPoint<Date>] { runPoints(samples, x: \.date, watts: \.batteryWatts) }
-
-    private var ceiling: Double {
-        let peak = (samples.compactMap(\.inputWatts) + samples.compactMap(\.batteryWatts))
-            .filter(\.isFinite).max() ?? 0
-        return max(peak * 1.25, 5)
-    }
+    @State private var selectedDate: Date?
 
     var body: some View {
-        let input = inputPoints
+        let input = runPoints(samples, x: \.date, watts: \.inputWatts)
+        let battery = runPoints(samples, x: \.date, watts: \.batteryWatts)
+        if input.isEmpty && battery.isEmpty {
+            EmptyNote(text: "No power readings yet.", systemImage: "waveform")
+        } else {
+            let selected = selectedSample
+            VStack(alignment: .leading, spacing: 10) {
+                plot(input: input, battery: battery, selected: selected)
+                if let selected {
+                    sampleDetails(selected)
+                } else {
+                    FlowRow(spacing: 12) {
+                        LegendDot(color: .mwAccent, text: "From charger")
+                        LegendDot(color: .mwBattery, text: "Into battery", dashed: true)
+                        inspectButton
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var inspectButton: some View {
+        if #available(iOS 26, *) {
+            inspectAction.buttonStyle(.glass).controlSize(.small)
+        } else {
+            inspectAction.buttonStyle(.bordered).controlSize(.small)
+        }
+    }
+
+    private var inspectAction: some View {
+        Button("Inspect sample", systemImage: "scope") {
+            selectedDate = samples.last?.date
+        }
+    }
+
+    private var selection: Binding<Date?> {
+        Binding {
+            selectedDate
+        } set: { date in
+            // Keep the inspected sample visible after the gesture ends.
+            if let date { selectedDate = date }
+        }
+    }
+
+    private var selectedSample: LiveSample? {
+        guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date,
+              selectedDate >= start, selectedDate <= end else { return nil }
+        return samples.min {
+            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
+        }
+    }
+
+    private func plot(input: [RunPoint<Date>], battery: [RunPoint<Date>], selected: LiveSample?) -> some View {
+        let levels = (input + battery).map(\.watts)
+        let lower = min((levels.min() ?? 0) * 1.15, 0)
+        let upper = max((levels.max() ?? 0) * 1.25, 5)
         return Chart {
-            runAreas(input, axis: "Time", topOpacity: 0.45)
+            runAreas(input, axis: "Time", topOpacity: 0.24)
             runLines(input, axis: "Time",
                      name: String(localized: "From charger"),
                      color: .mwAccent,
                      style: StrokeStyle(lineWidth: 2, lineJoin: .round))
-            runLines(batteryPoints, axis: "Time",
+            runLines(battery, axis: "Time",
                      name: String(localized: "Into battery"),
                      color: .mwBattery,
                      style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+            if let selected {
+                RuleMark(x: .value("Time", selected.date))
+                    .foregroundStyle(.secondary)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            }
         }
-        .chartYScale(domain: 0...ceiling)
+        .chartYScale(domain: lower...upper)
         .chartXAxis(.hidden)
         .chartYAxis {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { value in
                 AxisGridLine().foregroundStyle(Color.mwGrid)
                 AxisValueLabel {
                     if let watts = value.as(Double.self) {
-                        Text(verbatim: "\(Int(watts))W").mwMono(size: 9).foregroundStyle(Color.mwMuted)
+                        Text(verbatim: "\(watts.formatted(.number.precision(.fractionLength(0...1)))) W")
+                            .mwMono(size: 9)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
         }
+        .chartXSelection(value: selection)
+        .chartGesture { proxy in
+            DragGesture(minimumDistance: 12)
+                .onChanged { gesture in
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
+                    proxy.selectXValue(at: gesture.location.x)
+                }
+        }
         .chartLegend(.hidden)
         .frame(height: height)
         .clipped()
+    }
+
+    private func sampleDetails(_ sample: LiveSample) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(Formatting.clock(sample.date), systemImage: "clock")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 6)
+                Button("Clear selection", systemImage: "xmark.circle") { selectedDate = nil }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+            }
+            MetricGroup {
+                Metric(caption: "From charger", value: formatted(sample.inputWatts),
+                       unit: "W", tint: .mwAccent, size: 17)
+                Metric(caption: "Into battery", value: formatted(sample.batteryWatts),
+                       unit: "W", tint: .mwBattery, size: 17)
+            }
+            Text("Drag to inspect")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(10)
+        .background(Color.mwCanvas, in: .rect(cornerRadius: 14))
+    }
+
+    private func formatted(_ watts: Double?) -> String {
+        guard let watts, watts.isFinite else { return "—" }
+        return Formatting.watts(watts)
     }
 }
 

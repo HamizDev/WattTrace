@@ -5,27 +5,10 @@ struct SessionExportLink: View {
     let sessions: [ChargeSession]
 
     var body: some View {
-        NavigationLink {
+        PanelLink("Export charging data", detail: "CSV and JSON files",
+                  systemImage: "square.and.arrow.up") {
             SessionExportView(sessions: sessions)
-        } label: {
-            Panel("Export charging data", systemImage: "square.and.arrow.up") {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("CSV and JSON files")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("Saved curves, SOC bands and thermal analysis")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
         }
-        .buttonStyle(.plain)
     }
 }
 

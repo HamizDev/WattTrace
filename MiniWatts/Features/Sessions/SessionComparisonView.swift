@@ -6,27 +6,10 @@ struct SessionComparisonLink: View {
     var baselineID: UUID? = nil
 
     var body: some View {
-        NavigationLink {
+        PanelLink("Compare sessions", detail: "Compare at the same battery level",
+                  systemImage: "chart.xyaxis.line", tint: .mwWireless) {
             SessionComparisonView(sessions: sessions, baselineID: baselineID)
-        } label: {
-            Panel("Compare sessions", systemImage: "chart.xyaxis.line") {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Compare at the same battery level")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("Power, temperature and thermal pressure")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
         }
-        .buttonStyle(.plain)
     }
 }
 

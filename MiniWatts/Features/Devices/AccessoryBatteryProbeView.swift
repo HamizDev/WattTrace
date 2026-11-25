@@ -2,27 +2,10 @@ import SwiftUI
 
 struct AccessoryBatteryProbeLink: View {
     var body: some View {
-        NavigationLink {
+        PanelLink("Bluetooth battery diagnostic", detail: "Check supported Bluetooth accessories",
+                  systemImage: "antenna.radiowaves.left.and.right", tint: .mwWireless) {
             AccessoryBatteryProbeView()
-        } label: {
-            Panel("Bluetooth battery diagnostic", systemImage: "antenna.radiowaves.left.and.right") {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Standard battery service")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("Check supported Bluetooth accessories")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
         }
-        .buttonStyle(.plain)
     }
 }
 

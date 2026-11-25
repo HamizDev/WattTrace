@@ -16,15 +16,18 @@ struct Panel<Content: View>: View {
     /// "12 sensors" is copy, an `iPhone17,2` or a `4.8 W` reading is not. Keeping
     /// this a `Text` puts that choice at the call site, where it is knowable.
     var trailing: Text?
+    var accent: Color?
     @ViewBuilder var content: () -> Content
 
     init(_ title: LocalizedStringResource? = nil,
          systemImage: String? = nil,
          trailing: Text? = nil,
+         accent: Color? = nil,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.systemImage = systemImage
         self.trailing = trailing
+        self.accent = accent
         self.content = content
     }
 
@@ -37,7 +40,18 @@ struct Panel<Content: View>: View {
         }
         .padding(Theme.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.mwCard, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+        .background {
+            let shape = RoundedRectangle(cornerRadius: Theme.cardRadius)
+            ZStack {
+                shape.fill(Color.mwCard)
+                if let accent {
+                    shape.fill(.linearGradient(colors: [accent.opacity(0.10), .clear],
+                                               startPoint: .topTrailing, endPoint: .bottomLeading))
+                }
+                shape.strokeBorder(Color.mwCardStroke.opacity(0.32), lineWidth: 0.5)
+            }
+            .accessibilityHidden(true)
+        }
     }
 
     private var header: some View {

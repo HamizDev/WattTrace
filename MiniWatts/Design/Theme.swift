@@ -43,7 +43,7 @@ nonisolated extension UIColor {
 }
 
 nonisolated enum Theme {
-    static let cardRadius: CGFloat = 20
+    static let cardRadius: CGFloat = 22
     static let cardPadding: CGFloat = 16
 }
 

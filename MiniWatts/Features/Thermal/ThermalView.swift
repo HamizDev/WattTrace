@@ -188,12 +188,6 @@ struct ThermalView: View {
         Panel("Heat map · schematic", systemImage: form == .tablet ? "ipad" : "iphone.gen3",
               trailing: Text("\(snapshot.temperatures.count) sensors")) {
             VStack(spacing: 12) {
-                DeviceHeatMap(readings: zoneReadings,
-                              form: form,
-                              unit: unit,
-                              height: form == .tablet ? 320 : 250)
-                    .frame(maxWidth: .infinity)
-                TemperatureScale(unit: unit)
                 if let hottest = snapshot.hottestSensor {
                     // All three carry the name of the sensor they came from, and the
                     // row is top-aligned. Only "Hottest" used to have that line, which
@@ -225,6 +219,12 @@ struct ThermalView: View {
                                size: 22)
                     }
                 }
+                DeviceHeatMap(readings: zoneReadings,
+                              form: form,
+                              unit: unit,
+                              height: form == .tablet ? 320 : 250)
+                    .frame(maxWidth: .infinity)
+                TemperatureScale(unit: unit)
                 mapCaption
                     .font(.caption2)
                     .foregroundStyle(Color.mwMuted)

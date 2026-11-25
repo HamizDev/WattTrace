@@ -13,8 +13,8 @@ struct DashboardView: View {
             if monitor.thermal.state.isThrottling { throttleBanner }
             batteryPanel
             forecastPanel
-            breakdownPanel
             livePanel
+            breakdownPanel
             sessionPanel
             if !monitor.sensorsAvailable { sensorNote }
         }
@@ -35,14 +35,8 @@ struct DashboardView: View {
     // MARK: Hero
 
     private var heroPanel: some View {
-        Panel {
-            VStack(spacing: 14) {
-                PowerRing(inputWatts: monitor.headline?.watts,
-                          batteryWatts: plugged && snapshot.inputWatts != nil ? snapshot.batteryWatts : nil,
-                          fullScale: fullScale,
-                          caption: monitor.headline?.caption,
-                          tint: powerTint)
-
+        Panel(accent: powerTint) {
+            VStack(alignment: .leading, spacing: 12) {
                 FlowRow(spacing: 7) {
                     Pill(text: Text(snapshot.statusText),
                          systemImage: plugged ? "bolt.fill" : "battery.50",
@@ -50,6 +44,15 @@ struct DashboardView: View {
                     if snapshot.isWirelessInput {
                         Pill(text: Text("MagSafe"), systemImage: "wave.3.right", tint: .mwWireless)
                     }
+                }
+
+                PowerRing(inputWatts: monitor.headline?.watts,
+                          batteryWatts: plugged && snapshot.inputWatts != nil ? snapshot.batteryWatts : nil,
+                          fullScale: fullScale,
+                          caption: monitor.headline?.caption,
+                          tint: powerTint)
+
+                FlowRow(spacing: 7) {
                     if monitor.levelRateCheck?.verdict == .sensorsShort {
                         Pill(text: Text("reading low"), systemImage: "exclamationmark.triangle.fill", tint: .mwDanger)
                     } else if InputShortfallNotes.applies(to: snapshot, check: monitor.levelRateCheck) {
@@ -270,13 +273,7 @@ struct DashboardView: View {
     private var livePanel: some View {
         Panel("Last 3 minutes", systemImage: "waveform.path.ecg",
               trailing: Text("\(monitor.live.count) samples")) {
-            VStack(alignment: .leading, spacing: 8) {
-                LivePowerChart(samples: monitor.live)
-                HStack(spacing: 14) {
-                    LegendDot(color: .mwAccent, text: "From charger")
-                    LegendDot(color: .mwBattery, text: "Into battery", dashed: true)
-                }
-            }
+            LivePowerChart(samples: monitor.live)
         }
     }
 

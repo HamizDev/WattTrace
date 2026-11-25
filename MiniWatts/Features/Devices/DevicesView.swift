@@ -71,30 +71,9 @@ struct DevicesView: View {
     }
 
     private var compatibilityLink: some View {
-        Panel("Device compatibility", systemImage: "checkmark.shield") {
-            NavigationLink {
-                DeviceCompatibilityView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "sensor")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(Color.mwAccent)
-                        .frame(width: 36)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Live sensor coverage")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("Power rails, thermal sensors and model notes")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+        PanelLink("Device compatibility", detail: "Power rails, thermal sensors and model notes",
+                  systemImage: "checkmark.shield") {
+            DeviceCompatibilityView()
         }
     }
 
@@ -102,30 +81,9 @@ struct DevicesView: View {
     /// separate screen under Devices, so navigating back automatically stops
     /// its CPU and display-link sampling.
     private var systemMonitorLink: some View {
-        Panel("System Monitor", systemImage: "cpu") {
-            NavigationLink {
-                SystemMonitorView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "gauge.with.dots.needle.50percent")
-                        .font(.system(size: 25, weight: .medium))
-                        .foregroundStyle(Color.mwWireless)
-                        .frame(width: 36)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Performance and display")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Text("WattTrace CPU · FPS · thermal state")
-                            .font(.caption)
-                            .foregroundStyle(Color.mwMuted)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.mwMuted)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+        PanelLink("System Monitor", detail: "WattTrace CPU · FPS · thermal state",
+                  systemImage: "cpu", tint: .mwWireless) {
+            SystemMonitorView()
         }
     }
 
