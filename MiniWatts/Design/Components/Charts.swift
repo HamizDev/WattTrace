@@ -134,8 +134,11 @@ struct LivePowerChart: View {
     }
 
     private var selectedSample: LiveSample? {
-        guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date,
-              selectedDate >= start, selectedDate <= end else { return nil }
+        guard let selectedDate, let start = samples.first?.date, let end = samples.last?.date else { return nil }
+        // Some iOS 27.2 builds lack the Date comparison overloads weak-linked by the SDK.
+        let selectionTime = selectedDate.timeIntervalSinceReferenceDate
+        guard selectionTime >= start.timeIntervalSinceReferenceDate,
+              selectionTime <= end.timeIntervalSinceReferenceDate else { return nil }
         return samples.min {
             abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
         }
