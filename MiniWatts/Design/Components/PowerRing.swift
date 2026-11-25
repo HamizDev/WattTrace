@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Shows the measured input and cell under a shared scale when both are available.
+/// A compact range dial alongside the reading and its source.
 struct PowerRing: View {
     @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .largeTitle) private var valueSize: CGFloat = 57
 
     let inputWatts: Double?
     let batteryWatts: Double?
@@ -10,77 +11,91 @@ struct PowerRing: View {
     let caption: LocalizedStringResource?
     var tint: Color = .mwAccent
 
-    private let size: CGFloat = 226
-    private let sweep: CGFloat = 280.0 / 360.0
+    private let sweep: CGFloat = 288.0 / 360.0
 
     var body: some View {
         Group {
-            if typeSize.isAccessibilitySize {
-                centre
+            if typeSize.isAccessibilitySize || inputWatts == nil {
+                readout
             } else {
                 ViewThatFits(in: .horizontal) {
-                    ZStack {
-                        arc(width: 10, inset: 0, reading: inputWatts, color: tint)
-                        if let batteryWatts {
-                            arc(width: 5, inset: 15, reading: batteryWatts, color: .mwBattery)
-                        }
-                        centre.padding(.horizontal, 26)
+                    HStack(spacing: 16) {
+                        readout.fixedSize(horizontal: true, vertical: false)
+                        Spacer(minLength: 0)
+                        meter
                     }
-                    .frame(width: size, height: size)
-                    centre
+                    readout
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
-    private func arc(width: CGFloat, inset: CGFloat, reading: Double?, color: Color) -> some View {
-        let fraction = reading.map { fullScale > 0 ? min(max($0 / fullScale, 0), 1) : 0 } ?? 0
-        let style = StrokeStyle(lineWidth: width, lineCap: .round)
-        return ZStack {
-            Circle()
-                .trim(from: 0, to: sweep)
-                .stroke(Color.mwCardStroke.opacity(0.5), style: style)
-            if fraction > 0 {
-                Circle()
-                    .trim(from: 0, to: sweep * fraction)
-                    .stroke(color, style: style)
-            }
-        }
-        .rotationEffect(.degrees(130))
-        .padding(width / 2 + inset)
-        .accessibilityHidden(true)
-    }
-
-    private var centre: some View {
-        VStack(spacing: 4) {
+    private var readout: some View {
+        VStack(alignment: .leading, spacing: 3) {
             if let inputWatts {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(verbatim: Formatting.watts(inputWatts))
-                        .mwReadout(size: 51)
+                        .mwReadout(size: valueSize)
+                        .tracking(-1.25)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.55)
+                        .minimumScaleFactor(0.5)
                     Text(verbatim: "W")
-                        .font(.title3)
+                        .font(.title3.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
             } else {
                 Text("no reading")
-                    .font(.title3.weight(.semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
             if let caption {
                 Text(caption)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
             }
             if let batteryWatts, batteryWatts > 0.05 {
                 Text("\(Formatting.watts(batteryWatts)) W to cell")
                     .font(.footnote.weight(.medium))
                     .monospacedDigit()
                     .foregroundStyle(Color.mwBattery)
+                    .padding(.top, 4)
             }
         }
+    }
+
+    private var meter: some View {
+        ZStack {
+            arc(width: 6, inset: 0, reading: inputWatts, color: tint)
+            if let batteryWatts {
+                arc(width: 3, inset: 9, reading: batteryWatts, color: .mwBattery)
+            }
+            Text(verbatim: "0–\(fullScale.formatted(.number.precision(.fractionLength(0...1)))) W")
+                .font(.system(.caption2, design: .monospaced).weight(.medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+                .padding(.horizontal, 16)
+        }
+        .frame(width: 104, height: 104)
+        .accessibilityHidden(true)
+    }
+
+    private func arc(width: CGFloat, inset: CGFloat, reading: Double?, color: Color) -> some View {
+        let fraction = reading.map { fullScale > 0 ? min(max($0 / fullScale, 0), 1) : 0 } ?? 0
+        let stroke = StrokeStyle(lineWidth: width, lineCap: .round)
+        return ZStack {
+            Circle()
+                .trim(from: 0, to: sweep)
+                .stroke(Color.mwCardStroke.opacity(0.55), style: stroke)
+            if fraction > 0 {
+                Circle()
+                    .trim(from: 0, to: sweep * fraction)
+                    .stroke(color, style: stroke)
+            }
+        }
+        .rotationEffect(.degrees(126))
+        .padding(width / 2 + inset)
     }
 }

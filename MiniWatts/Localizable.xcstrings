@@ -5928,6 +5928,46 @@
           }
         }
       }
+    },
+    "No power readings yet." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无功率读数。"
+          }
+        }
+      }
+    },
+    "Drag to inspect" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖动查看采样"
+          }
+        }
+      }
+    },
+    "Inspect sample" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看采样"
+          }
+        }
+      }
+    },
+    "Clear selection" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除选择"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
