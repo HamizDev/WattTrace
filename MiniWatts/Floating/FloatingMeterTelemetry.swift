@@ -114,8 +114,7 @@ struct FloatingMeterTelemetryFrame: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.035, green: 0.055, blue: 0.09), .black],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            Color.black
             VStack(spacing: 16) {
                 header
                 if !showPower && !showTemperatures {
@@ -140,7 +139,7 @@ struct FloatingMeterTelemetryFrame: View {
         HStack(spacing: 8) {
             Image(systemName: data?.isWireless == true
                   ? "bolt.horizontal.circle.fill" : "bolt.circle.fill")
-                .foregroundStyle(.cyan)
+                .foregroundStyle(.blue)
             Text(verbatim: "WATTTRACE")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .tracking(1.8)
@@ -222,7 +221,7 @@ struct FloatingMeterTelemetryFrame: View {
         VStack(alignment: compact ? .leading : .center, spacing: 8) {
             Label(powerTitle, systemImage: "bolt.fill")
                 .font(.system(size: compact ? 17 : 21, weight: .semibold, design: .rounded))
-                .foregroundStyle(.cyan)
+                .foregroundStyle(.blue)
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(verbatim: formatted(data?.watts))
                     .font(.system(size: compact ? 62 : 94, weight: .bold, design: .rounded))
@@ -341,11 +340,7 @@ struct FloatingMeterTelemetryFrame: View {
         .padding(.vertical, compact ? 8 : 12)
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 14))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-        }
+        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private func temperatureFocus(_ title: LocalizedStringKey,
@@ -376,7 +371,7 @@ struct FloatingMeterTelemetryFrame: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 12)
-        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
     }
 
     /// Unplugged, the figure is what the battery supplies, not charging power.

@@ -11,7 +11,7 @@ struct AppleWatchBatteryCard: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.mwMuted)
                     if let reading = bridge.history.latest, bridge.paired, bridge.installed {
-                        HStack(alignment: .top, spacing: 12) {
+                        MetricGroup(spacing: 12) {
                             Metric(caption: "Watch battery", value: reading.batteryPercent.map(String.init) ?? "—",
                                    unit: "%", tint: reading.isFresh(at: context.date) ? .mwBattery : .mwMuted, size: 30)
                             VStack(alignment: .leading, spacing: 5) {
@@ -65,7 +65,7 @@ private struct AppleWatchHistoryView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwBattery)
+            Backdrop()
             ScrollView {
                 LazyVStack(spacing: 12) {
                     Panel("Watch battery history", systemImage: "clock.arrow.circlepath") {

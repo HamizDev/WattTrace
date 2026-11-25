@@ -11,7 +11,7 @@ struct SystemMonitorView: View {
 
     var body: some View {
         ZStack {
-            Backdrop(glow: .mwWireless)
+            Backdrop()
             PanelScroll {
                 cpuPanel
                 displayPanel
@@ -45,7 +45,7 @@ struct SystemMonitorView: View {
     private var cpuPanel: some View {
         Panel("WattTrace CPU", systemImage: "cpu") {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
+                MetricGroup(spacing: 12) {
                     Metric(caption: "App CPU",
                            value: cpuText(sampler.appCPUPercent),
                            unit: "%",
@@ -71,7 +71,7 @@ struct SystemMonitorView: View {
     private var displayPanel: some View {
         Panel("Display timing", systemImage: "rectangle.on.rectangle") {
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
+                MetricGroup(spacing: 12) {
                     Metric(caption: "Observed callbacks",
                            value: sampler.displayLinkFPS.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "fps",

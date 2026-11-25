@@ -65,8 +65,8 @@ struct PanelScroll<Content: View>: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
                 .padding(.bottom, 24)
                 // Pinned to a fixed width so nothing inside can widen the scroll
                 // content. A paragraph inside an HStack reports an enormous ideal

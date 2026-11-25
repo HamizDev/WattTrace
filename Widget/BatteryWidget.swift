@@ -79,8 +79,7 @@ struct BatteryWidgetView: View {
             .containerBackground(for: .widget) {
                 switch family {
                 case .systemSmall, .systemMedium:
-                    LinearGradient(colors: [palette.canvasTop, palette.canvas],
-                                   startPoint: .top, endPoint: .bottom)
+                    palette.canvas
                 default:
                     Color.clear
                 }
@@ -111,8 +110,9 @@ struct SmallBatteryView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 5) {
                     Image(systemName: reading.symbolName)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(tint)
+                        .widgetAccentable()
                     Text(reading.statusTitle)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(palette.muted)
@@ -186,8 +186,9 @@ struct MediumBatteryView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 5) {
                         Image(systemName: reading.symbolName)
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(tint)
+                            .widgetAccentable()
                         Text(reading.statusTitle)
                             .font(.system(size: 13, weight: .semibold))
                             .lineLimit(1)

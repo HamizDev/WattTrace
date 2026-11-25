@@ -6,7 +6,7 @@ struct AdapterView: View {
     private var snapshot: PowerSnapshot { monitor.snapshot }
 
     var body: some View {
-        PageScaffold("Adapter", glow: snapshot.isWirelessInput ? .mwWireless : .mwAccent) {
+        PageScaffold("Adapter") {
             if snapshot.externalConnected {
                 headlinePanel
                 identityPanel
@@ -209,7 +209,7 @@ struct AdapterView: View {
             if let resistance {
                 VStack(alignment: .leading, spacing: 12) {
                     if isSagging { sagBanner }
-                    HStack(alignment: .top, spacing: 10) {
+                    MetricGroup(spacing: 10) {
                         Metric(caption: "Path resistance",
                                value: String(format: "%.0f", resistance.milliohms),
                                unit: "mΩ",
@@ -227,7 +227,7 @@ struct AdapterView: View {
                                footnote: snapshot.usbInputVoltage.map { Text("\(String(format: "%.2f V", $0)) at the port") },
                                size: 22)
                     }
-                    HStack(alignment: .top, spacing: 10) {
+                    MetricGroup(spacing: 10) {
                         Metric(caption: "Lost in the path",
                                value: snapshot.usbInputCurrent.map {
                                    Formatting.watts(resistance.milliohms / 1000 * $0 * $0)
@@ -436,20 +436,19 @@ struct DetailRow: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    HStack(alignment: .firstTextBaseline) {
-                        label
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.mwMuted)
-                        Spacer(minLength: 12)
+                    LabeledContent {
                         Text(verbatim: value)
-                            .mwMono(size: 12)
+                            .monospacedDigit()
                             .textSelection(.enabled)
+                    } label: {
+                        label
                     }
+                    .font(.subheadline)
                 }
             }
             .padding(.vertical, 6)
             .overlay(alignment: .bottom) {
-                Rectangle().fill(Color.mwCardStroke).frame(height: 0.5)
+                Divider()
             }
         }
     }
