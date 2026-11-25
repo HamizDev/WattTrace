@@ -61,8 +61,8 @@ nonisolated struct SessionExportSummary: Encodable, Sendable {
     let id: UUID
     let start: Date
     let end: Date
-    let startPercent: Int
-    let endPercent: Int
+    let startPercent: Int?
+    let endPercent: Int?
     let testLabel: String?
     let adapterName: String?
     let adapterRatedWatts: Double?
@@ -84,7 +84,7 @@ nonisolated struct SessionExportSummary: Encodable, Sendable {
 nonisolated struct SessionExportSample: Encodable, Sendable {
     let timestamp: Date
     let offsetSeconds: TimeInterval
-    let recordedPercent: Int
+    let recordedPercent: Int?
     let storedInputWatts: Double?
     let storedBatteryWatts: Double?
     let analysisInputWatts: Double?
@@ -237,7 +237,7 @@ private nonisolated struct ExportJSONSession: Encodable {
 }
 
 private nonisolated struct ExportJSONEnvelope: Encodable {
-    let schemaVersion = 1
+    let schemaVersion = SessionExport.schemaVersion
     let application = "WattTrace"
     let exportedAt: Date
     let units = [
@@ -248,7 +248,8 @@ private nonisolated struct ExportJSONEnvelope: Encodable {
     let notes = [
         "Absent optional fields mean unavailable, not zero.",
         "Samples are stored curve points, possibly thinned, not the full one-second HID stream.",
-        "Recorded SOC may be carried forward; details.observedPercent is the actual observed SOC when available.",
+        "Older recorded SOC may be carried forward; new samples store only the level observed at that tick.",
+        "Older session end levels without a matching detailed sample may be the last available level.",
         "Legacy stored zero values and historical coverage can be ambiguous.",
         "The negotiated voltage/current are a ceiling, not measured charger output.",
         "Power is measured at the phone-side rail, not at the wall; battery watts remain signed.",
@@ -307,7 +308,7 @@ private nonisolated struct SessionCSVWriter {
 /// Offline serializer. All values use physical storage units, not display
 /// rounding or the current Celsius/Fahrenheit preference.
 nonisolated enum SessionExport {
-    static let schemaVersion = 1
+    static let schemaVersion = 2
 
     static func encode(_ records: [SessionExportRecord], format: SessionExportFormat,
                        exportedAt: Date = .now) throws -> Data {

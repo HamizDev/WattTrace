@@ -1,4 +1,4 @@
-# WattTrace charging export — schema 1
+# WattTrace charging export — schema 2
 
 Export completed history through **History → Export charging data**, or from
 an individual session. Save to Files using the system file exporter.
@@ -22,6 +22,13 @@ the original text. CSV headers include the physical units. JSON envelope
 contains `schemaVersion`, `application`, `exportedAt`, `units`, `notes` and
 `sessions`. This is an analysis export, not a history import format.
 
+Schema 2 keeps the CSV headers and makes the session start SOC, end SOC
+and saved-point recorded SOC nullable. For new sessions the endpoints
+and saved points report the levels observed at those exact times. A
+confirmed 0% is exported as zero. For older sessions an ambiguous 0% at
+a boundary is omitted. An older end SOC without a matching detailed
+sample may reflect the last available level.
+
 ## Cross-checking against an external USB meter
 
 Use `session_id` plus `timestamp_utc` in the saved-curve CSV. Align the clocks
@@ -36,9 +43,9 @@ device load and losses; it is not heat alone.
 stored values; `analysis_*_watts` apply the conservative legacy coverage
 selection. `legacy_curve_may_contain_unknown_zeros` warns that older values
 can be ambiguous even if a session measured that rail at some point. Signed
-battery watts include net discharge. `recorded_soc_percent` may be a
-carried-forward value. `observed_soc_percent` is available only if recorded
-as part of the new optional sample metadata.
+battery watts include net discharge. Historical rows may preserve a
+carried-forward `recorded_soc_percent`. `observed_soc_percent` comes
+from the sample observation metadata when available.
 
 New curve points include USB-C, wireless and battery rail V/A, partial input,
 negotiated V/A, actual thermal pressure when known, charging flag, reported
@@ -50,8 +57,9 @@ The capture device fields identify model and software, not a serial number.
 Saved curve points are normally sampled at roughly five-second intervals and
 can be thinned. Do not integrate across unknown time gaps or assume a
 complete one-second stream. The session totals and live aggregates use their
-own per-channel durations. Some older energy coverage was inferred by the
-legacy decoder and cannot be independently verified.
+own per-channel durations. For new sessions, observation gaps caused by pausing
+the app or losing the connection-state reading are excluded, even when brief.
+Some older energy coverage was inferred by the legacy decoder.
 
 ## Aggregates
 

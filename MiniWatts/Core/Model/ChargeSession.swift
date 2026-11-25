@@ -8,7 +8,7 @@ nonisolated struct ChargeSample: Codable, Hashable, Identifiable, Sendable {
     /// contain numeric values here and decode unchanged through Optional.
     let inputWatts: Double?
     let batteryWatts: Double?
-    let percent: Int
+    let percent: Int?
     let batteryTemperature: Double?
     let hottestTemperature: Double?
     /// True while `ProcessInfo.thermalState` was `.serious` or `.critical`.
@@ -17,6 +17,16 @@ nonisolated struct ChargeSample: Codable, Hashable, Identifiable, Sendable {
     var details: ChargeSampleDetails? = nil
 
     var id: TimeInterval { offset }
+
+    var observedPercent: Int? {
+        if let details {
+            guard let level = details.observedPercent, (0...100).contains(level) else { return nil }
+            return level
+        }
+        // Legacy points used zero as a fallback and could carry the last level forward.
+        guard let percent, (1...100).contains(percent) else { return nil }
+        return percent
+    }
 }
 
 /// Everything recorded between plugging in and unplugging.
@@ -24,12 +34,14 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
     let start: Date
     var end: Date?
-    var startPercent: Int
-    var endPercent: Int
+    private var startPercent: Int?
+    private(set) var endPercent: Int?
+    /// Latest confirmed connected tick, including ticks between saved curve points.
+    private var lastConnectedObservation: Date?
     var totals: EnergyTotals
     var samples: [ChargeSample]
-    var peakInputWatts: Double
-    var peakBatteryWatts: Double
+    private var peakInputWatts: Double?
+    private var peakBatteryWatts: Double?
     var peakBatteryTemperature: Double?
     var adapterName: String?
     var adapterRatedWatts: Double?
@@ -60,7 +72,52 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
 
     var isOpen: Bool { end == nil }
     var duration: TimeInterval { (end ?? .now).timeIntervalSince(start) }
-    var gainedPercent: Int { max(endPercent - startPercent, 0) }
+    var reportedStartPercent: Int? {
+        guard let startPercent, (0...100).contains(startPercent) else { return nil }
+        if lastConnectedObservation == nil, startPercent == 0 {
+            guard let first = samples.first, first.offset == 0,
+                  first.details?.observedPercent == 0 else { return nil }
+        }
+        return startPercent
+    }
+
+    var reportedEndPercent: Int? {
+        if lastConnectedObservation != nil { return endPercent }
+        // For older sessions, the curve only confirms the end level when a sample
+        // with observation details was saved at the session's exact end.
+        if let end, let last = samples.last, last.offset == end.timeIntervalSince(start), last.details != nil {
+            return last.observedPercent
+        }
+        guard let endPercent, (1...100).contains(endPercent) else { return nil }
+        return endPercent
+    }
+
+    var gainedPercent: Int? {
+        guard let start = reportedStartPercent, let end = reportedEndPercent else { return nil }
+        return max(end - start, 0)
+    }
+
+    var measuredPeakInputWatts: Double? {
+        guard let peakInputWatts,
+              lastConnectedObservation != nil || peakInputWatts > 0 || totals.inputMeasuredSeconds > 0 else { return nil }
+        return peakInputWatts
+    }
+
+    var measuredPeakBatteryWatts: Double? {
+        guard let peakBatteryWatts,
+              lastConnectedObservation != nil || peakBatteryWatts > 0 || totals.batteryMeasuredSeconds > 0 else { return nil }
+        return peakBatteryWatts
+    }
+
+    var isWorthKeeping: Bool {
+        if totals.inputWattHours > 0.001 || totals.batteryWattHours > 0.001 { return true }
+        // Curve points can establish that charge was added even when a session
+        // boundary was missed. The summary still reports that boundary as unknown.
+        let first = reportedStartPercent ?? samples.lazy.compactMap(\.observedPercent).first
+        let last = reportedEndPercent ?? samples.reversed().lazy.compactMap(\.observedPercent).first
+        guard let first, let last else { return false }
+        return last > first
+    }
 
     /// Copy to fall back to when the adapter never identified itself. The adapter's
     /// own name is hardware and is shown verbatim; this is the only half that is
@@ -75,16 +132,15 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
         return min(throttledSeconds / duration, 1)
     }
 
-    init(start: Date, startPercent: Int, adapterName: String?, adapterRatedWatts: Double?, isWireless: Bool) {
+    init(start: Date, startPercent: Int?, adapterName: String?, adapterRatedWatts: Double?, isWireless: Bool) {
         self.id = UUID()
         self.start = start
         self.end = nil
         self.startPercent = startPercent
         self.endPercent = startPercent
+        self.lastConnectedObservation = start
         self.totals = EnergyTotals()
         self.samples = []
-        self.peakInputWatts = 0
-        self.peakBatteryWatts = 0
         self.peakBatteryTemperature = nil
         self.adapterName = adapterName
         self.adapterRatedWatts = adapterRatedWatts
@@ -96,6 +152,25 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
         self.thermalPowerAnalysis = nil
         self.testLabel = nil
         self.captureDevice = nil
+    }
+
+    mutating func recordConnectedObservation(_ snapshot: PowerSnapshot) {
+        lastConnectedObservation = snapshot.date
+        endPercent = snapshot.percent
+        if let watts = snapshot.inputWatts {
+            peakInputWatts = max(peakInputWatts ?? watts, watts)
+        }
+        if let watts = snapshot.batteryWatts {
+            // This is the peak into the cell. The curve keeps the signed battery watts.
+            let chargingWatts = max(watts, 0)
+            peakBatteryWatts = max(peakBatteryWatts ?? chargingWatts, chargingWatts)
+        }
+    }
+
+    mutating func finishAtLastObservation() {
+        guard isOpen else { return }
+        let lastObserved = lastConnectedObservation ?? start.addingTimeInterval(samples.last?.offset ?? 0)
+        end = max(lastObserved, start)
     }
 
     /// Older history has at most the saved, possibly thinned curve. Its SOC
@@ -120,7 +195,7 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
         samples.sorted(by: { $0.offset < $1.offset }).map { sample in
             SOCReading(
                 offset: sample.offset,
-                percent: sample.details != nil ? sample.details?.observedPercent : sample.percent,
+                percent: sample.observedPercent,
                 inputWatts: sample.details != nil || totals.inputMeasuredSeconds > 0 ? sample.inputWatts : nil,
                 batteryWatts: sample.details != nil || totals.batteryMeasuredSeconds > 0 ? sample.batteryWatts : nil,
                 batteryTemperature: sample.batteryTemperature,
@@ -140,21 +215,20 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
         let t = totals
         let soc = resolvedSOCAnalysis
         let summary = SessionExportSummary(
-            id: id, start: start, end: end, startPercent: startPercent, endPercent: endPercent,
+            id: id, start: start, end: end, startPercent: reportedStartPercent, endPercent: reportedEndPercent,
             testLabel: testLabel, adapterName: adapterName, adapterRatedWatts: adapterRatedWatts,
             isWireless: isWireless, captureDevice: captureDevice,
             totals: SessionExportTotals(
-                inputWattHours: t.inputMeasuredSeconds > 0 ? t.inputWattHours : nil,
-                batteryWattHours: t.batteryMeasuredSeconds > 0 ? t.batteryWattHours : nil,
-                batteryMilliampHours: t.batteryCurrentMeasuredSeconds > 0 ? t.batteryMilliAmpHours : nil,
+                inputWattHours: t.measuredInputWattHours,
+                batteryWattHours: t.measuredBatteryWattHours,
+                batteryMilliampHours: t.measuredBatteryMilliAmpHours,
                 observedSeconds: t.integratedSeconds, inputMeasuredSeconds: t.inputMeasuredSeconds,
                 batteryMeasuredSeconds: t.batteryMeasuredSeconds, batteryCurrentMeasuredSeconds: t.batteryCurrentMeasuredSeconds,
                 pairedInputWattHours: t.pairedInputWattHours > 0.001 ? t.pairedInputWattHours : nil,
                 pairedBatteryWattHours: t.pairedInputWattHours > 0.001 ? t.pairedBatteryWattHours : nil,
                 chargePathEfficiencyPercent: t.chargePathEfficiencyPercent, loadAndLossWattHours: t.unaccountedWattHours
             ),
-            peakInputWatts: t.inputMeasuredSeconds > 0 || peakInputWatts > 0 ? peakInputWatts : nil,
-            peakBatteryWatts: t.batteryMeasuredSeconds > 0 || peakBatteryWatts > 0 ? peakBatteryWatts : nil,
+            peakInputWatts: measuredPeakInputWatts, peakBatteryWatts: measuredPeakBatteryWatts,
             peakBatteryTemperatureCelsius: peakBatteryTemperature, thermalHighSeconds: throttledSeconds,
             pathMilliohms: pathMilliohms, pathSamples: pathSamples
         )

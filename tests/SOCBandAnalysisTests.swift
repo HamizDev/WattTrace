@@ -68,6 +68,7 @@ struct SOCBandAnalysisTests {
         SOCSessionComparisonTests.run()
         try ThermalPowerAnalysisTests.run()
         try SessionExportTests.run()
+        try ChargeHistoryTests.run()
         try WatchBatteryReadingTests.run()
         AccessoryBatteryLevelTests.run()
         DiagnosticReportTests.run()

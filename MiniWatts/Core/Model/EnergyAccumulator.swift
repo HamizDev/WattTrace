@@ -84,12 +84,16 @@ nonisolated struct EnergyTotals: Codable, Hashable, Sendable {
     }
 
     /// Delivered energy, or nil when none could be measured.
-    ///
-    /// Wireless charging exposes no input-current sensor, so this stays at zero
-    /// for a whole MagSafe session while the battery side accumulates normally.
-    /// Nil says "not measured" where a bare 0.00 Wh would read as "nothing came in".
     var measuredInputWattHours: Double? {
-        inputWattHours > 0.001 ? inputWattHours : nil
+        inputMeasuredSeconds > 0 ? inputWattHours : nil
+    }
+
+    var measuredBatteryWattHours: Double? {
+        batteryMeasuredSeconds > 0 ? batteryWattHours : nil
+    }
+
+    var measuredBatteryMilliAmpHours: Double? {
+        batteryCurrentMeasuredSeconds > 0 ? batteryMilliAmpHours : nil
     }
 
     /// Share of measured adapter energy that reached the cell, 0…100.
@@ -118,10 +122,9 @@ nonisolated struct EnergyTotals: Codable, Hashable, Sendable {
 /// Trapezoidal integration of the live power readings.
 ///
 /// Samples arrive about once a second while the app is in the foreground and stop
-/// entirely when it is backgrounded. Rather than extrapolate across those gaps,
-/// any interval longer than `maximumInterval` is discarded — the totals then read
-/// as "energy measured while watching", which is honest, and `integratedSeconds`
-/// records how much of the wall clock that covered.
+/// entirely when it is backgrounded. Intervals across a reported interruption
+/// or longer than `maximumInterval` are discarded. `integratedSeconds` records
+/// how much of the wall clock the remaining intervals cover.
 nonisolated final class EnergyAccumulator {
     private struct Sample {
         let date: Date
@@ -138,6 +141,11 @@ nonisolated final class EnergyAccumulator {
 
     func reset() {
         totals = EnergyTotals()
+        breakContinuity()
+    }
+
+    /// End the current observation interval while keeping the accumulated totals.
+    func breakContinuity() {
         previous = nil
     }
 

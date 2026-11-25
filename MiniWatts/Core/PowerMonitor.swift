@@ -178,10 +178,6 @@ final class PowerMonitor {
     private var lastSampleWrite: Date = .distantPast
     private var lastPersist: Date = .distantPast
     private var lastExternalConnected: Bool?
-    /// The last moment the phone was actually observed plugged in. A session is
-    /// closed at this point rather than at `.now`, so a charge that ended while the
-    /// app was suspended is not recorded as having run until the app came back.
-    private var lastConnectedObservation: Date?
     /// Last foreground observation used to accumulate thermal-pressure time. Long
     /// gaps are excluded for the same reason the energy integrator excludes them:
     /// the app cannot know what happened while it was suspended.
@@ -237,15 +233,13 @@ final class PowerMonitor {
             isLoaded = true
             return
         }
-        let restored = stored.map { session in
-            // A session left open by a crash or a force quit is closed at its
-            // last recorded point rather than being resumed.
-            guard session.end == nil else { return session }
+        let restored = stored.compactMap { session -> ChargeSession? in
+            guard session.isOpen else { return session }
+            // Close a session left open by a crash or a force quit at the last persisted observation.
             var closed = session
-            closed.end = session.start.addingTimeInterval(session.samples.last?.offset ?? 0)
-            return closed
+            closed.finishAtLastObservation()
+            return closed.isWorthKeeping ? closed : nil
         }
-        .filter(Self.isWorthKeeping)
         // A charge may have started and finished while the file was being read, so
         // merge rather than assign, keeping whatever this run has already recorded.
         let known = Set(sessions.map(\.id))
@@ -266,21 +260,19 @@ final class PowerMonitor {
         }
     }
 
-    /// Stops the tick but leaves any open session open.
-    ///
-    /// This is what backgrounding does now. It used to close the session, which made
-    /// the History tab close to useless: `scenePhase` leaves `.active` for a pulled-down
-    /// Control Center, an incoming call, the app switcher and the screen locking, so an
-    /// overnight charge was recorded as a scatter of two-minute fragments instead of one
-    /// session. The integrator already discards gaps longer than ten seconds, so a
-    /// resumed session reports honest totals and `integratedSeconds` records how much of
-    /// the wall clock was actually watched.
+    /// Stops observing while keeping the current charge session open.
     func pause() {
         task?.cancel()
         task = nil
+        breakSessionContinuity()
+        persist()
+    }
+
+    private func breakSessionContinuity() {
+        energy.breakContinuity()
         socAccumulator.breakContinuity()
         thermalPowerAccumulator.breakContinuity()
-        persist()
+        lastThermalObservationDate = nil
     }
 
     // MARK: Refresh
@@ -312,7 +304,9 @@ final class PowerMonitor {
         resistance.add(current)
         pathResistance = resistance.estimate
         updateSession(current)
-        lastExternalConnected = current.externalConnected
+        if let connected = current.observedExternalConnected {
+            lastExternalConnected = connected
+        }
         onTick?(current)
     }
 
@@ -347,16 +341,18 @@ final class PowerMonitor {
     // MARK: Sessions
 
     private func updateSession(_ snapshot: PowerSnapshot) {
-        if snapshot.externalConnected {
-            lastConnectedObservation = snapshot.date
+        switch snapshot.observedExternalConnected {
+        case true?:
             if currentSession == nil {
                 openSession(snapshot)
             }
             energy.add(snapshot)
             sessionTotals = energy.totals
             recordSample(snapshot)
-        } else {
+        case false?:
             closeSessionIfNeeded()
+        case nil:
+            breakSessionContinuity()
         }
 
         if currentSession != nil, snapshot.date.timeIntervalSince(lastPersist) >= 30 {
@@ -370,7 +366,7 @@ final class PowerMonitor {
         thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = energy.totals
         currentSession = ChargeSession(start: snapshot.date,
-                                       startPercent: snapshot.percent ?? 0,
+                                       startPercent: snapshot.percent,
                                        adapterName: snapshot.adapterName,
                                        adapterRatedWatts: snapshot.adapterRatedWatts,
                                        isWireless: snapshot.isWirelessInput)
@@ -387,13 +383,12 @@ final class PowerMonitor {
     private func recordSample(_ snapshot: PowerSnapshot) {
         guard var session = currentSession else { return }
 
-        session.endPercent = snapshot.percent ?? session.endPercent
+        session.recordConnectedObservation(snapshot)
         session.totals = energy.totals
-        // Use the actual SOC, not the display fallback. This is independent of
-        // the five-second curve samples, which can be thinned on long sessions.
+        // Live analysis uses every observed tick. Saved curve points are downsampled.
         let socReading = SOCReading(
             offset: snapshot.date.timeIntervalSince(session.start),
-            percent: snapshot.percent,
+            percent: session.endPercent,
             inputWatts: snapshot.inputWatts,
             batteryWatts: snapshot.batteryWatts,
             batteryTemperature: snapshot.batteryTemperature,
@@ -404,8 +399,6 @@ final class PowerMonitor {
         thermalPowerAccumulator.add(socReading)
         session.socAnalysis = socAccumulator.analysis
         session.thermalPowerAnalysis = thermalPowerAccumulator.analysis
-        session.peakInputWatts = max(session.peakInputWatts, snapshot.inputWatts ?? 0)
-        session.peakBatteryWatts = max(session.peakBatteryWatts, snapshot.batteryWatts ?? 0)
         if let temperature = snapshot.batteryTemperature {
             session.peakBatteryTemperature = max(session.peakBatteryTemperature ?? temperature, temperature)
         }
@@ -422,20 +415,20 @@ final class PowerMonitor {
         lastThermalObservationDate = snapshot.date
         // Carried on every tick rather than at close: the fit is what History uses to
         // compare one cable with another, and a session that ends while the app is
-        // suspended is closed from `lastConnectedObservation` without another reading.
+        // suspended can close at the last confirmed connected tick.
         session.recordPathFit(resistance.estimate)
 
         if snapshot.date.timeIntervalSince(lastSampleWrite) >= SessionStore.sampleInterval {
             lastSampleWrite = snapshot.date
-            session.samples.append(ChargeSample(offset: snapshot.date.timeIntervalSince(session.start),
+            session.samples.append(ChargeSample(offset: socReading.offset,
                                                 inputWatts: snapshot.inputWatts,
                                                 batteryWatts: snapshot.batteryWatts,
-                                                percent: snapshot.percent ?? session.endPercent,
+                                                percent: socReading.percent,
                                                 batteryTemperature: snapshot.batteryTemperature,
                                                 hottestTemperature: snapshot.hottestSensor?.value,
                                                 throttled: thermal.state.isThrottling,
                                                 details: ChargeSampleDetails(
-                                                    observedPercent: snapshot.percent,
+                                                    observedPercent: socReading.percent,
                                                     usbVoltage: snapshot.usbInputVoltage,
                                                     usbCurrent: snapshot.usbInputCurrent,
                                                     wirelessVoltage: snapshot.wirelessInputVoltage,
@@ -471,12 +464,8 @@ final class PowerMonitor {
 
     private func closeSessionIfNeeded() {
         guard var session = currentSession else { return }
-        // The end is the last moment the charger was actually seen, not now. Unplug
-        // the phone while the app is suspended and the next tick after it wakes is
-        // the first that knows — dating the end from that tick would stretch every
-        // such session across however long the app was away.
-        session.end = max(lastConnectedObservation ?? snapshot.date, session.start)
-        lastConnectedObservation = nil
+        // A disconnect can happen while sampling is paused.
+        session.finishAtLastObservation()
         session.totals = energy.totals
         currentSession = nil
         energy.reset()
@@ -484,20 +473,12 @@ final class PowerMonitor {
         thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = EnergyTotals()
         lastThermalObservationDate = nil
-        if Self.isWorthKeeping(session) {
+        if session.isWorthKeeping {
             sessions.insert(session, at: 0)
         }
         // Persist either way: the periodic save wrote this session while it was
         // open, so the file has to be rewritten even when it is being discarded.
         persist()
-    }
-
-    /// A stretch of being plugged in that moved no energy is a cable reseat, or a
-    /// phone sitting at 100 %, not a charge worth keeping.
-    private static func isWorthKeeping(_ session: ChargeSession) -> Bool {
-        session.totals.inputWattHours > 0.001
-            || session.totals.batteryWattHours > 0.001
-            || session.gainedPercent > 0
     }
 
     private func persist() {

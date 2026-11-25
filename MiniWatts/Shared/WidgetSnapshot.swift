@@ -15,13 +15,12 @@ nonisolated struct WidgetSnapshot: Codable, Hashable {
     struct Session: Codable, Hashable {
         var start: Date
         var end: Date
-        var startPercent: Int
-        var endPercent: Int
-        var storedWattHours: Double
+        var gainedPercent: Int?
+        var measuredBatteryWattHours: Double?
         /// Nil when the input side was never measurable — a wireless charge.
         var deliveredWattHours: Double?
         var efficiencyPercent: Double?
-        var peakWatts: Double
+        var peakWatts: Double?
         var isWireless: Bool
 
         var duration: TimeInterval { end.timeIntervalSince(start) }

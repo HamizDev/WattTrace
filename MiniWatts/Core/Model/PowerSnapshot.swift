@@ -63,6 +63,8 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     let adapterDetails: [String: Any]?
     let sensors: [HIDSensors.Reading]
     let chargeStatus: [String: Any]?
+    /// Nil when neither power source reported a usable connection state.
+    let observedExternalConnected: Bool?
 
     // MARK: - Derived from the sensors, resolved once
 
@@ -134,7 +136,8 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         self.sensors = sensors
         self.chargeStatus = chargeStatus
         self.holdStateOverride = nil
-        let externalConnected = Self.externalConnected(registry: registry, powerSource: powerSource)
+        let connection = Self.observedExternalConnected(registry: registry, powerSource: powerSource)
+        self.observedExternalConnected = connection
         let readings = Self.mergingCopies(sensors)
         self.readings = readings
 
@@ -161,7 +164,7 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
             }
             if let reason = Self.derivedTemperatureRejectionReason(for: reading,
                                                                     allSensors: readings,
-                                                                    externalConnected: externalConnected) {
+                                                                    externalConnected: connection == true) {
                 temperatureWarnings.append(Self.temperatureWarning(for: reading, reason: reason))
                 continue
             }
@@ -279,7 +282,7 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
     }
 
     var externalConnected: Bool {
-        Self.externalConnected(registry: registry, powerSource: powerSource)
+        observedExternalConnected == true
     }
 
     var fullyCharged: Bool {
@@ -290,7 +293,13 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     var isFinishingCharge: Bool { bool("Is Finishing Charge", in: powerSource) }
     var lowPowerMode: Bool { bool("LPM Active", in: powerSource) }
-    var percent: Int? { int("CurrentCapacity", in: registry) ?? int("Current Capacity", in: powerSource) }
+    var percent: Int? {
+        if let level = int("CurrentCapacity", in: registry), (0...100).contains(level) {
+            return level
+        }
+        guard let level = int("Current Capacity", in: powerSource), (0...100).contains(level) else { return nil }
+        return level
+    }
 
     /// e.g. "Charging On Hold". Privileged on iOS, so usually nil there.
     var chargeStatusText: String? { chargeStatus?["chargeStatus"] as? String }
@@ -717,10 +726,27 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     // MARK: - Helpers
 
-    private static func externalConnected(registry: [String: Any], powerSource: [String: Any]?) -> Bool {
-        if registry["ExternalConnected"] != nil { return bool("ExternalConnected", in: registry) }
-        if let state = powerSource?["Power Source State"] as? String { return state == "AC Power" }
-        return bool("Raw External Connected", in: powerSource)
+    static func internalBattery(in sources: [[String: Any]]) -> [String: Any]? {
+        sources.first { ($0["Type"] as? String) == "InternalBattery" }
+            ?? sources.first {
+                $0["Type"] == nil && ($0["Name"] as? String)?.hasPrefix("InternalBattery-") == true
+            }
+    }
+
+    private static func observedExternalConnected(registry: [String: Any],
+                                                  powerSource: [String: Any]?) -> Bool? {
+        if let connected = connectionFlag(registry["ExternalConnected"]) { return connected }
+        switch powerSource?["Power Source State"] as? String {
+        case "AC Power": return true
+        case "Battery Power": return false
+        default: return connectionFlag(powerSource?["Raw External Connected"])
+        }
+    }
+
+    private static func connectionFlag(_ value: Any?) -> Bool? {
+        guard let number = value as? NSNumber,
+              number.doubleValue == 0 || number.doubleValue == 1 else { return nil }
+        return number.boolValue
     }
 
     /// IOKit reports some signed 32-bit values as wrapped unsigned numbers
