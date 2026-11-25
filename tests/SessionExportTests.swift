@@ -89,6 +89,7 @@ enum SessionExportTests {
             precondition(row["test_label"] == "'  =HYPERLINK(\"x\")")
             precondition(row["adapter_name"] == "充电器,\"A\"\nB")
             precondition(row["legacy_curve_may_contain_unknown_zeros"] == "true")
+            precondition(row["schema_version"] == "2")
             switch format {
             case .summaryCSV:
                 precondition(row["input_wh"] == "" && row["battery_wh"] == "0.0")
@@ -116,7 +117,7 @@ enum SessionExportTests {
         }
         let json = try SessionExport.encode([record], format: .json, exportedAt: start)
         let envelope = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-        precondition(envelope["schemaVersion"] as? Int == 1)
+        precondition(envelope["schemaVersion"] as? Int == 2)
         let exported = (envelope["sessions"] as! [[String: Any]])[0]
         let exportedSummary = exported["summary"] as! [String: Any]
         precondition(exportedSummary["testLabel"] as? String == "  =HYPERLINK(\"x\")",

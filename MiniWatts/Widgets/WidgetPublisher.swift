@@ -54,12 +54,11 @@ nonisolated extension WidgetSnapshot.Session {
     init(_ session: ChargeSession) {
         self.init(start: session.start,
                   end: session.end ?? session.start.addingTimeInterval(session.duration),
-                  startPercent: session.startPercent,
-                  endPercent: session.endPercent,
-                  storedWattHours: session.totals.batteryWattHours,
+                  gainedPercent: session.gainedPercent,
+                  measuredBatteryWattHours: session.totals.measuredBatteryWattHours,
                   deliveredWattHours: session.totals.measuredInputWattHours,
                   efficiencyPercent: session.totals.chargePathEfficiencyPercent,
-                  peakWatts: max(session.peakInputWatts, session.peakBatteryWatts),
+                  peakWatts: [session.measuredPeakInputWatts, session.measuredPeakBatteryWatts].compactMap { $0 }.max(),
                   isWireless: session.isWireless)
     }
 }

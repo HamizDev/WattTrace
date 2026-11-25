@@ -31,7 +31,7 @@ nonisolated enum ReadingProbe {
 
         let registry = battery?.readRegistryProperties() ?? [:]
         let sources = battery?.readPowerSources() ?? []
-        let internalBattery = sources.first { ($0["Type"] as? String) == "InternalBattery" } ?? sources.first
+        let internalBattery = PowerSnapshot.internalBattery(in: sources)
         let readings = sensors?.read() ?? []
         guard internalBattery != nil || !registry.isEmpty || !readings.isEmpty else { return nil }
 

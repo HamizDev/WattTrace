@@ -10,12 +10,10 @@ extension ChargeSession {
         return Text(fallbackTitle)
     }
 
-    /// Nil when the adapter side was never measured — every wireless charge, and
-    /// anything recorded where the input rail does not answer. The stored peak is
-    /// 0 then, and a row reading "0.00 W" beside a 60 W charge curve said the
-    /// charger delivered nothing.
-    var measuredPeakInputWatts: Double? {
-        totals.measuredInputWattHours != nil && peakInputWatts > 0 ? peakInputWatts : nil
+    var batteryLevelRange: String {
+        let start = reportedStartPercent.map { "\($0)%" } ?? "—"
+        let end = reportedEndPercent.map { "\($0)%" } ?? "—"
+        return "\(start) → \(end)"
     }
 
     /// The curve a list row draws: the adapter's when it was measured, otherwise
@@ -82,10 +80,10 @@ struct SessionsView: View {
                            value: monitor.sessionTotals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwAccent, size: 21)
                     Metric(caption: "Stored",
-                           value: String(format: "%.2f", monitor.sessionTotals.batteryWattHours),
+                           value: monitor.sessionTotals.measuredBatteryWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwBattery, size: 21)
                     Metric(caption: "Gained",
-                           value: "+\(session.gainedPercent)",
+                           value: session.gainedPercent.map { "+\($0)" } ?? "—",
                            unit: "%", size: 21)
                 }
                 if !session.samples.isEmpty {
@@ -100,10 +98,10 @@ struct SessionsView: View {
     }
 
     private var summaryPanel: some View {
-        // Nil, not 0, when no session measured the adapter side.
         let delivered = monitor.sessions.compactMap(\.totals.measuredInputWattHours)
+        let stored = monitor.sessions.compactMap(\.totals.measuredBatteryWattHours)
         let totalDelivered = delivered.isEmpty ? nil : delivered.reduce(0, +)
-        let totalStored = monitor.sessions.reduce(0) { $0 + $1.totals.batteryWattHours }
+        let totalStored = stored.isEmpty ? nil : stored.reduce(0, +)
         // Aggregate with the same paired sampling intervals as the per-session
         // charge-path efficiency. A plain mean gives a five-minute session the
         // same weight as a two-hour session, which biases the History summary.
@@ -118,7 +116,7 @@ struct SessionsView: View {
                        value: totalDelivered.map { String(format: "%.1f", $0) } ?? "—",
                        unit: "Wh", tint: .mwAccent, size: 21)
                 Metric(caption: "Stored",
-                       value: String(format: "%.1f", totalStored),
+                       value: totalStored.map { String(format: "%.1f", $0) } ?? "—",
                        unit: "Wh", tint: .mwBattery, size: 21)
                 Metric(caption: "Cell share",
                        value: averageEfficiency.map { String(format: "%.0f", $0) } ?? "—",
@@ -145,12 +143,12 @@ struct SessionRow: View {
                     }
                     Spacer(minLength: 8)
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(verbatim: String(format: "%.2f Wh", session.totals.measuredInputWattHours
-                                              ?? session.totals.batteryWattHours))
+                        let wattHours = session.totals.measuredInputWattHours ?? session.totals.measuredBatteryWattHours
+                        Text(verbatim: wattHours.map { String(format: "%.2f Wh", $0) } ?? "—")
                             .mwReadout(size: 16)
                             .foregroundStyle(session.totals.measuredInputWattHours == nil
                                              ? Color.mwBattery : Color.mwAccent)
-                        Text("\(session.startPercent)% → \(session.endPercent)%")
+                        Text(verbatim: session.batteryLevelRange)
                             .mwMono(size: 10)
                             .foregroundStyle(Color.mwMuted)
                     }
@@ -246,7 +244,7 @@ struct SessionDetailView: View {
                            value: session.totals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwAccent, size: 21)
                     Metric(caption: "Stored",
-                           value: String(format: "%.2f", session.totals.batteryWattHours),
+                           value: session.totals.measuredBatteryWattHours.map { String(format: "%.2f", $0) } ?? "—",
                            unit: "Wh", tint: .mwBattery, size: 21)
                     Metric(caption: "Load + loss",
                            value: session.totals.unaccountedWattHours.map { String(format: "%.2f", $0) } ?? "—",
@@ -254,17 +252,17 @@ struct SessionDetailView: View {
                 }
                 HStack(alignment: .top, spacing: 10) {
                     Metric(caption: "Into cell",
-                           value: String(format: "%.0f", session.totals.batteryMilliAmpHours),
+                           value: session.totals.measuredBatteryMilliAmpHours.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "mAh", size: 21)
                     Metric(caption: "Cell share",
                            value: session.totals.chargePathEfficiencyPercent.map { String(format: "%.0f", $0) } ?? "—",
                            unit: "%", tint: .mwLoss, size: 21)
                     Metric(caption: "Gained",
-                           value: "+\(session.gainedPercent)",
+                           value: session.gainedPercent.map { "+\($0)" } ?? "—",
                            unit: "%", tint: .mwBattery, size: 21)
                 }
                 if session.totals.integratedSeconds < session.duration * 0.9 {
-                    Text("Measured for \(Formatting.duration(session.totals.integratedSeconds)) of \(Formatting.duration(session.duration)) — the app was backgrounded for the rest, and those gaps are excluded rather than estimated.")
+                    Text("Measured for \(Formatting.duration(session.totals.integratedSeconds)) of \(Formatting.duration(session.duration)). Gaps in sampling are excluded.")
                         .font(.caption2)
                         .foregroundStyle(Color.mwMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -274,8 +272,9 @@ struct SessionDetailView: View {
     }
 
     private var powerPanel: some View {
-        Panel("Charge curve", systemImage: "chart.xyaxis.line",
-              trailing: Text("peak \(String(format: "%.1f", session.measuredPeakInputWatts ?? session.peakBatteryWatts)) W")) {
+        let peak = session.measuredPeakInputWatts ?? session.measuredPeakBatteryWatts
+        return Panel("Charge curve", systemImage: "chart.xyaxis.line",
+                     trailing: peak.map { Text("peak \(String(format: "%.1f", $0)) W") }) {
             if session.samples.isEmpty {
                 EmptyNote(text: "This session ended before the first sample was written.")
             } else {
@@ -424,7 +423,7 @@ struct SessionDetailView: View {
                 DetailRow(label: "Adapter", value: session.adapterName)
                 DetailRow(label: "Rated", value: session.adapterRatedWatts.map { String(format: "%.0f W", $0) })
                 DetailRow(label: "Peak from charger", value: session.measuredPeakInputWatts.map { String(format: "%.2f W", $0) })
-                DetailRow(label: "Peak into cell", value: String(format: "%.2f W", session.peakBatteryWatts))
+                DetailRow(label: "Peak into cell", value: session.measuredPeakBatteryWatts.map { String(format: "%.2f W", $0) })
                 DetailRow(label: "Peak cell temp", value: session.peakBatteryTemperature.map { monitor.temperatureUnit.reading($0) })
                 DetailRow(label: "Average in", value: session.totals.averageInputWatts.map { String(format: "%.2f W", $0) })
                 DetailRow(label: "Path resistance",

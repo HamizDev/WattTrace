@@ -212,6 +212,23 @@ struct SessionClimateChart: View {
         return 0...max(last, 1)
     }
 
+    private struct LevelPoint {
+        let offset: TimeInterval
+        let percent: Int
+        let segment: Int
+    }
+
+    private var levelPoints: [LevelPoint] {
+        var segment = 0
+        return samples.compactMap { sample in
+            guard let percent = sample.observedPercent else {
+                segment += 1
+                return nil
+            }
+            return LevelPoint(offset: sample.offset, percent: percent, segment: segment)
+        }
+    }
+
     private var temperatures: [ChargeSample] {
         samples.filter { $0.batteryTemperature != nil }
     }
@@ -226,32 +243,40 @@ struct SessionClimateChart: View {
     }
 
     var body: some View {
+        let points = levelPoints
         VStack(spacing: 4) {
-            Chart(samples) { sample in
-                LineMark(x: .value("Elapsed", sample.offset),
-                         y: .value("Percent", Double(sample.percent)))
-                    .foregroundStyle(Color.mwWireless)
-                    .lineStyle(StrokeStyle(lineWidth: 1.8))
-                    .interpolationMethod(.monotone)
-            }
-            .chartYScale(domain: 0...100)
-            .chartXScale(domain: xDomain)
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                    AxisGridLine().foregroundStyle(Color.mwGrid)
+            if points.isEmpty {
+                EmptyNote(text: "No battery level was recorded for this session.")
+            } else {
+                Chart(points, id: \.offset) { point in
+                    LineMark(x: .value("Elapsed", point.offset),
+                             y: .value("Percent", Double(point.percent)),
+                             series: .value("Segment", point.segment))
+                        .foregroundStyle(Color.mwWireless)
+                        .lineStyle(StrokeStyle(lineWidth: 1.8))
+                        .interpolationMethod(.monotone)
+                        .symbol(.circle)
+                        .symbolSize(8)
                 }
-            }
-            .chartYAxis {
-                AxisMarks(position: .trailing, values: [0, 50, 100]) { value in
-                    AxisGridLine().foregroundStyle(Color.mwGrid)
-                    AxisValueLabel {
-                        if let number = value.as(Double.self) {
-                            Text(verbatim: "\(Int(number))%").mwMono(size: 9).foregroundStyle(Color.mwMuted)
+                .chartYScale(domain: 0...100)
+                .chartXScale(domain: xDomain)
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisGridLine().foregroundStyle(Color.mwGrid)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .trailing, values: [0, 50, 100]) { value in
+                        AxisGridLine().foregroundStyle(Color.mwGrid)
+                        AxisValueLabel {
+                            if let number = value.as(Double.self) {
+                                Text(verbatim: "\(Int(number))%").mwMono(size: 9).foregroundStyle(Color.mwMuted)
+                            }
                         }
                     }
                 }
+                .frame(height: height * 0.55)
             }
-            .frame(height: height * 0.55)
 
             if temperatures.isEmpty {
                 EmptyNote(text: "No cell temperature was recorded for this session.")

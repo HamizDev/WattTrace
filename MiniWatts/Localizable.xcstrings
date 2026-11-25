@@ -4583,18 +4583,18 @@
         }
       }
     },
-    "Measured for %@ of %@ — the app was backgrounded for the rest, and those gaps are excluded rather than estimated." : {
+    "Measured for %@ of %@. Gaps in sampling are excluded." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Measured for %1$@ of %2$@ — the app was backgrounded for the rest, and those gaps are excluded rather than estimated."
+            "value" : "Measured for %1$@ of %2$@. Gaps in sampling are excluded."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在总计 %2$@ 中实际测量了 %1$@ —— 其余时间应用处于后台，该时间段直接排除未进行估算。"
+            "value" : "总时长为 %2$@，其中 %1$@ 有连续采样。"
           }
         }
       }
@@ -4655,6 +4655,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "协商档位"
+          }
+        }
+      }
+    },
+    "No battery level was recorded for this session." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本次记录没有电池电量数据。"
           }
         }
       }

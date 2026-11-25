@@ -36,7 +36,8 @@ actor SensorProbe {
     /// enter the following sample.
     func read(lastExternalConnected: Bool?, periodicRescan: Bool) -> Result {
         let (snapshot, sources) = probe()
-        if lastExternalConnected != snapshot.externalConnected || periodicRescan {
+        let connectionChanged = snapshot.observedExternalConnected.map { $0 != lastExternalConnected } ?? false
+        if connectionChanged || periodicRescan {
             sensors?.rescan()
         }
         return Result(snapshot: snapshot,
@@ -57,7 +58,7 @@ actor SensorProbe {
     private func probe() -> (snapshot: PowerSnapshot, sources: [[String: Any]]) {
         let registry = battery?.readRegistryProperties() ?? [:]
         let sources = battery?.readPowerSources() ?? []
-        let internalBattery = sources.first { ($0["Type"] as? String) == "InternalBattery" } ?? sources.first
+        let internalBattery = PowerSnapshot.internalBattery(in: sources)
         let snapshot = PowerSnapshot(date: .now,
                                      registry: registry,
                                      powerSource: internalBattery,

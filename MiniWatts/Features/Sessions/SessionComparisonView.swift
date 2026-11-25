@@ -133,7 +133,7 @@ struct SessionComparisonView: View {
 
     private func choiceTitle(_ session: ChargeSession) -> String {
         let name = session.testLabel ?? session.adapterName ?? String(localized: session.fallbackTitle)
-        return "\(name) · \(Formatting.timestamp(session.start)) · \(session.startPercent)–\(session.endPercent)%"
+        return "\(name) · \(Formatting.timestamp(session.start)) · \(session.batteryLevelRange)"
     }
 
     private func sessionPanel(_ session: ChargeSession, source: SOCAnalysisSource,
@@ -149,7 +149,7 @@ struct SessionComparisonView: View {
                     DetailRow(label: "Rated", value: session.adapterRatedWatts.map { String(format: "%.0f W", $0) })
                     DetailRow(label: "Transport", value: DetailRow.transportName(wireless: session.isWireless))
                     DetailRow(label: "Started", value: Formatting.timestamp(session.start))
-                    DetailRow(label: "Battery level (%)", value: "\(session.startPercent) → \(session.endPercent)%")
+                    DetailRow(label: "Battery level (%)", value: session.batteryLevelRange)
                     DetailRow(label: "Analysis source", value: source == .live
                               ? String(localized: "Live sensor aggregation")
                               : String(localized: "Saved curve reconstruction"))
