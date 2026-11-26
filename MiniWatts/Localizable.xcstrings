@@ -1,6 +1,146 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "AirPods battery": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods 电量"
+          }
+        }
+      }
+    },
+    "AirPods component battery": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods 部件电量"
+          }
+        }
+      }
+    },
+    "Seen in the current audio output. Battery readings are unavailable.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前音频输出显示了此设备，暂无可读取的电量。"
+          }
+        }
+      }
+    },
+    "System battery": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统电池信息"
+          }
+        }
+      }
+    },
+    "Sample time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "采样时间"
+          }
+        }
+      }
+    },
+    "Accessory diagnostics": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配件诊断"
+          }
+        }
+      }
+    },
+    "Unassigned battery reading": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未标明部件的电量"
+          }
+        }
+      }
+    },
+    "Vendor": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "厂商"
+          }
+        }
+      }
+    },
+    "Bluetooth Battery Service (180F / 2A19)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝牙电池服务（180F / 2A19）"
+          }
+        }
+      }
+    },
+    "More diagnostic options": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多诊断选项"
+          }
+        }
+      }
+    },
+    "Broadcast check complete": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "广播检查完成"
+          }
+        }
+      }
+    },
+    "Choose an accessory below to read its battery.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在下方选择配件，读取电量。"
+          }
+        }
+      }
+    },
+    "No verified component readings from this Bluetooth diagnostic.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这项蓝牙诊断暂无可确认的部件电量。"
+          }
+        }
+      }
+    },
+    "Diagnostic status": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断状态"
+          }
+        }
+      }
+    },
     "Copy diagnostic report" : {
       "localizations": {
         "zh-Hans": {

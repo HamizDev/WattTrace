@@ -28,6 +28,7 @@ nonisolated struct ExternalBatteryDevice: Identifiable, Hashable {
     }
 
     let id: String
+    let systemIdentifier: String?
     let name: String
     /// `groupName`: the pieces of one pair of AirPods share it.
     let groupName: String?
@@ -230,15 +231,15 @@ nonisolated final class BatteryCenterBridge {
         let name = Self.string(object, "name")
             ?? Self.string(object, "groupName")
             ?? String(localized: "Unknown device")
-        let identifier = Self.string(object, "identifier")
-            ?? Self.string(object, "matchIdentifier")
-            ?? Self.string(object, "accessoryIdentifier")
-            ?? name
+        let systemIdentifier = ["identifier", "matchIdentifier", "accessoryIdentifier"]
+            .lazy.compactMap { Self.string(object, $0) }.first { !$0.isEmpty }
+        let identifier = systemIdentifier ?? name
         let parts = Self.parts(object)
         return ExternalBatteryDevice(
             // Every piece of one accessory shares an identifier, so the part goes
             // into the id — otherwise ForEach collapses the earbuds into one row.
             id: parts == 0 ? identifier : "\(identifier)#\(parts)",
+            systemIdentifier: systemIdentifier,
             name: name,
             groupName: Self.string(object, "groupName"),
             category: Self.category(object),
@@ -290,10 +291,9 @@ nonisolated final class BatteryCenterBridge {
     /// 1 % into 100 %.
     private static func percent(_ object: NSObject) -> Int? {
         for key in ["percentCharge", "percent", "batteryLevel"] {
-            guard let number = object.value(forKeyIfPresent: key) as? NSNumber else { continue }
-            let value = number.intValue
-            guard (0...100).contains(value) else { continue }
-            return value
+            if let value = AccessoryBatteryLevel.decodeSystemPercentage(object.value(forKeyIfPresent: key) as? NSNumber) {
+                return value
+            }
         }
         return nil
     }

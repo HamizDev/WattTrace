@@ -6,23 +6,33 @@ struct AppleWatchBatteryCard: View {
     var body: some View {
         Panel("Apple Watch", systemImage: "applewatch") {
             TimelineView(.periodic(from: .now, by: 30)) { context in
+                let reading = bridge.paired && bridge.installed ? bridge.history.latest : nil
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(connectionTitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.mwMuted)
-                    if let reading = bridge.history.latest, bridge.paired, bridge.installed {
-                        MetricGroup(spacing: 12) {
-                            Metric(caption: "Watch battery", value: reading.batteryPercent.map(String.init) ?? "—",
-                                   unit: "%", tint: reading.isFresh(at: context.date) ? .mwBattery : .mwMuted, size: 30)
+                    MetricGroup(spacing: 12) {
+                        let percent = reading?.batteryPercent
+                        Metric(caption: "Watch battery", value: percent.map(String.init) ?? String(localized: "Unknown"),
+                               unit: percent == nil ? nil : "%",
+                               tint: reading?.isFresh(at: context.date) == true ? .mwBattery : .mwMuted, size: 30)
+                        if let reading {
                             VStack(alignment: .leading, spacing: 5) {
-                                Text(stateTitle(reading.state)).font(.headline)
+                                if reading.state != .unknown {
+                                    Text(stateTitle(reading.state)).font(.headline)
+                                }
                                 Text(reading.isFresh(at: context.date) ? "Recent reading" : "Last known · stale")
                                     .font(.caption)
                                     .foregroundStyle(Color.mwMuted)
                             }
                         }
+                    }
+                    if let reading {
+                        DetailRow(label: "Source", value: "WatchConnectivity")
                         DetailRow(label: "Watch sample time", value: reading.capturedAt.formatted(.dateTime.month().day().hour().minute().second()))
                         DetailRow(label: "Watch system", value: reading.systemVersion)
+                    }
+                    Text(connectionTitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.mwMuted)
+                    if reading != nil {
                         NavigationLink {
                             AppleWatchHistoryView()
                         } label: {
