@@ -1,20 +1,27 @@
 import AVFoundation
-import Combine
 import SwiftUI
 
 /// Passive inspection of this app's audio session. It never activates audio,
 /// changes the category, starts playback, scans BLE or connects to a peripheral.
 /// This is not a list of paired devices or an accessory battery API.
-struct AudioRouteDiagnosticPanel: View {
-    private struct Output: Identifiable, Equatable {
-        let id: Int
-        let name: String
-        let portType: String
-        let isBluetooth: Bool
-    }
+struct AudioRouteOutput: Identifiable, Equatable {
+    let id: Int
+    let name: String
+    let portType: String
+    let isBluetooth: Bool
 
-    @Environment(\.scenePhase) private var scenePhase
-    @State private var outputs: [Output] = []
+    static func current() -> [Self] {
+        AVAudioSession.sharedInstance().currentRoute.outputs.enumerated().map { index, port in
+            let bluetooth = port.portType == .bluetoothA2DP
+                || port.portType == .bluetoothHFP || port.portType == .bluetoothLE
+            return Self(id: index, name: port.portName, portType: port.portType.rawValue, isBluetooth: bluetooth)
+        }
+    }
+}
+
+struct AudioRouteDiagnosticPanel: View {
+    let outputs: [AudioRouteOutput]
+    let onRefresh: () -> Void
 
     var body: some View {
         Panel("Current audio output", systemImage: "headphones") {
@@ -39,31 +46,18 @@ struct AudioRouteDiagnosticPanel: View {
                     }
                 }
                 EmptyNote(text: "This is WattTrace's current audio route, not a list of connected Bluetooth devices. An AirPods name can appear here without access to its battery levels. No audio session is activated or changed by this check.")
-                Button {
-                    refresh()
-                } label: {
-                    Label("Refresh audio route", systemImage: "arrow.clockwise")
-                        .font(.caption.weight(.semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.mwAccent)
+                refreshButton
             }
-        }
-        .onAppear { refresh() }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { refresh() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
-            if scenePhase == .active { refresh() }
         }
     }
 
-    private func refresh() {
-        let next = AVAudioSession.sharedInstance().currentRoute.outputs.enumerated().map { index, port in
-            let bluetooth = port.portType == .bluetoothA2DP
-                || port.portType == .bluetoothHFP || port.portType == .bluetoothLE
-            return Output(id: index, name: port.portName, portType: port.portType.rawValue, isBluetooth: bluetooth)
+    @ViewBuilder
+    private var refreshButton: some View {
+        let button = Button("Refresh audio route", systemImage: "arrow.clockwise", action: onRefresh)
+        if #available(iOS 26, *) {
+            button.buttonStyle(.glass)
+        } else {
+            button.buttonStyle(.bordered)
         }
-        if outputs != next { outputs = next }
     }
 }

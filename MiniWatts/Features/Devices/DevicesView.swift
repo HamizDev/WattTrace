@@ -1,70 +1,143 @@
+import AVFoundation
+import Combine
 import SwiftUI
 
 struct DevicesView: View {
     @Environment(PowerMonitor.self) private var monitor
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var audioOutputs: [AudioRouteOutput] = []
 
-    /// One card per accessory. BatteryCenter hands back a separate `BCBatteryDevice`
-    /// for each piece of a multi-part accessory — left earbud, right earbud, case —
-    /// so entries sharing a `groupName` are gathered back into one card here.
     private var groups: [DeviceGroup] {
         let accessories = monitor.devices.filter { !$0.isInternal }
-        return Dictionary(grouping: accessories) { $0.groupName ?? $0.id }
-            .map { DeviceGroup(id: $0.key,
-                               entries: $0.value.sorted { $0.parts < $1.parts }) }
-            .sorted { $0.entries[0].name < $1.entries[0].name }
+        // A display name can be shared by several unrelated devices. Group
+        // component readings only when BatteryCenter supplies an identifier.
+        return Dictionary(grouping: accessories.enumerated()) { index, device in
+            DeviceGroup.ID(device: device, index: index)
+        }
+        .map { id, readings in
+            DeviceGroup(id: id, firstRecordIndex: readings[0].offset,
+                        entries: readings.map(\.element).sorted { $0.parts < $1.parts })
+        }
+        .sorted {
+            let nameOrder = $0.name.localizedStandardCompare($1.name)
+            return nameOrder == .orderedSame ? $0.firstRecordIndex < $1.firstRecordIndex : nameOrder == .orderedAscending
+        }
     }
 
     var body: some View {
+        let groups = groups
+        // Neither source exposes an identity that can join an audio route to a
+        // BatteryCenter record. Show the route-only fallback when no AirPods
+        // records already explain the component-reading state.
+        let unmatchedAirPods = groups.contains(where: \.hasAirPodsComponents) ? [] : audioOutputs.filter {
+            $0.isBluetooth && isAirPodsEarbuds($0.name)
+        }
         PageScaffold("Devices") {
-            thisPhonePanel
-            AppleWatchBatteryCard()
-            AudioRouteDiagnosticPanel()
-            AccessoryBatteryProbeLink()
-            compatibilityLink
-            systemMonitorLink
-            accessoriesStatusPanel
-            ForEach(groups) { group in
-                DeviceCard(group: group)
+            VStack(spacing: 24) {
+                devicePanels {
+                    thisPhonePanel
+                    AppleWatchBatteryCard()
+                    if groups.isEmpty && unmatchedAirPods.isEmpty {
+                        noAccessoryReadingsPanel
+                    }
+                    ForEach(groups) { group in
+                        DeviceCard(group: group)
+                    }
+                    ForEach(unmatchedAirPods) { output in
+                        airPodsWithoutReadings(name: output.name)
+                    }
+                }
+                devicePanels {
+                    AccessoryBatteryProbeLink()
+                    accessoryDiagnosticsPanel
+                    AudioRouteDiagnosticPanel(outputs: audioOutputs, onRefresh: refreshAudioRoute)
+                    compatibilityLink
+                    systemMonitorLink
+                }
+            }
+        }
+        .onAppear(perform: refreshAudioRoute)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { refreshAudioRoute() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
+            if scenePhase == .active { refreshAudioRoute() }
+        }
+    }
+
+    private func devicePanels<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ViewThatFits(in: .horizontal) {
+            if !typeSize.isAccessibilitySize {
+                PanelColumns { content() }
+                    .frame(minWidth: widePanelsMinimumWidth - 40)
+            }
+            VStack(spacing: 14) { content() }
+        }
+    }
+
+    private func refreshAudioRoute() {
+        let next = AudioRouteOutput.current()
+        if next != audioOutputs { audioOutputs = next }
+    }
+
+    private func airPodsWithoutReadings(name: String) -> some View {
+        Panel("AirPods battery", systemImage: "airpods") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(verbatim: name).font(.headline)
+                AirPodsReadings(entries: [])
+                VStack(spacing: 0) {
+                    DetailRow(label: "Source", value: String(localized: "Unknown"))
+                    DetailRow(label: "Sample time", value: String(localized: "Unknown"))
+                }
+                EmptyNote(text: "Seen in the current audio output. Battery readings are unavailable.", systemImage: "headphones")
             }
         }
     }
 
     private var thisPhonePanel: some View {
         let snapshot = monitor.snapshot
-        // An iPad was shown with an iPhone's glyph (#13).
         let isTablet = DeviceForm.current == .tablet
         return Panel("This device", systemImage: isTablet ? "ipad" : "iphone",
                      trailing: Text(verbatim: monitor.deviceModelIdentifier)) {
-            VStack(spacing: 12) {
-                HStack(alignment: .center, spacing: 14) {
-                    Image(systemName: isTablet ? "ipad" : "iphone.gen3")
-                        .font(.system(size: 30, weight: .light))
-                        .foregroundStyle(Color.mwAccent)
-                    VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 12) {
+                MetricGroup {
+                    Metric(caption: "Battery", value: batteryLabel(percent: snapshot.percent),
+                           tint: snapshot.percent == nil ? .mwMuted : .primary, size: 30)
+                    VStack(alignment: .leading, spacing: 4) {
                         if let deviceName = DeviceCompatibilityProfile.displayName {
-                            Text(verbatim: deviceName)
-                                .font(.system(size: 15, weight: .semibold))
+                            Text(verbatim: deviceName).font(.headline)
                         }
-                        Text(snapshot.statusText)
-                            .font(.system(size: 14, weight: .semibold))
+                        Text(snapshot.statusText).font(.subheadline.weight(.semibold))
                         Text(snapshot.externalConnected
                              ? "\(snapshot.inputWatts.map(Formatting.watts) ?? "—") W in"
                              : "on battery")
-                            .mwMono(size: 11)
+                            .font(.caption)
+                            .monospacedDigit()
                             .foregroundStyle(Color.mwMuted)
                     }
-                    Spacer()
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(snapshot.percent.map(String.init) ?? "—")
-                            .mwReadout(size: 30)
-                        Text(verbatim: "%")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.mwMuted)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let percent = snapshot.percent {
-                    ChargeBar(percent: Double(percent),
-                              tint: percent <= 20 ? .mwDanger : .mwBattery)
+                    ChargeBar(percent: percent, tint: percent <= 20 ? .mwDanger : .mwBattery)
+                }
+                VStack(spacing: 0) {
+                    DetailRow(label: "Source", value: snapshot.percent.map { _ in String(localized: "System battery") }
+                              ?? String(localized: "Unknown"))
+                    DetailRow(label: "Sample time", value: snapshot.percent.map { _ in Formatting.clock(snapshot.date) }
+                              ?? String(localized: "Unknown"))
+                }
+            }
+        }
+    }
+
+    private var noAccessoryReadingsPanel: some View {
+        Panel("Accessories", systemImage: "headphones") {
+            VStack(alignment: .leading, spacing: 10) {
+                EmptyNote(text: monitor.batteryCenterStatus ?? "No external accessory battery records were returned.")
+                VStack(spacing: 0) {
+                    DetailRow(label: "Source", value: "BatteryCenter")
+                    DetailRow(label: "Sample time", value: String(localized: "Unknown"))
                 }
             }
         }
@@ -77,9 +150,6 @@ struct DevicesView: View {
         }
     }
 
-    /// Keep the top-level tab bar to five pages. The System Monitor is a
-    /// separate screen under Devices, so navigating back automatically stops
-    /// its CPU and display-link sampling.
     private var systemMonitorLink: some View {
         PanelLink("System Monitor", detail: "WattTrace CPU · FPS · thermal state",
                   systemImage: "cpu", tint: .mwWireless) {
@@ -87,163 +157,180 @@ struct DevicesView: View {
         }
     }
 
-    /// Empty accessory battery telemetry is not evidence of a disconnected
-    /// accessory. The separate audio-route panel can report a route name even
-    /// when the private battery service returns no readable battery data.
-    private var accessoriesStatusPanel: some View {
-        Panel("Accessories", systemImage: "airpods") {
+    private var accessoryDiagnosticsPanel: some View {
+        Panel("Accessory diagnostics", systemImage: "waveform.path") {
             VStack(alignment: .leading, spacing: 10) {
-                DetailRow(label: "BatteryCenter records", value: String(monitor.devices.count))
-                DetailRow(label: "External accessory records", value: String(monitor.devices.filter { !$0.isInternal }.count))
-                if groups.isEmpty {
-                    EmptyNote(text: monitor.batteryCenterStatus
-                              ?? "No external accessory battery records were returned.")
+                VStack(spacing: 0) {
+                    DetailRow(label: "BatteryCenter records", value: String(monitor.devices.count))
+                    DetailRow(label: "External accessory records", value: String(monitor.devices.filter { !$0.isInternal }.count))
+                    if let time = monitor.accessoryReadDate {
+                        DetailRow(label: "Last accessory check", value: Formatting.clock(time))
+                    }
                 }
-                if let time = monitor.accessoryReadDate {
-                    DetailRow(label: "Last accessory check", value: Formatting.clock(time))
-                }
-                Button {
-                    monitor.refreshAccessoryDevices()
-                } label: {
-                    Label("Refresh accessory records", systemImage: "arrow.clockwise")
-                        .font(.caption.weight(.semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.mwAccent)
-                EmptyNote(text: "AirPods battery percentages, left/right and case levels require actual battery records. The audio output name is not a substitute for those readings.", systemImage: "info.circle")
+                refreshAccessoriesButton
             }
         }
     }
 
+    @ViewBuilder
+    private var refreshAccessoriesButton: some View {
+        let button = Button("Refresh accessory records", systemImage: "arrow.clockwise") {
+            monitor.refreshAccessoryDevices()
+        }
+        if #available(iOS 26, *) {
+            button.buttonStyle(.glass)
+        } else {
+            button.buttonStyle(.bordered)
+        }
+    }
 }
 
-/// One accessory, with every piece BatteryCenter reported for it.
-struct DeviceGroup: Identifiable {
-    let id: String
+private struct DeviceGroup: Identifiable {
+    enum ID: Hashable {
+        case systemIdentifier(String)
+        case individualRecord(String, Int)
+
+        init(device: ExternalBatteryDevice, index: Int) {
+            if let identifier = device.systemIdentifier {
+                self = .systemIdentifier(identifier)
+            } else {
+                self = .individualRecord(device.id, index)
+            }
+        }
+    }
+
+    let id: ID
+    let firstRecordIndex: Int
     let entries: [ExternalBatteryDevice]
 
     var lead: ExternalBatteryDevice { entries[0] }
-    /// A pair of AirPods has a level per piece and none for the whole.
-    var isMultipart: Bool { entries.count > 1 || lead.parts != 0 }
-    var isCharging: Bool { entries.contains(where: \.isCharging) }
-    var isLowBattery: Bool { entries.contains(where: \.isLowBattery) }
-    /// The level to headline with: the lowest piece, which is the one that will
-    /// run out first and the only one worth a single number.
-    var percent: Int? { entries.compactMap(\.percent).min() }
+    var name: String { lead.groupName ?? lead.name }
+    var hasAirPodsComponents: Bool {
+        entries.contains { entry in
+            isAirPodsEarbuds(entry.name) || entry.groupName.map(isAirPodsEarbuds) == true
+        }
+    }
 }
 
-struct DeviceCard: View {
+private struct DeviceCard: View {
     let group: DeviceGroup
-
-    private var device: ExternalBatteryDevice { group.lead }
 
     var body: some View {
         Panel {
-            VStack(spacing: 12) {
-                HStack(alignment: .center, spacing: 14) {
-                    Image(systemName: device.symbol)
-                        .font(.system(size: 26, weight: .light))
+            VStack(alignment: .leading, spacing: 12) {
+                Label {
+                    Text(verbatim: group.name)
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                } icon: {
+                    Image(systemName: group.hasAirPodsComponents ? "airpods" : group.lead.symbol)
                         .foregroundStyle(Color.mwWireless)
-                        .frame(width: 34)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(device.name)
-                            .font(.system(size: 14, weight: .semibold))
-                            .lineLimit(1)
-                        HStack(spacing: 6) {
-                            if let transport = device.transport {
-                                Text(transport.title).mwMono(size: 10).foregroundStyle(Color.mwMuted)
-                            }
-                            if let vendor = device.vendor {
-                                Text(verbatim: vendor).mwMono(size: 10).foregroundStyle(Color.mwMuted)
-                            }
-                            if group.isCharging {
-                                Label("charging", systemImage: "bolt.fill")
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(Color.mwBattery)
-                            }
-                            if group.isLowBattery {
-                                Label("low", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(Color.mwDanger)
-                            }
-                        }
+                        .accessibilityHidden(true)
+                }
+
+                if group.hasAirPodsComponents {
+                    AirPodsReadings(entries: group.entries)
+                    let otherReadings = group.entries.filter { AirPodsPart(rawValue: $0.parts) == nil }
+                    ForEach(Array(otherReadings.enumerated()), id: \.offset) { _, entry in
+                        DetailRow(label: entry.partTitle ?? "Unassigned battery reading",
+                                  value: batteryLabel(percent: entry.percent, approximate: entry.isApproximate))
                     }
-                    Spacer()
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        if group.lead.isApproximate, group.percent != nil {
-                            Text(verbatim: "~")
-                                .font(.system(size: 15, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color.mwMuted)
+                } else {
+                    MetricGroup {
+                        ForEach(Array(group.entries.enumerated()), id: \.offset) { _, entry in
+                            BatteryPartReading(title: entry.partTitle ?? "Battery", entry: entry)
                         }
-                        Text(group.percent.map(String.init) ?? "—")
-                            .mwReadout(size: 26)
-                        Text(verbatim: "%")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color.mwMuted)
                     }
                 }
 
-                if group.isMultipart {
-                    HStack(spacing: 10) {
-                        ForEach(group.entries) { entry in
-                            PartGauge(entry: entry)
-                        }
+                VStack(spacing: 0) {
+                    DetailRow(label: "Source", value: "BatteryCenter")
+                    // BatteryCenter provides a level, but no hardware sample time in its record.
+                    DetailRow(label: "Sample time", value: String(localized: "Unknown"))
+                    if let transport = group.lead.transport {
+                        DetailRow(label: "Transport", value: String(localized: transport.title))
                     }
-                } else if let percent = group.percent {
-                    ChargeBar(percent: Double(percent),
-                              tint: tint(percent))
+                    if let vendor = group.lead.vendor {
+                        DetailRow(label: "Vendor", value: vendor)
+                    }
                 }
             }
         }
-    }
-
-    private func tint(_ percent: Int) -> Color {
-        percent <= 20 ? .mwDanger : (group.isCharging ? .mwBattery : .mwWireless)
     }
 }
 
-struct PartGauge: View {
-    let entry: ExternalBatteryDevice
+private enum AirPodsPart: Int, CaseIterable, Identifiable {
+    case left = 1
+    case right = 2
+    case chargingCase = 4
+
+    var id: Int { rawValue }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .left: "Left"
+        case .right: "Right"
+        case .chargingCase: "Case"
+        }
+    }
+}
+
+private struct AirPodsReadings: View {
+    let entries: [ExternalBatteryDevice]
 
     var body: some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 3) {
-                Group {
-                    if let partTitle = entry.partTitle { Text(partTitle) } else { Text(verbatim: entry.name) }
-                }
-                .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Color.mwMuted)
-                    .lineLimit(1)
-                if entry.isCharging {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 8))
-                        .foregroundStyle(Color.mwBattery)
-                }
-            }
-            Text(entry.percent.map { "\($0)%" } ?? "—")
-                .mwReadout(size: 15)
-            if let percent = entry.percent {
-                ChargeBar(percent: Double(percent),
-                          tint: percent <= 20 ? .mwDanger : .mwBattery)
-            } else {
-                Capsule().fill(Color.mwMuted.opacity(0.15)).frame(height: 4)
+        MetricGroup(spacing: 10) {
+            ForEach(AirPodsPart.allCases) { part in
+                let matches = entries.filter { $0.parts == part.rawValue }
+                BatteryPartReading(title: part.title, entry: matches.count == 1 ? matches.first : nil)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.mwMuted.opacity(0.07))
-        )
     }
+}
+
+private struct BatteryPartReading: View {
+    let title: LocalizedStringResource
+    let entry: ExternalBatteryDevice?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Metric(caption: title, value: batteryLabel(percent: entry?.percent,
+                                                       approximate: entry?.isApproximate == true),
+                   tint: entry?.percent == nil ? .mwMuted : .primary, size: 20)
+            if let entry, let percent = entry.percent {
+                ChargeBar(percent: percent, tint: percent <= 20 ? .mwDanger : (entry.isCharging ? .mwBattery : .mwWireless))
+            }
+            if entry?.isCharging == true {
+                Label("charging", systemImage: "bolt.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.mwBattery)
+            }
+            if entry?.isLowBattery == true {
+                Label("low", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.mwDanger)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private func isAirPodsEarbuds(_ name: String) -> Bool {
+    name.localizedCaseInsensitiveContains("AirPods") && !name.localizedCaseInsensitiveContains("AirPods Max")
+}
+
+private func batteryLabel(percent: Int?, approximate: Bool = false) -> String {
+    guard let percent else { return String(localized: "Unknown") }
+    return approximate ? "~\(percent)%" : "\(percent)%"
 }
 
 private struct ChargeBar: View {
-    let percent: Double
+    let percent: Int
     let tint: Color
 
     var body: some View {
-        ProgressView(value: min(max(percent, 0), 100), total: 100)
+        ProgressView(value: Double(percent), total: 100)
             .tint(tint)
             .accessibilityHidden(true)
     }

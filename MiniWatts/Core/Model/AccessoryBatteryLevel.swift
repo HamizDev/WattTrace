@@ -1,11 +1,20 @@
+import CoreFoundation
 import Foundation
 
-/// Bluetooth SIG Battery Level (0x2A19): one unsigned byte, 0...100 percent.
-/// No fractional scaling, guessed sentinel values or vendor-specific parsing.
+/// Validated battery levels from standard Bluetooth and system battery records.
 nonisolated enum AccessoryBatteryLevel {
+    /// Bluetooth SIG Battery Level (0x2A19): one unsigned byte, 0...100 percent.
     static func decode(_ data: Data?) -> Int? {
         guard let data, data.count == 1, let byte = data.first, byte <= 100 else { return nil }
         return Int(byte)
+    }
+
+    /// BatteryCenter carries whole percentages in NSNumber. Reject sentinels,
+    /// fractional data, and booleans before they can be truncated into a level.
+    static func decodeSystemPercentage(_ number: NSNumber?) -> Int? {
+        guard let number, CFGetTypeID(number) != CFBooleanGetTypeID(),
+              let value = Int(exactly: number.doubleValue), (0...100).contains(value) else { return nil }
+        return value
     }
 }
 
