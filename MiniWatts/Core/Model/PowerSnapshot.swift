@@ -281,6 +281,15 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
         return bool("Is Charging", in: powerSource)
     }
 
+    /// Charge-state evidence for timing. Unknown flags break the observation interval.
+    var observedActiveCharging: Bool? {
+        guard externalConnected else { return observedExternalConnected }
+        if chargeStatusText != nil, measuredHoldState == .held { return false }
+        let full = Self.binaryFlag(registry["FullyCharged"]) ?? Self.binaryFlag(powerSource?["Is Charged"])
+        if full == true { return false }
+        return Self.binaryFlag(registry["IsCharging"]) ?? Self.binaryFlag(powerSource?["Is Charging"])
+    }
+
     var externalConnected: Bool {
         observedExternalConnected == true
     }
@@ -735,15 +744,15 @@ nonisolated struct PowerSnapshot: @unchecked Sendable {
 
     private static func observedExternalConnected(registry: [String: Any],
                                                   powerSource: [String: Any]?) -> Bool? {
-        if let connected = connectionFlag(registry["ExternalConnected"]) { return connected }
+        if let connected = binaryFlag(registry["ExternalConnected"]) { return connected }
         switch powerSource?["Power Source State"] as? String {
         case "AC Power": return true
         case "Battery Power": return false
-        default: return connectionFlag(powerSource?["Raw External Connected"])
+        default: return binaryFlag(powerSource?["Raw External Connected"])
         }
     }
 
-    private static func connectionFlag(_ value: Any?) -> Bool? {
+    private static func binaryFlag(_ value: Any?) -> Bool? {
         guard let number = value as? NSNumber,
               number.doubleValue == 0 || number.doubleValue == 1 else { return nil }
         return number.boolValue

@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Active charging time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实际充电时长"
+          }
+        }
+      }
+    },
+    "Connected time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接时长"
+          }
+        }
+      }
+    },
+    "%@ · Connected for %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · 连接 %2$@"
+          }
+        }
+      }
+    },
     "AirPods battery": {
       "localizations": {
         "zh-Hans": {

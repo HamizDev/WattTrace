@@ -16,6 +16,10 @@ extension ChargeSession {
         return "\(start) → \(end)"
     }
 
+    var activeChargingDurationText: String {
+        activeChargingSeconds.map(Formatting.duration) ?? "—"
+    }
+
     /// The curve a list row draws: the adapter's when it was measured, otherwise
     /// the battery's, in the colour of the energy figure beside it. Older files
     /// wrote a missing input reading as 0, so "has input samples" cannot decide.
@@ -75,9 +79,9 @@ struct SessionsView: View {
     }
 
     private func currentPanel(_ session: ChargeSession) -> some View {
-        Panel("In progress", systemImage: "bolt.fill",
-              trailing: Text(verbatim: Formatting.duration(session.duration)), accent: .mwAccent) {
+        Panel("In progress", systemImage: "bolt.fill", accent: .mwAccent) {
             VStack(spacing: 12) {
+                DetailRow(label: "Active charging time", value: session.activeChargingDurationText)
                 MetricGroup(spacing: 10) {
                     Metric(caption: "Delivered",
                            value: monitor.sessionTotals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",
@@ -162,7 +166,7 @@ struct SessionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 session.titleText
                     .font(.headline)
-                Text("\(Formatting.timestamp(session.start)) · \(Formatting.duration(session.duration))")
+                Text("\(Formatting.timestamp(session.start)) · Connected for \(Formatting.duration(session.duration))")
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -264,9 +268,12 @@ struct SessionDetailView: View {
     }
 
     private var energyPanel: some View {
-        Panel("Energy", systemImage: "bolt.circle",
-              trailing: Text(verbatim: Formatting.duration(session.duration))) {
+        Panel("Energy", systemImage: "bolt.circle") {
             VStack(spacing: 12) {
+                VStack(spacing: 0) {
+                    DetailRow(label: "Active charging time", value: session.activeChargingDurationText)
+                    DetailRow(label: "Connected time", value: Formatting.duration(session.duration))
+                }
                 MetricGroup(spacing: 10) {
                     Metric(caption: "Delivered",
                            value: session.totals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",

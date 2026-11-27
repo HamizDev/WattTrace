@@ -22,6 +22,12 @@ the original text. CSV headers include the physical units. JSON envelope
 contains `schemaVersion`, `application`, `exportedAt`, `units`, `notes` and
 `sessions`. This is an analysis export, not a history import format.
 
+The summary duration (`duration_seconds` in CSV, `durationSeconds` in JSON)
+is the elapsed connection span from the session start to its recorded end.
+The app displays active charging time separately from this span, using
+observed charging intervals and excluding charging holds and sampling gaps.
+Active charging time is unavailable for history recorded before that counter.
+
 Schema 2 keeps the CSV headers and makes the session start SOC, end SOC
 and saved-point recorded SOC nullable. For new sessions the endpoints
 and saved points report the levels observed at those exact times. A

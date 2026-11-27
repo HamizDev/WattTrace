@@ -168,6 +168,7 @@ final class PowerMonitor {
     private var lastBatteryCenterStatus: BatteryCenterBridge.Status?
     private(set) var accessoryReadDate: Date?
     private let energy = EnergyAccumulator()
+    private var activeChargingTime = ActiveChargingTime()
     private var socAccumulator = SOCBandAccumulator()
     private var thermalPowerAccumulator = ThermalPowerAccumulator()
     private let resistance = PathResistanceMeter()
@@ -270,6 +271,7 @@ final class PowerMonitor {
 
     private func breakSessionContinuity() {
         energy.breakContinuity()
+        activeChargingTime.breakContinuity()
         socAccumulator.breakContinuity()
         thermalPowerAccumulator.breakContinuity()
         lastThermalObservationDate = nil
@@ -362,6 +364,7 @@ final class PowerMonitor {
 
     private func openSession(_ snapshot: PowerSnapshot) {
         energy.reset()
+        activeChargingTime = ActiveChargingTime()
         socAccumulator = SOCBandAccumulator()
         thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = energy.totals
@@ -384,6 +387,8 @@ final class PowerMonitor {
         guard var session = currentSession else { return }
 
         session.recordConnectedObservation(snapshot)
+        activeChargingTime.add(snapshot)
+        session.activeChargingSeconds = activeChargingTime.seconds
         session.totals = energy.totals
         // Live analysis uses every observed tick. Saved curve points are downsampled.
         let socReading = SOCReading(
@@ -469,6 +474,7 @@ final class PowerMonitor {
         session.totals = energy.totals
         currentSession = nil
         energy.reset()
+        activeChargingTime = ActiveChargingTime()
         socAccumulator = SOCBandAccumulator()
         thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = EnergyTotals()
@@ -524,6 +530,7 @@ final class PowerMonitor {
         sessions.removeAll()
         currentSession = nil
         energy.reset()
+        activeChargingTime = ActiveChargingTime()
         socAccumulator = SOCBandAccumulator()
         thermalPowerAccumulator = ThermalPowerAccumulator()
         sessionTotals = EnergyTotals()
