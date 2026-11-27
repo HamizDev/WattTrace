@@ -290,10 +290,11 @@ struct DashboardView: View {
 
     private var sessionPanel: some View {
         Panel("This charge", systemImage: "sum",
-              trailing: monitor.currentSession.map { Text(verbatim: Formatting.duration($0.duration)) } ?? Text("idle")) {
-            if monitor.currentSession != nil {
+              trailing: monitor.currentSession == nil ? Text("idle") : nil) {
+            if let session = monitor.currentSession {
                 let totals = monitor.sessionTotals
                 VStack(spacing: 12) {
+                    DetailRow(label: "Active charging time", value: session.activeChargingDurationText)
                     MetricGroup(spacing: 10) {
                         Metric(caption: "Delivered",
                                value: totals.measuredInputWattHours.map { String(format: "%.2f", $0) } ?? "—",

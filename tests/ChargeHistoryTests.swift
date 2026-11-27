@@ -14,6 +14,7 @@ enum ChargeHistoryTests {
     static func run() throws {
         testPowerSources()
         testEnergyContinuity()
+        try testActiveChargingTime()
         try testSessionBoundaries()
         try testLegacySessions()
         try testWidgetCache()
@@ -93,6 +94,63 @@ enum ChargeHistoryTests {
         precondition(measuredZero.measuredBatteryMilliAmpHours == nil)
     }
 
+    private static func testActiveChargingTime() throws {
+        precondition(PowerSnapshot(registry: ["IsCharging": true]).observedActiveCharging == nil)
+        precondition(PowerSnapshot(registry: ["ExternalConnected": true, "IsCharging": -1])
+            .observedActiveCharging == nil)
+        precondition(PowerSnapshot(registry: ["ExternalConnected": false, "IsCharging": true])
+            .observedActiveCharging == false)
+        precondition(PowerSnapshot(powerSource: ["Power Source State": "AC Power", "Is Charging": true,
+                                               "Is Finishing Charge": true]).observedActiveCharging == true)
+        precondition(PowerSnapshot(powerSource: ["Power Source State": "AC Power", "Is Finishing Charge": true])
+            .observedActiveCharging == nil)
+        precondition(PowerSnapshot(registry: ["ExternalConnected": true, "IsCharging": true],
+                                   chargeStatus: ["chargeStatus": " Charging On Hold "])
+            .observedActiveCharging == false)
+
+        var time = ActiveChargingTime()
+        time.add(tick(0))
+        precondition(time.seconds == nil, "missing charge state stays unknown")
+        time.add(tick(1, percent: 79, charging: true))
+        precondition(time.seconds == 0)
+        time.add(tick(2, percent: 80, charging: true))
+        precondition(time.seconds == 1)
+
+        time.add(tick(3, percent: 80, charging: false))
+        time.add(tick(7, percent: 80, charging: false))
+        precondition(time.seconds == 1, "the connected hold adds no time, including at its boundary")
+        time.add(tick(8, percent: 80, charging: true))
+        precondition(time.seconds == 1, "resume starts a new observation interval")
+        time.add(tick(9, percent: 81, charging: true))
+        precondition(time.seconds == 2)
+
+        time.add(tick(10, percent: 81))
+        time.add(tick(11, percent: 81, charging: true))
+        precondition(time.seconds == 2, "a missing charge-state tick breaks continuity")
+        time.add(tick(12, percent: 81, charging: true))
+        time.breakContinuity()
+        time.add(tick(15, percent: 81, charging: true))
+        precondition(time.seconds == 3, "even a brief suspension adds no time")
+        time.add(tick(45, percent: 83, charging: true))
+        precondition(time.seconds == 3, "a long sampling gap adds no time")
+        time.add(tick(46, percent: 83, charging: true))
+        time.add(PowerSnapshot(date: start.addingTimeInterval(47),
+                               registry: ["ExternalConnected": true, "IsCharging": true, "FullyCharged": true]))
+        time.add(tick(60, percent: 100, charging: false))
+        precondition(time.seconds == 4, "confirmed full stops timing even while power is connected")
+
+        var session = ChargeSession(start: start, startPercent: 79, adapterName: nil,
+                                   adapterRatedWatts: nil, isWireless: false)
+        session.recordConnectedObservation(tick(60, percent: 100, charging: false))
+        session.activeChargingSeconds = time.seconds
+        let stored = try JSONEncoder().encode(session)
+        var restored = try JSONDecoder().decode(ChargeSession.self, from: stored)
+        restored.finishAtLastObservation()
+        precondition(restored.activeChargingSeconds == 4 && restored.duration == 60)
+        precondition(restored.exportRecord?.summary.durationSeconds == 60,
+                     "the established export duration remains the elapsed connection span")
+    }
+
     private static func testSessionBoundaries() throws {
         var missingStart = ChargeSession(start: start, startPercent: nil, adapterName: nil,
                                          adapterRatedWatts: nil, isWireless: false)
@@ -153,6 +211,7 @@ enum ChargeHistoryTests {
         }
         """
         let session = try JSONDecoder().decode(ChargeSession.self, from: Data(legacyJSON.utf8))
+        precondition(session.activeChargingSeconds == nil, "old history has no active charging duration")
         precondition(session.samples.first?.percent == 0, "legacy stored sample remains readable")
         precondition(session.exportRecord?.samples.first?.recordedPercent == 0, "raw legacy recording is preserved")
         precondition(session.reportedStartPercent == nil && session.reportedEndPercent == nil)
@@ -191,10 +250,11 @@ enum ChargeHistoryTests {
         precondition(refreshed.gainedPercent == 0 && refreshed.measuredBatteryWattHours == 0)
     }
 
-    private static func tick(_ seconds: TimeInterval, percent: Int? = nil,
+    private static func tick(_ seconds: TimeInterval, percent: Int? = nil, charging: Bool? = nil,
                              sensors: [HIDSensors.Reading] = [], wireless: Bool = false) -> PowerSnapshot {
         var registry: [String: Any] = ["ExternalConnected": 1]
         registry["CurrentCapacity"] = percent
+        registry["IsCharging"] = charging
         return PowerSnapshot(date: start.addingTimeInterval(seconds), registry: registry,
                              adapterDetails: ["IsWireless": wireless], sensors: sensors)
     }

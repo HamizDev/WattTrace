@@ -134,7 +134,7 @@ nonisolated final class EnergyAccumulator {
     }
 
     /// Longest gap that still counts as continuous measurement.
-    private static let maximumInterval: TimeInterval = 10
+    static let maximumInterval: TimeInterval = 10
 
     private(set) var totals = EnergyTotals()
     private var previous: Sample?

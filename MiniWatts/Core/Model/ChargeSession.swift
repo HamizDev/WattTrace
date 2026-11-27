@@ -29,6 +29,27 @@ nonisolated struct ChargeSample: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
+/// Keeps timing continuity in memory so an app restart never joins two disjoint observations.
+nonisolated struct ActiveChargingTime {
+    private(set) var seconds: TimeInterval?
+    private var previousActiveDate: Date?
+
+    mutating func add(_ snapshot: PowerSnapshot) {
+        let active = snapshot.observedActiveCharging
+        defer { previousActiveDate = active == true ? snapshot.date : nil }
+        guard let active else { return }
+        if seconds == nil { seconds = 0 }
+        guard active, let previousActiveDate else { return }
+        let interval = snapshot.date.timeIntervalSince(previousActiveDate)
+        guard interval > 0, interval <= EnergyAccumulator.maximumInterval else { return }
+        seconds = (seconds ?? 0) + interval
+    }
+
+    mutating func breakContinuity() {
+        previousActiveDate = nil
+    }
+}
+
 /// Everything recorded between plugging in and unplugging.
 nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
@@ -46,6 +67,9 @@ nonisolated struct ChargeSession: Codable, Identifiable, Hashable, Sendable {
     var adapterName: String?
     var adapterRatedWatts: Double?
     var isWireless: Bool
+    /// Seconds bounded by consecutive active charging observations. Absent before
+    /// a known charge state is observed and in records predating this measurement.
+    var activeChargingSeconds: TimeInterval?
     /// Seconds spent with the system thermally throttling.
     var throttledSeconds: TimeInterval
     /// Best path-resistance fit made during the session, milliohms — the charger's
